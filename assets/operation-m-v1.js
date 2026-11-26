@@ -9,7 +9,6 @@ let configDraft=null,configSaving=false,workspaceReady=false,workspaceLoading=fa
 let arrived='',revealDraft=false,layoutFrame=0,queue=[],guided=false,rankLock=false,rankTimer=0;
 let lastView='',guidedHistory=[],lastMove=null;
 const RANK_STYLE={S:'holo',A:'gold',B:'crystal',C:'steel',D:'silver'};
-const RANK_NAMES={S:'HOLOGRAPHIC',A:'GOLD',B:'CRYSTAL',C:'STEEL',D:'SILVER'};
 const RANK_ART={
 S:'<path d="M24 2 30 16 46 24 30 30 24 46 17 31 2 24 17 17Z" fill="currentColor" opacity=".22"/><path d="M24 3 30 16 45 24 30 30 24 45 17 31 3 24 17 17Z M24 3V45M3 24H45M17 17 30 30M30 16 17 31"/><path d="m6 6 7 2-5 5ZM42 6l-7 2 5 5ZM6 42l7-2-5-5ZM42 42l-7-2 5-5Z" fill="currentColor"/>',
 A:'<path d="M24 7 36 18 24 40 12 18Z" fill="currentColor" opacity=".25"/><path d="M24 7 36 18 24 40 12 18ZM12 18H36M24 7V40"/><path d="M8 11C0 27 10 39 20 42M40 11c8 16-2 28-12 31M5 20l6 5M7 30l8 3M43 20l-6 5M41 30l-8 3"/>',
@@ -18,7 +17,12 @@ C:'<path d="M24 5 41 11V25C41 34 31 40 24 44 17 40 7 34 7 25V11Z" fill="currentC
 D:'<circle cx="24" cy="24" r="17" fill="currentColor" opacity=".14"/><circle cx="24" cy="24" r="17"/><path d="M24 14 33 24 24 34 15 24Z"/>'
 };
 const crest=t=>'<svg class="op-rank-crest" aria-hidden="true" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">'+(RANK_ART[t]||'')+'</svg>';
-const rarity=t=>'<span class="op-rarity-art" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></span>';
+const rarity=()=>'<span class="op-rarity-art" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b><em class="op-card-particles"></em></span>';
+const cardBadge=(t,large=false)=>'<span class="'+(large?'op-confirm-rank':'op-chip')+'" data-tier="'+t+'">'+crest(t)+t+'</span>';
+const cardBack=()=>'<span class="op-card-back" aria-hidden="true"><svg viewBox="0 0 120 150" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="5" width="110" height="140" rx="9" stroke="currentColor" stroke-width="1.2"/><rect x="10" y="10" width="100" height="130" rx="6" stroke="currentColor" opacity=".45"/><path d="M15 35 15 15 35 15M85 15H105V35M15 115V135H35M85 135H105V115M60 16 102 75 60 134 18 75Z" stroke="currentColor" opacity=".68"/><circle cx="60" cy="75" r="31" stroke="currentColor"/><circle cx="60" cy="75" r="25" stroke="currentColor" stroke-dasharray="2 3"/><path d="M35 87V59L60 78 85 59V87M43 86V73L60 87 77 73V86M60 37 65 45 60 53 55 45ZM60 97 65 105 60 113 55 105Z" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 75 23 69 29 75 23 81ZM91 75 97 69 103 75 97 81Z" fill="currentColor"/></svg></span>';
+function cardFace(c,name,t='',large=false){
+  return '<span class="op-card-front">'+photo(c,name)+rarity()+(t?cardBadge(t,large):'')+'<span class="op-player-name" title="'+esc(name)+'">'+esc(name)+'</span>'+(!c?'<span class="op-link-mark">연결 필요</span>':'')+'</span>';
+}
 const DEFAULT_ROLES=['대월향','우왁굳','천양','머독','고세구!']; // confirmed by the current Admin screenshot
 const CONFIG_KEY='operationMV1';
 const admin=()=>document.body.dataset.mwsMode==='admin'&&window.__mwsAppReadyV130===true;
@@ -73,12 +77,12 @@ function photo(c,name){
 function player(n,kind='tier'){
   const c=current(n),name=display(n),tier=state.tiers[n]||'';
   const styled=(kind==='tier'||kind==='result')&&tier;
-  return '<button type="button" class="op-player '+(selected===n?'op-selected ':'')+(!c?'op-unlinked':'')+(arrived===n&&kind==='tier'?' op-arrived':'')+'" '+(styled?'data-tier="'+tier+'" data-rarity="'+RANK_STYLE[tier]+'" ':'')+'data-op-player="'+esc(n)+'" draggable="'+(kind==='tier'&&!!c)+'" aria-label="'+esc(name+(tier?' '+tier+' 티어':' 미분류')+(!c?' 연락처 연결 필요':''))+'" '+(kind==='tier'?'aria-pressed="'+(selected===n)+'"':'data-op-result="1"')+'>'+photo(c,name)+(styled?rarity(tier)+'<span class="op-chip" data-tier="'+tier+'">'+crest(tier)+tier+'</span>':'')+'<span class="op-player-name" title="'+esc(name)+'">'+esc(name)+'</span>'+(!c?'<span class="op-link-mark">연결 필요</span>':'')+'</button>';
+  return '<button type="button" class="op-player op-card '+(selected===n?'op-selected ':'')+(!c?'op-unlinked':'')+(arrived===n&&kind==='tier'?' op-arrived':'')+'" '+(styled?'data-tier="'+tier+'" data-rarity="'+RANK_STYLE[tier]+'" ':'data-rarity="neutral" ')+'data-op-player="'+esc(n)+'" draggable="'+(kind==='tier'&&!!c)+'" aria-label="'+esc(name+(tier?' '+tier+' 티어':' 미분류')+(!c?' 연락처 연결 필요':''))+'" '+(kind==='tier'?'aria-pressed="'+(selected===n)+'"':'data-op-result="1"')+'>'+cardFace(c,name,styled?tier:'')+'</button>';
 }
 function row(t){
   const members=ROSTER.filter(n=>state.tiers[n]===t);
   const count=members.length;
-  return '<div class="op-tier-row" data-count="'+members.length+'" data-op-drop="'+t+'" data-tier="'+t+'"><button type="button" data-op-tier="'+t+'" class="op-tier-label" aria-label="'+t+' 티어로 이동">'+crest(t)+'<span class="op-rank-heading"><strong>'+t+'</strong><span>'+RANK_NAMES[t]+'</span></span><span class="op-rank-meta"><b>'+members.length+'명</b><small>'+SCORE[t]+'점</small></span></button><div class="op-player-grid" '+(count?'tabindex="0" aria-label="'+t+' 티어 참가자 '+count+'명"':'')+'>'+members.map(n=>player(n)).join('')+(!members.length?'<button type="button" class="op-empty" data-op-tier="'+t+'" aria-label="'+t+' 티어에 참가자 배치"><span class="op-slot-grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="op-empty-center">'+crest(t)+'<span>'+(selected?'선택한 참가자 배치':'참가자 배치')+'</span></span></button>':'')+'</div></div>';
+  return '<div class="op-tier-row" data-count="'+members.length+'" data-op-drop="'+t+'" data-tier="'+t+'"><button type="button" data-op-tier="'+t+'" class="op-tier-label" aria-label="'+t+' 티어로 이동">'+crest(t)+'<span class="op-rank-heading"><strong>'+t+'</strong></span><span class="op-rank-meta"><b>'+members.length+'명</b><small>'+SCORE[t]+'점</small></span></button><div class="op-player-grid" '+(count?'tabindex="0" aria-label="'+t+' 티어 참가자 '+count+'명"':'')+'>'+members.map(n=>player(n)).join('')+(!members.length?'<button type="button" class="op-empty" data-op-tier="'+t+'" aria-label="'+t+' 티어에 참가자 배치"><span class="op-slot-grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="op-empty-center">'+crest(t)+'<span>'+(selected?'선택한 참가자 배치':'참가자 배치')+'</span></span></button>':'')+'</div></div>';
 }
 function roster(){
   const host=byId.get(state.roles[0]);
@@ -106,7 +110,7 @@ function guidedBoard(){
   queue=queue.filter(n=>current(n)&&!state.tiers[n]);
   if(!queue.length){guided=false;return tierBoard()}
   const n=queue[0],name=display(n),done=ROSTER.filter(x=>state.tiers[x]).length;
-  return '<div class="op-guided"><div class="op-guided-top"><span class="op-guided-count">'+(done+1)+' / 20</span><div class="op-guided-track" role="progressbar" aria-label="분류 진행률" aria-valuenow="'+done+'" aria-valuemin="0" aria-valuemax="20"><i style="width:'+(done*5)+'%"></i></div>'+button('undo-guided','이전',guidedHistory.length?'':'disabled')+button('exit-guided','전체 티어표')+'</div><div class="op-guided-stage"><div class="op-stage-halo" aria-hidden="true"></div><article class="op-reveal-card" data-op-current="'+esc(n)+'">'+photo(current(n),name)+'<strong>'+esc(name)+'</strong></article></div><div class="op-guided-ranks">'+TIERS.map((t,i)=>'<button type="button" class="op-guide-rank" data-op-assign="'+t+'" data-tier="'+t+'" aria-keyshortcuts="'+(i+1)+'"><span class="op-keyhint">'+(i+1)+'</span><strong>'+crest(t)+t+'</strong><small>'+ROSTER.filter(x=>state.tiers[x]===t).length+'명</small></button>').join('')+'</div></div>';
+  return '<div class="op-guided"><div class="op-guided-top"><span class="op-guided-count">'+(done+1)+' / 20</span><div class="op-guided-track" role="progressbar" aria-label="분류 진행률" aria-valuenow="'+done+'" aria-valuemin="0" aria-valuemax="20"><i style="width:'+(done*5)+'%"></i></div>'+button('undo-guided','이전',guidedHistory.length?'':'disabled')+button('exit-guided','전체 티어표')+'</div><div class="op-guided-stage"><div class="op-stage-halo" aria-hidden="true"></div><article class="op-reveal-card op-card" data-rarity="neutral" data-op-current="'+esc(n)+'">'+cardFace(current(n),name)+cardBack()+'</article></div><div class="op-guided-ranks">'+TIERS.map((t,i)=>'<button type="button" class="op-guide-rank" data-op-assign="'+t+'" data-tier="'+t+'" aria-keyshortcuts="'+(i+1)+'"><span class="op-keyhint">'+(i+1)+'</span><strong>'+crest(t)+t+'</strong><small>'+ROSTER.filter(x=>state.tiers[x]===t).length+'명</small></button>').join('')+'</div></div>';
 }
 function tierBoard(){
   const unassigned=ROSTER.filter(n=>!state.tiers[n]);
@@ -218,7 +222,7 @@ root.addEventListener('click',e=>{
     if(role)configDraft.roles[idx]=id;else configDraft.links[picker]=id;
     picker='';query='';notice='';render();return;
   }
-  if(b.dataset.opAssign&&guided&&queue.length&&TIERS.includes(b.dataset.opAssign)){if(e.detail>1||rankLock)return;const n=queue.shift(),t=b.dataset.opAssign;if(!current(n)||state.tiers[n]){render();return}state.tiers[n]=t;state.teams=[];guidedHistory.push(n);save();rankLock=true;const card=root.querySelector('.op-reveal-card');if(card){card.dataset.tier=t;card.dataset.rarity=RANK_STYLE[t];card.classList.add('op-rank-confirm');card.insertAdjacentHTML('beforeend',rarity(t)+'<span class="op-confirm-rank">'+crest(t)+t+'</span>')}root.querySelectorAll('[data-op-assign]').forEach(x=>x.disabled=true);const finish=()=>{rankLock=false;rankTimer=0;if(!queue.length)guided=false;render()};rankTimer=setTimeout(finish,matchMedia('(prefers-reduced-motion: reduce)').matches?0:{S:650,A:500,B:400,C:300,D:240}[t]);return}
+  if(b.dataset.opAssign&&guided&&queue.length&&TIERS.includes(b.dataset.opAssign)){if(e.detail>1||rankLock)return;const n=queue.shift(),t=b.dataset.opAssign;if(!current(n)||state.tiers[n]){render();return}state.tiers[n]=t;state.teams=[];guidedHistory.push(n);save();rankLock=true;const card=root.querySelector('.op-reveal-card');if(card){card.dataset.tier=t;card.dataset.rarity=RANK_STYLE[t];card.classList.add('op-rank-confirm');card.querySelector('.op-card-front')?.insertAdjacentHTML('beforeend',cardBadge(t,true))}root.querySelectorAll('[data-op-assign]').forEach(x=>x.disabled=true);const finish=()=>{rankLock=false;rankTimer=0;if(!queue.length)guided=false;render()};rankTimer=setTimeout(finish,matchMedia('(prefers-reduced-motion: reduce)').matches?0:{S:650,A:500,B:400,C:300,D:240}[t]);return}
   if(rankLock){clearTimeout(rankTimer);rankTimer=0;rankLock=false;}
   switch(b.dataset.opAction){
     case 'start-guided':lastMove=null;startGuided();break;
