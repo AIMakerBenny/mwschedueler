@@ -278,7 +278,8 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-team footer>span{min-width:29px;text-align:center;font-variant-numeric:tabular-nums}
 
 @container(max-width:600px){#operationM .op-guided{padding:4px 0 8px;gap:7px}#operationM .op-guided-stage{padding:8px}#operationM .op-guided-top{gap:5px;flex-wrap:wrap}#operationM .op-guided-count{font-size:14px}#operationM .op-guided-top button{font-size:11px;padding:6px 8px}#operationM button.op-guide-rank{min-height:68px;padding:5px;gap:3px}#operationM .op-guide-rank .op-rank-crest{width:22px;height:22px}#operationM .op-guide-rank strong{font-size:24px;gap:3px}#operationM .op-keyhint{display:none}#operationM .op-pool-actions{flex-wrap:wrap;justify-content:flex-end}#operationM .op-pool .op-block-head{align-items:flex-start}#operationM .op-pool .op-block-head h2{white-space:nowrap}#operationM .op-toolbar .op-actions{margin-left:auto}}
-@media(prefers-reduced-motion:reduce){#operationM *,#operationM *::before,#operationM *::after{animation:none!important;transition:none!important}#operationM .op-player.op-tilt,#operationM .op-player.op-selected{transform:none}}
+#operationM .op-motion-reduced *,#operationM .op-motion-reduced *::before,#operationM .op-motion-reduced *::after{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){#operationM :not(.op-motion-full):not(.op-motion-full *),#operationM :not(.op-motion-full):not(.op-motion-full *)::before,#operationM :not(.op-motion-full):not(.op-motion-full *)::after{animation:none!important;transition:none!important}#operationM .op-player.op-tilt,#operationM .op-player.op-selected{transform:none}}
 
 /* Density follows the available content width, not the physical monitor size.
    Keep high-density tiers readable rather than shrinking 20 portraits into one row. */
@@ -400,7 +401,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 @keyframes op-crystal-flash{0%{opacity:0;transform:translateX(-20%)}40%{opacity:.8}100%{opacity:0;transform:translateX(20%)}}
 @keyframes op-silver-flash{0%{opacity:.8}100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){
-  #operationM .op-card-front,#operationM .op-card-back,#operationM .op-card-particles,#operationM .op-card .op-rarity-art *{animation:none!important;transition:none!important}
+  #operationM .op-card-front:not(.op-motion-full *),#operationM .op-card-back:not(.op-motion-full *),#operationM .op-card-particles:not(.op-motion-full *),#operationM .op-card .op-rarity-art *:not(.op-motion-full *){animation:none!important;transition:none!important}
   #operationM .op-reveal-card:not(.op-face-down) .op-card-front{visibility:visible;transform:none}
   #operationM .op-reveal-card:not(.op-face-down) .op-card-back{visibility:hidden}
 }
@@ -503,9 +504,6 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-deck-remaining{display:block;text-align:center;color:var(--muted);font-size:11px;line-height:1.2;font-variant-numeric:tabular-nums}
 #operationM .op-deck-reserve{position:absolute;left:calc(50% + min(21%,130px));top:50%;width:clamp(42px,9cqw,100px);aspect-ratio:3/4;transform:translate(-50%,-50%);pointer-events:none;z-index:-1}
 #operationM .op-deck-reserve>span{position:absolute;inset:0;border-radius:8px;transform:translate(calc(var(--op-i)*7px),calc(var(--op-i)*-2px)) rotate(calc(var(--op-i)*4deg))}
-#operationM .op-guided.op-skip-motion *,#operationM .op-guided.op-skip-motion *::before,#operationM .op-guided.op-skip-motion *::after{animation:none!important;transition:none!important}
-#operationM .op-guided.op-skip-motion .op-reveal-card .op-card-front{visibility:visible;transform:none}
-#operationM .op-guided.op-skip-motion .op-reveal-card .op-card-back{visibility:hidden}
 @container(max-width:600px){#operationM .op-guided-stage{padding:5px}#operationM .op-deck-pick{grid-template-columns:repeat(auto-fit,minmax(47px,1fr));gap:5px;padding:8px 4px}#operationM .op-deck-controls{gap:4px}#operationM .op-deck-controls button{font-size:11px;padding:6px 7px}#operationM .op-deck-shuffling .op-deck-card{width:70px}}
 @media(prefers-reduced-motion:reduce){#operationM .op-deck-card,#operationM .op-deck-card:hover{transform:none!important}}
 
@@ -553,7 +551,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 @keyframes op-draft-finale{0%,100%{filter:none}25%{filter:brightness(1.12)}}
 #operationM .op-skip-draft{white-space:nowrap}
 @container(max-width:600px){#operationM .op-completed-slot{gap:3px;padding:3px}#operationM .op-completed-slot svg{width:12px;height:12px}}
-@media(prefers-reduced-motion:reduce){#operationM .op-rank-beam,#operationM .op-draft-layer{display:none!important}}
+@media(prefers-reduced-motion:reduce){#operationM .op-rank-beam:not(.op-motion-full *),#operationM .op-draft-layer{display:none!important}}
 
 /* Result panels keep portraits in a 3+2 formation, with compact rank counts. */
 #operationM .op-teams{gap:10px;align-items:stretch}
@@ -695,7 +693,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
  #operationM .op-single-stage .op-guided-top{flex-wrap:wrap;gap:5px}
 }
 @container(max-width:360px){#operationM .op-single-stage .op-completed-rank svg{display:none}#operationM .op-single-stage .op-guide-rank .op-rank-crest{width:16px}#operationM .op-single-stage .op-completed-slot{padding:5px 3px}}
-@media(prefers-reduced-motion:reduce){#operationM .op-single-stage .op-shuffle-layer{display:none}#operationM .op-single-stage .op-reveal-card.op-face-open .op-card-front{visibility:visible;transform:none}}
+@media(prefers-reduced-motion:reduce){#operationM .op-single-stage:not(.op-motion-full) .op-shuffle-layer{display:none}#operationM .op-single-stage .op-reveal-card.op-face-open .op-card-front{visibility:visible;transform:none}}
 
 #operationM .op-single-stage .op-deck-reserve.op-stack-shuffling,#operationM .op-single-stage .op-deck-reserve.op-stack-shuffling *{visibility:hidden!important}
 #operationM .op-single-stage .op-reveal-card.op-face-down{background:transparent;border-color:transparent;box-shadow:none;isolation:auto}
@@ -721,3 +719,8 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
  #operationM .op-single-stage .op-completed-tray{max-width:none}
  #operationM .op-single-stage button.op-deck-reserve{width:clamp(58px,15cqw,105px);max-width:100%}
 }
+
+/* Reduced motion keeps stage duration and input locking, with gentle stationary changes. */
+#operationM .op-motion-reduced .op-rank-confirm{box-shadow:0 0 0 2px var(--tier);filter:none}
+#operationM .op-motion-reduced .op-rank-confirm .op-card-front::after{animation:none!important;opacity:0}
+#operationM .op-motion-reduced .op-rank-beam{display:none}

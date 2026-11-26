@@ -8,17 +8,21 @@ let state=read(),tab='roster',selected='',dragName='',picker='',query='',notice=
 let configDraft=null,configSaving=false,workspaceReady=false,workspaceLoading=false,workspaceError=false;
 let arrived='',layoutFrame=0,queue=[],guided=false,choosingMode=false,rankLock=false,rankTimer=0;
 let lastView='',guidedHistory=[],lastMove=null;
-let rankPhaseTimers=[];
+let rankPhaseTimers=[],rankEffect=null;
 let draftRun=null,draftRender=false;
 const draftLater=(run,ms,fn)=>{run.timers.push(setTimeout(()=>{if(draftRun===run&&root.classList.contains('active'))fn()},ms))};
-function clearRankMotion(){clearTimeout(rankTimer);rankTimer=0;rankPhaseTimers.forEach(clearTimeout);rankPhaseTimers=[];root.querySelectorAll('.op-rank-beam').forEach(x=>x.remove())}
+function clearRankMotion(){clearTimeout(rankTimer);rankTimer=0;rankPhaseTimers.forEach(clearTimeout);rankPhaseTimers=[];rankEffect?.cancel();rankEffect=null;root.querySelectorAll('.op-rank-beam').forEach(x=>x.remove())}
 function rankAfter(ms,fn){rankPhaseTimers.push(setTimeout(fn,ms))}
-let deckPhase='pick',deckEpoch=0,skipMotion=false,paused=false,deckEffects=[],deckTimers=[],rebuildingGuided=false;
+const MOTION=Object.freeze({shuffle:1700,draw:640,flip:700,charge:240,hold:Object.freeze({S:900,A:740,B:640,C:540,D:440}),flight:480});
+let deckPhase='pick',deckEpoch=0,paused=false,deckEffects=[],deckTimers=[],rebuildingGuided=false,guidedMode='full',motionTrace=[];
+function motionPreference(){return (typeof window.mwsMotionReduced==='function'?window.mwsMotionReduced():reducedMotion())?'reduced':'full'}
+function markMotion(phase,tier=''){motionTrace.push({phase,tier,mode:guidedMode,at:performance.now()});if(motionTrace.length>256)motionTrace.shift()}
+function canSkipGuided(){return ['shuffle','draw','flip','confirm'].includes(deckPhase)}
+const guidedFull=()=>guidedMode==='full';
 function stopShuffle(){
   deckEpoch++;deckEffects.forEach(a=>a.cancel());deckEffects=[];deckTimers.forEach(clearTimeout);deckTimers=[];
   if(['shuffle','draw','flip'].includes(deckPhase))deckPhase='pick';
 }
-const guidedMotion=()=>!skipMotion&&!reducedMotion()&&!document.hidden;
 const liveDeck=epoch=>epoch===deckEpoch&&guided&&tab==='tier'&&root.classList.contains('active');
 function deckWait(ms,epoch,fn){deckTimers.push(setTimeout(()=>{if(liveDeck(epoch))fn()},ms))}
 function deckAnimate(node,frames,opts){const a=node.animate(frames,opts);deckEffects.push(a);return a}
@@ -137,9 +141,13 @@ function shuffleDeck(){
   queue=ROSTER.filter(n=>current(n)&&!state.tiers[n]);
   for(let i=queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[queue[i],queue[j]]=[queue[j],queue[i]]}
   if(!queue.length){guided=false;render();return}
-  deckPhase='shuffle';rebuildingGuided=true;try{render()}finally{rebuildingGuided=false}const epoch=deckEpoch;
+  deckPhase='shuffle';markMotion('shuffle');rebuildingGuided=true;try{render()}finally{rebuildingGuided=false}const epoch=deckEpoch;
   const stage=root.querySelector('.op-guided-stage'),deck=stage?.querySelector('.op-deck-reserve'),center=stage?.querySelector('.op-single-center');
-  if(!guidedMotion()||!stage||!deck||!center){finishShuffle(epoch);return}
+  if(!stage||!deck||!center){deckWait(MOTION.shuffle,epoch,()=>finishShuffle(epoch));return}
+  if(!guidedFull()||typeof deck.animate!=='function'){
+    if(deck.animate)deckAnimate(deck,[{opacity:1},{opacity:.7},{opacity:1}],{duration:MOTION.shuffle,easing:'ease-in-out'});
+    deckWait(MOTION.shuffle,epoch,()=>finishShuffle(epoch));return
+  }
   const from=deck.getBoundingClientRect(),to=center.getBoundingClientRect(),scale=draftScale();
   const dx=(to.left+to.width/2-from.left-from.width/2)/scale,dy=(to.top+to.height/2-from.top-from.height/2)/scale;
   const layer=stage.querySelector('.op-shuffle-layer'),width=Math.min(170,Math.max(80,from.width/scale)),height=width*1.32;
@@ -160,7 +168,7 @@ function shuffleDeck(){
       {offset:1,transform:'translate(-50%,-50%) translate('+(-dx+depth*.22)+'px,'+(-dy-i*.65)+'px) scale(.88)'}
     ],{duration:1550,delay:Math.min(i*8,120),easing:'cubic-bezier(.32,.04,.3,1)',fill:'both'});
   });
-  deckWait(1700,epoch,()=>finishShuffle(epoch));
+  deckWait(MOTION.shuffle,epoch,()=>finishShuffle(epoch));
 }
 function finishShuffle(epoch){
   if(!liveDeck(epoch))return;
@@ -168,10 +176,10 @@ function finishShuffle(epoch){
   root.querySelector('.op-guided-stage')?.classList.remove('op-shuffling-stage');
   root.querySelector('.op-deck-reserve')?.classList.remove('op-stack-shuffling');
   deckEffects.forEach(a=>a.cancel());deckEffects=[];deckPhase='pick';refreshGuided();
-  if(!paused)drawCard(0);
+  if(!paused&&!document.hidden)drawCard(0);
 }
 function startGuided(){
-  tab='tier';choosingMode=false;guided=ROSTER.some(n=>current(n)&&!state.tiers[n]);guidedHistory=[];selected='';notice=guided?'':'분류할 미분류 참가자가 없습니다.';paused=false;skipMotion=false;
+  tab='tier';choosingMode=false;guided=ROSTER.some(n=>current(n)&&!state.tiers[n]);guidedHistory=[];selected='';notice=guided?'':'분류할 미분류 참가자가 없습니다.';paused=document.hidden;guidedMode=motionPreference();motionTrace=[];
   if(guided)shuffleDeck();else render();
 }
 function stackMarkup(count){
@@ -188,12 +196,12 @@ function guidedBoard(){
   if(!queue.length){stopShuffle();guided=false;return tierBoard()}
   const done=ROSTER.filter(x=>state.tiers[x]).length,reveal=deckPhase==='reveal';
   const controls=button('undo-guided','이전',guidedHistory.length&&reveal?'':'disabled')+button('choose-mode','방식 변경')+button('exit-guided','전체 티어표');
-  return '<div class="op-guided op-single-stage '+(skipMotion?'op-skip-motion ':'')+'op-deck-phase-'+deckPhase+'"><div class="op-guided-top"><span class="op-guided-count">'+done+' / 20</span><div class="op-guided-track" role="progressbar" aria-label="분류 진행률" aria-valuenow="'+done+'" aria-valuemin="0" aria-valuemax="20"><i style="width:'+(done*5)+'%"></i></div>'+controls+'</div><div class="op-guided-stage"><div class="op-stage-halo" aria-hidden="true"></div><div class="op-single-deck"><button type="button" class="op-deck-reserve op-deck-card" data-op-draw="0" aria-label="다음 카드 공개">'+stackMarkup(Math.max(0,queue.length-(reveal?1:0)))+'</button><span class="op-deck-remaining" aria-live="polite">남은 카드 '+Math.max(0,queue.length-(reveal?1:0))+'장</span></div><div class="op-single-center">'+(reveal?'<article class="op-reveal-card op-card op-face-open" data-rarity="neutral" data-op-current="'+esc(queue[0])+'">'+cardFace(current(queue[0]),display(queue[0]))+cardBack()+'</article>':'')+'</div>'+completedTray()+'<div class="op-shuffle-layer" aria-hidden="true"></div></div><div class="op-guided-ranks">'+TIERS.map((t,i)=>'<button type="button" class="op-guide-rank" data-op-assign="'+t+'" data-tier="'+t+'" aria-keyshortcuts="'+(i+1)+'" '+(!reveal?'disabled':'')+'><span class="op-keyhint">'+(i+1)+'</span><strong>'+crest(t)+t+'</strong><small>'+ROSTER.filter(x=>state.tiers[x]===t).length+'명</small></button>').join('')+'</div><div class="op-deck-controls">'+button('shuffle-guided','다시 섞기',deckPhase==='pick'?'':'disabled')+button('toggle-pause',paused?'계속 진행':'일시정지','aria-pressed="'+paused+'"')+button('skip-guided','연출 생략','aria-pressed="'+skipMotion+'"')+'</div></div>';
+  return '<div class="op-guided op-single-stage '+'op-motion-'+guidedMode+' op-deck-phase-'+deckPhase+'"><div class="op-guided-top"><span class="op-guided-count">'+done+' / 20</span><div class="op-guided-track" role="progressbar" aria-label="분류 진행률" aria-valuenow="'+done+'" aria-valuemin="0" aria-valuemax="20"><i style="width:'+(done*5)+'%"></i></div>'+controls+'</div><div class="op-guided-stage"><div class="op-stage-halo" aria-hidden="true"></div><div class="op-single-deck"><button type="button" class="op-deck-reserve op-deck-card" data-op-draw="0" aria-label="다음 카드 공개">'+stackMarkup(Math.max(0,queue.length-(reveal?1:0)))+'</button><span class="op-deck-remaining" aria-live="polite">남은 카드 '+Math.max(0,queue.length-(reveal?1:0))+'장</span></div><div class="op-single-center">'+(reveal?'<article class="op-reveal-card op-card op-face-open" data-rarity="neutral" data-op-current="'+esc(queue[0])+'">'+cardFace(current(queue[0]),display(queue[0]))+cardBack()+'</article>':'')+'</div>'+completedTray()+'<div class="op-shuffle-layer" aria-hidden="true"></div></div><div class="op-guided-ranks">'+TIERS.map((t,i)=>'<button type="button" class="op-guide-rank" data-op-assign="'+t+'" data-tier="'+t+'" aria-keyshortcuts="'+(i+1)+'" '+(!reveal?'disabled':'')+'><span class="op-keyhint">'+(i+1)+'</span><strong>'+crest(t)+t+'</strong><small>'+ROSTER.filter(x=>state.tiers[x]===t).length+'명</small></button>').join('')+'</div><div class="op-deck-controls">'+button('shuffle-guided','다시 섞기',deckPhase==='pick'?'':'disabled')+button('toggle-pause',paused?'계속 진행':'일시정지','aria-pressed="'+paused+'"')+button('skip-guided','현재 연출 건너뛰기',canSkipGuided()?'':'disabled')+'</div></div>';
 }
 function refreshGuided(){
   const panel=root.querySelector('.op-guided');if(!panel)return;
   for(const p of ['shuffle','pick','draw','flip','reveal','confirm'])panel.classList.toggle('op-deck-phase-'+p,deckPhase===p);
-  panel.classList.toggle('op-skip-motion',skipMotion);
+  panel.classList.toggle('op-motion-full',guidedFull());panel.classList.toggle('op-motion-reduced',!guidedFull());
   const active=['draw','flip','reveal'].includes(deckPhase),count=Math.max(0,queue.length-(active?1:0)),done=ROSTER.filter(n=>state.tiers[n]).length;
   const stack=panel.querySelector('.op-deck-reserve');stack.disabled=deckPhase!=='pick'||!queue.length;
   const key=String(Math.min(5,count));if(stack.dataset.count!==key){stack.dataset.count=key;stack.innerHTML=stackMarkup(count)}
@@ -206,11 +214,11 @@ function refreshGuided(){
   panel.querySelector('[data-op-action="undo-guided"]').disabled=!guidedHistory.length||!['pick','reveal'].includes(deckPhase)||rankLock;
   panel.querySelector('[data-op-action="shuffle-guided"]').disabled=deckPhase!=='pick';
   const pause=panel.querySelector('[data-op-action="toggle-pause"]');pause.textContent=paused?'계속 진행':'일시정지';pause.setAttribute('aria-pressed',String(paused));
-  panel.querySelector('[data-op-action="skip-guided"]').setAttribute('aria-pressed',String(skipMotion));
+  panel.querySelector('[data-op-action="skip-guided"]').disabled=!canSkipGuided();
 }
 function openDraw(card,epoch){
   if(!liveDeck(epoch)||!card.isConnected)return;
-  card.classList.remove('op-face-down','op-is-flipping');card.classList.add('op-face-open');deckPhase='reveal';refreshGuided();
+  card.classList.remove('op-face-down','op-is-flipping');card.classList.add('op-face-open');deckPhase='reveal';markMotion('reveal');refreshGuided();
 }
 function drawCard(i=0){
   if(!guided||deckPhase!=='pick'||rankLock||!queue.length||!Number.isInteger(i)||i<0||i>=queue.length)return;
@@ -218,65 +226,85 @@ function drawCard(i=0){
   const panel=root.querySelector('.op-guided'),stack=panel?.querySelector('.op-deck-reserve'),center=panel?.querySelector('.op-single-center');
   if(!stack||!center)return;
   queue.splice(i,1);queue.unshift(n);const epoch=deckEpoch;
-  deckPhase='draw';const card=guidedCard(n,true);
+  deckPhase='draw';guidedMode=motionPreference();markMotion('draw');const card=guidedCard(n,true);
   // The moving face-down card exists at the physical deck before being reparented.
   stack.append(card);card.classList.add('op-card-on-stack');
   const from=card.getBoundingClientRect();
   card.classList.remove('op-card-on-stack');center.replaceChildren(card);
   const to=card.getBoundingClientRect(),scale=draftScale(),dx=(from.left+from.width/2-to.left-to.width/2)/scale,dy=(from.top+from.height/2-to.top-to.height/2)/scale;
   const sx=from.width/to.width,sy=from.height/to.height;refreshGuided();
-  if(!guidedMotion()||!card.animate){openDraw(card,epoch);return}
-  const flight=deckAnimate(card,[{transform:'translate('+dx+'px,'+dy+'px) scale('+sx+','+sy+') rotate(-7deg)'},{offset:.7,transform:'translate('+dx*.07+'px,'+(dy*.07-10)+'px) scale(1.015) rotate(1deg)'},{transform:'none'}],{duration:640,easing:'cubic-bezier(.2,.76,.22,1)',fill:'both'});
-  flight.finished.then(()=>{
+  const beginFlip=()=>{
     if(!liveDeck(epoch)||!card.isConnected)return;
-    flight.cancel();deckPhase='flip';refreshGuided();card.classList.add('op-is-flipping');
-    // Flip the same card only after it has stopped at center.
+    deckPhase='flip';markMotion('flip');refreshGuided();
     const front=card.querySelector('.op-card-front'),back=card.querySelector('.op-card-back');
-    const f=deckAnimate(front,[{transform:'rotateY(180deg)'},{transform:'rotateY(0deg)'}],{duration:700,easing:'cubic-bezier(.4,.12,.22,1)',fill:'both'});
-    const b=deckAnimate(back,[{transform:'rotateY(0deg)'},{transform:'rotateY(-180deg)'}],{duration:700,easing:'cubic-bezier(.4,.12,.22,1)',fill:'both'});
+    if(!guidedFull()||!front.animate||!back.animate){
+      // Accessibility mode replaces travel/rotation with fades, never a zero-duration state transition.
+      if(back.animate)deckAnimate(back,[{opacity:1},{opacity:.05}],{duration:MOTION.flip/2,fill:'both'});
+      deckWait(MOTION.flip/2,epoch,()=>{
+        if(!card.isConnected)return;
+        card.classList.remove('op-face-down');card.classList.add('op-face-open');
+        if(front.animate)deckAnimate(front,[{opacity:.05},{opacity:1}],{duration:MOTION.flip/2,fill:'both'});
+      });
+      deckWait(MOTION.flip,epoch,()=>{openDraw(card,epoch);deckEffects.forEach(a=>a.cancel());deckEffects=[]});return
+    }
+    card.classList.add('op-is-flipping');
+    const f=deckAnimate(front,[{transform:'rotateY(180deg)'},{transform:'rotateY(0deg)'}],{duration:MOTION.flip,easing:'cubic-bezier(.4,.12,.22,1)',fill:'both'});
+    const b=deckAnimate(back,[{transform:'rotateY(0deg)'},{transform:'rotateY(-180deg)'}],{duration:MOTION.flip,easing:'cubic-bezier(.4,.12,.22,1)',fill:'both'});
     Promise.all([f.finished,b.finished]).then(()=>{if(!liveDeck(epoch)||!card.isConnected)return;openDraw(card,epoch);f.cancel();b.cancel();deckEffects=[]}).catch(()=>{});
-  }).catch(()=>{});
+  };
+  if(!guidedFull()||!card.animate){
+    if(card.animate)deckAnimate(card,[{opacity:.12},{opacity:1}],{duration:MOTION.draw,fill:'both'});
+    deckWait(MOTION.draw,epoch,()=>{deckEffects.forEach(a=>a.cancel());deckEffects=[];beginFlip()});return
+  }
+  const flight=deckAnimate(card,[{transform:'translate('+dx+'px,'+dy+'px) scale('+sx+','+sy+') rotate(-7deg)'},{offset:.7,transform:'translate('+dx*.07+'px,'+(dy*.07-10)+'px) scale(1.015) rotate(1deg)'},{transform:'none'}],{duration:MOTION.draw,easing:'cubic-bezier(.2,.76,.22,1)',fill:'both'});
+  flight.finished.then(()=>{if(!liveDeck(epoch)||!card.isConnected)return;flight.cancel();deckEffects=[];beginFlip()}).catch(()=>{});
 }
+
 function nextGuided(){
   clearRankMotion();rankLock=false;deckPhase='pick';
   if(!queue.length){stopShuffle();guided=false;render();return}
   root.querySelector('.op-single-center')?.replaceChildren();refreshGuided();
-  if(!paused)drawCard(0);
+  if(!paused&&!document.hidden)drawCard(0);
 }
 function skipGuidedMotion(){
-  if(rankLock){skipMotion=true;nextGuided();return}
-  skipMotion=!skipMotion;
-  if(!skipMotion){refreshGuided();return}
+  if(!guided||!canSkipGuided())return;
+  markMotion('skip-'+deckPhase);
+  // One explicit skip affects the current animation only; the next card uses normal timing.
+  if(rankLock){nextGuided();return}
   if(deckPhase==='shuffle'){stopShuffle();finishShuffle(deckEpoch);return}
-  if(['draw','flip'].includes(deckPhase)){stopShuffle();const card=root.querySelector('.op-single-center .op-reveal-card');if(card)openDraw(card,deckEpoch);else{refreshGuided();if(!paused)drawCard(0)}return}
-  refreshGuided();
+  if(['draw','flip'].includes(deckPhase)){stopShuffle();const card=root.querySelector('.op-single-center .op-reveal-card');if(card)openDraw(card,deckEpoch);else{refreshGuided();if(!paused&&!document.hidden)drawCard(0)}}
 }
 function confirmRank(t,source){
   if(rankLock||!guided||deckPhase!=='reveal'||!queue.length||!TIERS.includes(t))return;
   const n=queue[0],card=root.querySelector('.op-reveal-card'),panel=root.querySelector('.op-guided');
   if(!current(n)||state.tiers[n]||!card||!panel)return;
   queue.shift();state.tiers[n]=t;state.teams=[];guidedHistory.push(n);save();rankLock=true;
-  deckPhase='confirm';panel.classList.remove('op-deck-phase-reveal');panel.classList.add('op-deck-phase-confirm');const motion=guidedMotion(),charge=motion?240:0,hold=motion?{S:900,A:740,B:640,C:540,D:440}[t]:0,flight=motion?480:0;
+  deckPhase='confirm';guidedMode=motionPreference();markMotion('confirm',t);panel.classList.remove('op-deck-phase-reveal');panel.classList.add('op-deck-phase-confirm');panel.classList.toggle('op-motion-full',guidedFull());panel.classList.toggle('op-motion-reduced',!guidedFull());const charge=MOTION.charge,hold=MOTION.hold[t],flight=MOTION.flight;panel.querySelector('[data-op-action="skip-guided"]').disabled=false;
   root.querySelectorAll('[data-op-assign]').forEach(x=>x.disabled=true);panel.querySelector('[data-op-action="undo-guided"]').disabled=true;source.classList.add('op-rank-chosen');
   const target=panel.querySelector('[data-op-completed="'+t+'"]');
-  const finish=nextGuided;
+  const finish=()=>{markMotion('land',t);nextGuided()};
   const apply=()=>{
     if(!rankLock||!card.isConnected)return;
-    card.dataset.tier=t;card.dataset.rarity=RANK_STYLE[t];card.classList.remove('op-rank-charging');card.classList.add('op-rank-confirm');card.querySelector('.op-card-front')?.insertAdjacentHTML('beforeend',cardBadge(t,true));
+    markMotion('material',t);card.dataset.tier=t;card.dataset.rarity=RANK_STYLE[t];card.classList.remove('op-rank-charging');card.classList.add('op-rank-confirm');card.querySelector('.op-card-front')?.insertAdjacentHTML('beforeend',cardBadge(t,true));
   };
   const send=()=>{
     if(!rankLock||!card.isConnected)return;
-    if(!motion||!target){finish();return}
+    markMotion('flight',t);
+    if(!target){rankTimer=setTimeout(finish,flight);return}
     const r=card.getBoundingClientRect(),d=target.getBoundingClientRect(),scale=root.offsetWidth?root.getBoundingClientRect().width/root.offsetWidth:1,dx=(d.left+d.width/2-r.left-r.width/2)/(scale||1),dy=(d.top+d.height/2-r.top-r.height/2)/(scale||1);
     card.classList.add('op-rank-flight');card.getAnimations().forEach(a=>a.cancel());
-    if(card.animate)card.animate([{transform:'none',opacity:1},{offset:.22,transform:'translate('+dx*.17+'px,'+(dy*.17-8)+'px) scale(.92)',opacity:1},{transform:'translate('+dx+'px,'+dy+'px) scale(.22)',opacity:.45}],{duration:flight,easing:'cubic-bezier(.4,.1,.6,1)',fill:'forwards'});
-    rankTimer=setTimeout(()=>{target.classList.remove('op-completed-impact');void target.offsetWidth;target.classList.add('op-completed-impact');refreshGuided();finish()},flight);
+    const land=()=>{if(!rankLock||!card.isConnected)return;target.classList.remove('op-completed-impact');void target.offsetWidth;target.classList.add('op-completed-impact');finish()};
+    if(card.animate){
+      const frames=guidedFull()?[{transform:'none',opacity:1},{offset:.22,transform:'translate('+dx*.17+'px,'+(dy*.17-8)+'px) scale(.92)',opacity:1},{transform:'translate('+dx+'px,'+dy+'px) scale(.22)',opacity:.45}]:[{opacity:1},{opacity:.08}];
+      rankEffect=card.animate(frames,{duration:flight,easing:'cubic-bezier(.4,.1,.6,1)',fill:'forwards'});
+      rankEffect.finished.then(land).catch(()=>{});
+    }else rankTimer=setTimeout(land,flight);
   };
-  if(!motion){apply();rankTimer=setTimeout(finish,0);return}
+  if(!guidedFull()){rankAfter(charge,()=>{apply();rankAfter(hold,send)});return}
   card.classList.add('op-rank-charging');const a=source.getBoundingClientRect(),b=card.getBoundingClientRect(),p=panel.getBoundingClientRect(),scale=root.offsetWidth?root.getBoundingClientRect().width/root.offsetWidth:1;
   const x=(a.left+a.width/2-p.left)/(scale||1),y=(a.top+a.height/2-p.top)/(scale||1),dx=(b.left+b.width/2-a.left-a.width/2)/(scale||1),dy=(b.top+b.height/2-a.top-a.height/2)/(scale||1);
   const beam=document.createElement('span');beam.className='op-rank-beam';beam.dataset.tier=t;beam.setAttribute('aria-hidden','true');beam.style.cssText='left:'+x+'px;top:'+y+'px;width:'+Math.hypot(dx,dy)+'px;--op-angle:'+Math.atan2(dy,dx)+'rad';panel.append(beam);
-  rankAfter(charge,()=>{beam.remove();apply()});rankAfter(charge+hold,send);
+  rankAfter(charge,()=>{beam.remove();apply();rankAfter(hold,send)});
 }
 function tierBoard(){
   const unassigned=ROSTER.filter(n=>!state.tiers[n]);
@@ -636,8 +664,13 @@ root.addEventListener('dragleave',e=>{const r=e.target.closest('[data-op-drop]')
 root.addEventListener('dragend',()=>clearDrag(!!dragName));
 window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{clearHover();finishDraft(false);stopShuffle();clearDrag(false);clearRankMotion();rankLock=false;tab='roster';choosingMode=false;guided=false;selected='';picker='';configDraft=null}});
 window.addEventListener('mws:app-ready',()=>{finishDraft(false);stopShuffle();clearRankMotion();rankLock=false;guided=false;choosingMode=false;tab='roster';workspaceReady=false;configDraft=null;picker='';if(root.classList.contains('active'))void enter()});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)return;clearHover();if(draftRun)finishDraft(true);if(!guided)return;paused=true;if(rankLock){nextGuided();return}if(deckPhase==='shuffle'){stopShuffle();finishShuffle(deckEpoch);return}if(['draw','flip'].includes(deckPhase)){stopShuffle();const card=root.querySelector('.op-single-center .op-reveal-card');if(card)openDraw(card,deckEpoch)}refreshGuided()});
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)return;clearHover();if(draftRun)finishDraft(true);if(!guided)return;
+  // Stop automatic advancement when backgrounded, but do not jump past the active animation.
+  paused=true;markMotion('background-pause');
+  const pause=root.querySelector('[data-op-action="toggle-pause"]');if(pause){pause.textContent='계속 진행';pause.setAttribute('aria-pressed','true')}
+});
 window.addEventListener('mawang:datachange',()=>window.mwsOperationM?.refresh());
-window.mwsOperationM={render,refresh(){if(!root.classList.contains('active')||!workspaceReady)return;sync();if(signature()!==lastSignature){finishDraft(false);if(guided){stopShuffle();clearRankMotion();rankLock=false;deckPhase='pick';paused=true;queue=ROSTER.filter(n=>current(n)&&!state.tiers[n])}render()}}};
+window.mwsOperationM={render,motionReport(){return{phase:deckPhase,mode:guidedMode,paused,settings:{app:typeof window.mwsMotionReduced==='function'?window.mwsMotionReduced():null,system:reducedMotion(),hidden:document.hidden},events:motionTrace.map(x=>({...x}))}},refresh(){if(!root.classList.contains('active')||!workspaceReady)return;sync();if(signature()!==lastSignature){finishDraft(false);if(guided){stopShuffle();clearRankMotion();rankLock=false;deckPhase='pick';paused=true;queue=ROSTER.filter(n=>current(n)&&!state.tiers[n])}render()}}};
 if(root.classList.contains('active'))void enter();
 }
