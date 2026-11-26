@@ -45,7 +45,10 @@
     // Include the existing batched LIVE metadata before the legacy contact filter removes cards.
     const friendSearchAnchor="if(!q)return true;\n      try{return typeof contactMatches==='function'?contactMatches(c,q):String(c.name||'').toLowerCase().includes(q)}";
     const friendSearchReplacement="if(!q)return true;\n      if(window.mwsFriendLiveMatchesV120?.(c,q))return true;\n      try{return typeof contactMatches==='function'?contactMatches(c,q):String(c.name||'').toLowerCase().includes(q)}";
-    if(safeFeatures.includes(friendSearchAnchor))safeFeatures=safeFeatures.replace(friendSearchAnchor,friendSearchReplacement);
+    const friendRenderStart=safeFeatures.indexOf('function renderFriendFinderV5(){');
+    const friendRenderEnd=safeFeatures.indexOf('async function syncFriendFinderV5(',friendRenderStart);
+    const friendRender=friendRenderStart>=0&&friendRenderEnd>friendRenderStart?safeFeatures.slice(friendRenderStart,friendRenderEnd):'';
+    if(friendRender.includes(friendSearchAnchor))safeFeatures=safeFeatures.slice(0,friendRenderStart)+friendRender.replace(friendSearchAnchor,friendSearchReplacement)+safeFeatures.slice(friendRenderEnd);
     else console.warn('Friend Finder LIVE search patch target missing');
     safeFeatures=safeFeatures.replace('이름, 태그 또는 초성 검색','이름, 태그, 방송 제목, 카테고리 검색');
     safeFeatures=safeFeatures.replace("grid.querySelectorAll('[data-profile]').forEach", "if(previousUiStates)window.mwsUiInteractionsV1?.stateChanges(grid,'.friend-finder-card-v5[data-id]',previousUiStates);grid.querySelectorAll('[data-profile]').forEach");
