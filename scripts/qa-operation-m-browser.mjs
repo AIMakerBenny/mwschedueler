@@ -55,7 +55,7 @@ for(const [w,h] of [[1366,768],[1715,894],[1920,1080],[2560,1440],[2560,1080],[3
  await b.evaluate("(async()=>{await new Promise(r=>setTimeout(r,800));return true})()");
  const result=await b.evaluate(`(()=>{const r=document.querySelector('#operationM'),footers=[...r.querySelectorAll('.op-team footer')];return {sizes:[...r.querySelectorAll('.op-team')].map(t=>t.querySelectorAll('.op-player').length),unique:new Set([...r.querySelectorAll('.op-team .op-player')].map(p=>p.dataset.opPlayer)).size,overflow:document.documentElement.scrollWidth>innerWidth+1,score:[...r.querySelectorAll('.op-team header b')].map(x=>x.textContent),footerBottom:Math.max(...footers.map(f=>f.getBoundingClientRect().bottom)),limit:document.querySelector('#mwsAccessTools').getBoundingClientRect().top,portraits:[...r.querySelectorAll('.op-team .op-player .op-portrait')].map(x=>x.getBoundingClientRect().width)}})()`);
  assert.deepEqual(result.sizes,[5,5,5,5]);assert.equal(result.unique,20);assert.equal(result.overflow,false);assert.deepEqual(result.score,['15점','15점','15점','15점']);
- if(w>=1366){assert(result.footerBottom<=result.limit+1,JSON.stringify(result));assert(Math.min(...result.portraits)>70,JSON.stringify(result))}
+ if(w>=1366){assert(result.footerBottom<=result.limit+1,JSON.stringify(result));assert(Math.min(...result.portraits)>70,JSON.stringify(result))}else{assert(Math.min(...result.portraits)>80,JSON.stringify(result))}
  console.log('OPERATION_M_LAYOUT',w,h,board,result.footerBottom,result.limit);
  await b.navigate(url,w,h);assert.equal(await b.evaluate("document.querySelectorAll('.op-coach').length"),4);
  await b.evaluate("document.querySelector('[data-op-action=tab-tier]').click()");assert.equal(await b.evaluate("document.querySelectorAll('.op-board .op-player').length"),20);
@@ -78,7 +78,7 @@ for(const [w,h] of [[1366,768],[1024,768],[2560,1080],[3840,2160],[390,844]]){
  // All 20 players in one rank: every card must be reachable without shrinking to tiny thumbnails.
  await b.evaluate(`(async()=>{for(let i=0;i<20;i++){document.querySelector('.op-pool .op-player').click();document.querySelector('.op-tier-row[data-tier=S] .op-tier-label').click();await new Promise(requestAnimationFrame)}return true})()`);
  const skew=await b.evaluate(`(()=>{const r=document.querySelector('.op-tier-row[data-tier=S]'),g=r.querySelector('.op-player-grid'),cards=[...g.querySelectorAll('.op-player')];g.scrollTop=g.scrollHeight;const a=g.getBoundingClientRect(),last=cards.at(-1).getBoundingClientRect();return {count:cards.length,portrait:cards[0].querySelector('.op-portrait').getBoundingClientRect().width,scrollHeight:g.scrollHeight,clientHeight:g.clientHeight,lastReachable:g.scrollHeight<=g.clientHeight+1||last.bottom<=a.bottom+2,overflow:document.documentElement.scrollWidth>innerWidth+1}})()`);
- assert.equal(skew.count,20);assert(skew.portrait>=65,JSON.stringify(skew));assert(skew.lastReachable,JSON.stringify(skew));assert(!skew.overflow,JSON.stringify(skew));
+ assert.equal(skew.count,20);assert(skew.portrait>=(w===390?90:65),JSON.stringify(skew));assert(skew.lastReachable,JSON.stringify(skew));assert(!skew.overflow,JSON.stringify(skew));
  await b.evaluate("document.querySelector('[data-op-action=undo-move]').click()");
  assert.equal(await b.evaluate("document.querySelectorAll('.op-tier-row[data-tier=S] .op-player').length"),19);
  assert.equal(await b.evaluate("document.querySelectorAll('.op-pool .op-player').length"),1);
