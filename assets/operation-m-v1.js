@@ -6,7 +6,11 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const read=()=>{try{return normalizeState(JSON.parse(localStorage.getItem(KEY)||'null'))}catch(_){return normalizeState(null)}};
 let state=read(),tab='roster',selected='',dragName='',picker='',query='',notice='',lastSignature='',saveFailed=false;
 let configDraft=null,configSaving=false,workspaceReady=false,workspaceLoading=false,workspaceError=false;
-let arrived='',revealDraft=false,layoutFrame=0,queue=[],guided=false;
+let arrived='',revealDraft=false,layoutFrame=0,queue=[],guided=false,rankLock=false,rankTimer=0;
+const RANK_STYLE={S:'holo',A:'gold',B:'crystal',C:'steel',D:'silver'};
+const RANK_MARK={S:'✧',A:'◆',B:'✦',C:'▲',D:'•'};
+const rarity=(t)=>'<span class="op-rarity-art" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></span>';
+const crest=t=>'<span class="op-rank-crest" aria-hidden="true">'+RANK_MARK[t]+'</span>';
 const DEFAULT_ROLES=['대월향','우왁굳','천양','머독','고세구!']; // confirmed by the current Admin screenshot
 const CONFIG_KEY='operationMV1';
 const admin=()=>document.body.dataset.mwsMode==='admin'&&window.__mwsAppReadyV130===true;
@@ -61,11 +65,11 @@ function photo(c,name){
 function player(n,kind='tier'){
   const c=current(n),name=display(n),tier=state.tiers[n]||'';
   const styled=(kind==='tier'||kind==='result')&&tier;
-  return '<button type="button" class="op-player '+(selected===n?'op-selected ':'')+(!c?'op-unlinked':'')+(arrived===n&&kind==='tier'?' op-arrived':'')+'" '+(styled?'data-tier="'+tier+'" ':'')+'data-op-player="'+esc(n)+'" draggable="'+(kind==='tier'&&!!c)+'" aria-label="'+esc(name+(tier?' '+tier+' 티어':' 미분류')+(!c?' 연락처 연결 필요':''))+'" '+(kind==='tier'?'aria-pressed="'+(selected===n)+'"':'data-op-result="1"')+'>'+photo(c,name)+(styled?'<span class="op-chip" data-tier="'+tier+'">'+tier+'</span>':'')+'<span class="op-player-name">'+esc(name)+'</span>'+(!c?'<span class="op-link-mark">연결 필요</span>':'')+'</button>';
+  return '<button type="button" class="op-player '+(selected===n?'op-selected ':'')+(!c?'op-unlinked':'')+(arrived===n&&kind==='tier'?' op-arrived':'')+'" '+(styled?'data-tier="'+tier+'" data-rarity="'+RANK_STYLE[tier]+'" ':'')+'data-op-player="'+esc(n)+'" draggable="'+(kind==='tier'&&!!c)+'" aria-label="'+esc(name+(tier?' '+tier+' 티어':' 미분류')+(!c?' 연락처 연결 필요':''))+'" '+(kind==='tier'?'aria-pressed="'+(selected===n)+'"':'data-op-result="1"')+'>'+photo(c,name)+(styled?rarity(tier)+'<span class="op-chip" data-tier="'+tier+'">'+crest(tier)+tier+'</span>':'')+'<span class="op-player-name">'+esc(name)+'</span>'+(!c?'<span class="op-link-mark">연결 필요</span>':'')+'</button>';
 }
 function row(t){
   const members=ROSTER.filter(n=>(state.tiers[n]||'')===t);
-  return '<div class="op-tier-row" data-count="'+members.length+'" data-op-drop="'+t+'" data-tier="'+(t||'U')+'"><button type="button" data-op-tier="'+t+'" class="op-tier-label" aria-label="'+(t?t+' 티어로 이동':'미분류로 이동')+'"><strong>'+(t||'미분류')+'</strong><small>'+members.length+'명'+(t?' · '+SCORE[t]+'점':'')+'</small></button><div class="op-player-grid">'+members.map(n=>player(n)).join('')+(!members.length?'<div class="op-empty">여기에 참가자 배치</div>':'')+'</div></div>';
+  return '<div class="op-tier-row" data-count="'+members.length+'" data-op-drop="'+t+'" data-tier="'+(t||'U')+'"><button type="button" data-op-tier="'+t+'" class="op-tier-label" aria-label="'+(t?t+' 티어로 이동':'미분류로 이동')+'"><strong>'+crest(t)+(t||'미분류')+'</strong><small>'+members.length+'명'+(t?' · '+SCORE[t]+'점':'')+'</small></button><div class="op-player-grid">'+members.map(n=>player(n)).join('')+(!members.length?'<div class="op-empty">여기에 참가자 배치</div>':'')+'</div></div>';
 }
 function roster(){
   const host=byId.get(state.roles[0]);
@@ -93,12 +97,12 @@ function guidedBoard(){
   queue=queue.filter(n=>current(n)&&!state.tiers[n]);
   if(!queue.length){guided=false;return tierBoard()}
   const n=queue[0],name=display(n),done=ROSTER.filter(x=>state.tiers[x]).length;
-  return '<div class="op-guided"><div class="op-guided-top"><span>참가자 '+(done+1)+' / 20</span><div class="op-guided-track"><i style="width:'+(done*5)+'%"></i></div>'+button('exit-guided','전체 티어표')+'</div><div class="op-guided-stage"><article class="op-reveal-card" data-op-current="'+esc(n)+'">'+photo(current(n),name)+'<strong>'+esc(name)+'</strong></article></div><div class="op-guided-ranks">'+TIERS.map(t=>'<button type="button" class="op-guide-rank" data-op-assign="'+t+'" data-tier="'+t+'"><strong>'+t+'</strong><small>'+ROSTER.filter(x=>state.tiers[x]===t).length+'명</small></button>').join('')+'</div></div>';
+  return '<div class="op-guided"><div class="op-guided-top"><span>참가자 '+(done+1)+' / 20</span><div class="op-guided-track"><i style="width:'+(done*5)+'%"></i></div>'+button('exit-guided','전체 티어표')+'</div><div class="op-guided-stage"><article class="op-reveal-card" data-op-current="'+esc(n)+'">'+photo(current(n),name)+'<strong>'+esc(name)+'</strong></article></div><div class="op-guided-ranks">'+TIERS.map(t=>'<button type="button" class="op-guide-rank" data-op-assign="'+t+'" data-tier="'+t+'"><strong>'+crest(t)+t+'</strong><small>'+ROSTER.filter(x=>state.tiers[x]===t).length+'명</small></button>').join('')+'</div></div>';
 }
 function tierBoard(){
   const unassigned=ROSTER.filter(n=>!state.tiers[n]);
-  const maxCount=Math.max(...TIERS.map(t=>ROSTER.filter(n=>state.tiers[n]===t).length));
-  return '<div class="op-tier-workspace"><div class="op-pool '+(!unassigned.length?'op-pool-empty':'')+'" data-op-drop=""><div class="op-block-head"><h2>미분류 <small>'+unassigned.length+'</small></h2><div class="op-pool-actions">'+(unassigned.length?button('start-guided','한 장씩 분류'):'')+button('reset','초기화')+'<button type="button" data-op-tier="" '+(!selected?'disabled':'')+'>미분류로 이동</button></div></div>'+(unassigned.length?'<div class="op-player-grid">'+unassigned.map(n=>player(n)).join('')+'</div>':'')+'</div><div class="op-board" data-layout="'+(maxCount>8?'rows':'columns')+'">'+TIERS.map(row).join('')+'</div></div>';
+
+  return '<div class="op-tier-workspace"><div class="op-pool '+(!unassigned.length?'op-pool-empty':'')+'" data-count="'+unassigned.length+'" data-op-drop=""><div class="op-block-head"><h2>미분류 <small>'+unassigned.length+'</small></h2><div class="op-pool-actions">'+(unassigned.length?button('start-guided','한 장씩 분류'):'')+button('reset','초기화')+'<button type="button" data-op-tier="" '+(!selected?'disabled':'')+'>미분류로 이동</button></div></div>'+(unassigned.length?'<div class="op-player-grid">'+unassigned.map(n=>player(n)).join('')+'</div>':'')+'</div><div class="op-board" data-layout="columns">'+TIERS.map(row).join('')+'</div></div>';
 }
 async function saveConfig(){
   if(!canConfigure()||!configDraft||configSaving)return;
@@ -127,6 +131,7 @@ function render(){
   if(!workspaceReady){
     root.innerHTML='<div class="op-shell"><div class="op-result-empty">'+(workspaceError?'인물 설정을 불러오지 못했습니다. '+button('retry','다시 시도'):'참가자 정보를 불러오는 중…')+'</div></div>';return;
   }
+  if(rankLock)return;
   sync();const assigned=ROSTER.filter(n=>TIERS.includes(state.tiers[n])).length;
   const action=tab==='roster'||guided?'':button('draft',state.teams.length?'다시 자동 드래프트':'자동 드래프트','class="op-primary" '+(!available()?'disabled':''));
   const scoreSpread=state.teams.length?Math.max(...state.teams.map(t=>teamStats(t,state.tiers).score))-Math.min(...state.teams.map(t=>teamStats(t,state.tiers).score)):null;
@@ -140,13 +145,16 @@ function render(){
 function measureLayout(){
   if(!root.classList.contains('active'))return;
   const area=root.querySelector('.op-teams,.op-board,.op-guided');if(!area)return;
-  const rect=area.getBoundingClientRect(),scale=root.offsetWidth?root.getBoundingClientRect().width/root.offsetWidth:1;
+  const rect=area.getBoundingClientRect(),rootRect=root.getBoundingClientRect(),scale=root.offsetWidth?rootRect.width/root.offsetWidth:1;
   const access=document.getElementById('mwsAccessTools'),accessRect=access?.getBoundingClientRect();
   const bottom=accessRect&&accessRect.height&&accessRect.top>0?Math.min(innerHeight-14,accessRect.top-10):innerHeight-18;
   const available=Math.max(180,(bottom-Math.max(0,rect.top))/(scale||1));
   root.style.setProperty('--op-available',Math.floor(available)+'px');
+  root.style.setProperty('--op-workspace-height',Math.max(240,Math.floor((bottom-Math.max(0,rootRect.top))/(scale||1)))+'px');
 }
-window.addEventListener('resize',()=>{if(layoutFrame)cancelAnimationFrame(layoutFrame);layoutFrame=requestAnimationFrame(measureLayout)});
+function scheduleMeasure(){if(layoutFrame)cancelAnimationFrame(layoutFrame);layoutFrame=requestAnimationFrame(measureLayout)}
+window.addEventListener('resize',scheduleMeasure);
+if(typeof ResizeObserver==='function'){let lastWidth=-1;new ResizeObserver(()=>{if(root.clientWidth!==lastWidth){lastWidth=root.clientWidth;scheduleMeasure()}}).observe(root)}
 function signature(){return JSON.stringify(ROSTER.map(n=>{const c=current(n);return[c?.id,c?.name,c?.image]}).concat(state.roles.map(id=>{const c=byId.get(id);return[c?.id,c?.name,c?.image]})))}
 function move(n,t){
   if(!ROSTER.includes(n)||!current(n)||(t&&!TIERS.includes(t)))return;
@@ -169,7 +177,8 @@ root.addEventListener('click',e=>{
     if(role)configDraft.roles[idx]=id;else configDraft.links[picker]=id;
     picker='';query='';notice='';render();return;
   }
-  if(b.dataset.opAssign&&guided&&queue.length&&TIERS.includes(b.dataset.opAssign)){if(e.detail>1)return;const n=queue.shift();if(!current(n)||state.tiers[n]){render();return}state.tiers[n]=b.dataset.opAssign;state.teams=[];save();if(!queue.length)guided=false;render();return}
+  if(b.dataset.opAssign&&guided&&queue.length&&TIERS.includes(b.dataset.opAssign)){if(e.detail>1||rankLock)return;const n=queue.shift(),t=b.dataset.opAssign;if(!current(n)||state.tiers[n]){render();return}state.tiers[n]=t;state.teams=[];save();rankLock=true;const card=root.querySelector('.op-reveal-card');if(card){card.dataset.tier=t;card.dataset.rarity=RANK_STYLE[t];card.classList.add('op-rank-confirm');card.insertAdjacentHTML('beforeend',rarity(t)+'<span class="op-confirm-rank">'+crest(t)+t+'</span>')}root.querySelectorAll('[data-op-assign]').forEach(x=>x.disabled=true);const finish=()=>{rankLock=false;rankTimer=0;if(!queue.length)guided=false;render()};rankTimer=setTimeout(finish,matchMedia('(prefers-reduced-motion: reduce)').matches?0:{S:650,A:500,B:400,C:300,D:240}[t]);return}
+  if(rankLock){clearTimeout(rankTimer);rankTimer=0;rankLock=false;}
   switch(b.dataset.opAction){
     case 'start-guided':startGuided();break;
     case 'exit-guided':guided=false;render();break;
@@ -195,7 +204,7 @@ root.addEventListener('dragstart',e=>{const b=e.target.closest('[data-op-player]
 root.addEventListener('dragover',e=>{const r=e.target.closest('[data-op-drop]');if(!r||!dragName)return;e.preventDefault();e.dataTransfer.dropEffect='move';root.querySelectorAll('.op-drop-active').forEach(x=>{if(x!==r)x.classList.remove('op-drop-active')});r.classList.add('op-drop-active')});
 root.addEventListener('drop',e=>{const r=e.target.closest('[data-op-drop]');if(!r||!dragName)return;e.preventDefault();const n=dragName;dragName='';move(n,r.dataset.opDrop)});
 root.addEventListener('dragend',()=>{dragName='';root.querySelectorAll('.op-drop-active,.op-dragging').forEach(x=>x.classList.remove('op-drop-active','op-dragging'))});
-window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{tab='roster';guided=false;selected='';picker='';configDraft=null}});
+window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{clearTimeout(rankTimer);rankTimer=0;rankLock=false;tab='roster';guided=false;selected='';picker='';configDraft=null}});
 window.addEventListener('mws:app-ready',()=>{workspaceReady=false;configDraft=null;picker='';if(root.classList.contains('active'))void enter()});
 window.addEventListener('mawang:datachange',()=>window.mwsOperationM?.refresh());
 window.mwsOperationM={render,refresh(){if(!root.classList.contains('active')||!workspaceReady)return;sync();if(signature()!==lastSignature)render()}};
