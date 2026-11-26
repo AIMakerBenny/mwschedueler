@@ -466,8 +466,8 @@ function measureLayout(){
   if(area.classList.contains('op-single-stage')){
     const stage=area.querySelector('.op-guided-stage'),center=area.querySelector('.op-single-center'),style=getComputedStyle(area);
     const chrome=[...area.children].filter(el=>el!==stage).reduce((sum,el)=>sum+el.offsetHeight,0)+(parseFloat(style.rowGap)||0)*3+(parseFloat(style.paddingTop)||0)+(parseFloat(style.paddingBottom)||0);
-    set('--op-single-stage-height',Math.max(310,Math.min(760,available-chrome-8)));
-    set('--op-single-card',Math.max(132,Math.min(480,(center?.clientWidth||area.clientWidth)-20,(center?.clientHeight||available)-60)));
+    set('--op-single-stage-height',Math.max(310,Math.min(1640,available-chrome-8)));
+    set('--op-single-card',Math.max(132,Math.min(960,(center?.clientWidth||area.clientWidth)-24,(center?.clientHeight||available)-Math.max(60,Math.min(100,available*.048)))));
     return
   }
   if(area.classList.contains('op-guided')){

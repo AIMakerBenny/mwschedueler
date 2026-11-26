@@ -703,3 +703,21 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-single-stage .op-reveal-card.op-is-flipping .op-card-back{inset:8px}
 #operationM .op-single-stage .op-reveal-card.op-face-down .op-card-back{box-shadow:0 8px 20px #0008,inset 0 0 0 3px #232336,inset 0 0 0 4px #a99ac75c}
 @container(max-width:760px){#operationM .op-single-stage .op-reveal-card.op-is-flipping .op-card-back{inset:5px}}
+
+/* Large monitors retain the same stage proportions rather than a fixed 760px ceiling. */
+#operationM .op-single-stage{width:min(100%,clamp(1600px,calc(var(--op-single-stage-height,600px)*2.2),2800px))}
+#operationM .op-single-stage .op-single-center{z-index:3;perspective:none}
+#operationM .op-single-stage .op-reveal-card{perspective:calc(var(--op-single-card,340px)*4.8)}
+#operationM .op-single-stage .op-completed-tray{position:relative;z-index:1;max-width:clamp(330px,calc(var(--op-single-stage-height,600px)*.38),560px)}
+#operationM .op-single-stage button.op-deck-reserve{width:clamp(86px,calc(var(--op-single-stage-height,600px)*.35),320px);max-width:calc(100% - 16px)}
+@container(min-width:1900px){
+ #operationM .op-single-stage .op-guided-ranks button.op-guide-rank{min-height:clamp(108px,calc(var(--op-single-stage-height,600px)*.1),144px)}
+ #operationM .op-single-stage .op-completed-slot{padding:clamp(10px,1cqw,25px)}
+ #operationM .op-single-stage .op-completed-rank,#operationM .op-single-stage .op-completed-slot b{font-size:clamp(25px,1.5cqw,40px)}
+ #operationM .op-single-stage .op-completed-names{font-size:clamp(14px,.8cqw,21px)}
+ #operationM .op-single-stage .op-deck-remaining{font-size:clamp(17px,.85cqw,24px)}
+}
+@container(max-width:760px){
+ #operationM .op-single-stage .op-completed-tray{max-width:none}
+ #operationM .op-single-stage button.op-deck-reserve{width:clamp(58px,15cqw,105px);max-width:100%}
+}
