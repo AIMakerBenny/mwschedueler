@@ -15,10 +15,11 @@ permissions:
   contents: read
 env:
   MWS_QA_OFFLINE: '1'
+  MWS_OPERATION_M_CAPTURE: 'operation-m-visuals'
 jobs:
   operation-m:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,3 +32,10 @@ jobs:
       - name: Verify Friend Finder LIVE search
         if: success() || failure()
         run: node scripts/qa-friend-live-search-browser.mjs
+      - name: Upload browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: operation-m-visuals
+          path: operation-m-visuals/
+          if-no-files-found: warn
