@@ -808,7 +808,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-roster .op-block-head small{font-size:clamp(12px,.8cqw,19px)}
 #operationM .op-mode-choice{width:100%;min-height:max(0px,var(--op-available,65dvh));padding:12px clamp(12px,3cqw,64px);margin:0;align-content:center;justify-items:center}
 #operationM .op-mode-options{width:min(100%,max(620px,calc(var(--op-available,65dvh)*1.85)));gap:clamp(14px,2cqw,36px)}
-#operationM button.op-mode-card{height:clamp(260px,calc(var(--op-available,65dvh)*.70),760px);grid-template-rows:minmax(0,1fr) auto}
+#operationM button.op-mode-card{height:max(260px,calc(var(--op-available,65dvh)*.70));grid-template-rows:minmax(0,1fr) auto}
 #operationM .op-mode-preview{height:100%;min-height:0;padding:clamp(8px,2cqw,30px)}
 #operationM .op-preview-stack{width:min(77%,calc(var(--op-available,65dvh)*.62));height:100%;max-height:none}
 #operationM .op-preview-card{width:min(54%,calc(var(--op-available,65dvh)*.31));max-width:none}
@@ -833,7 +833,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-team footer>span svg{width:clamp(11px,calc(var(--op-team-card,120px)*.086),24px)}
 #operationM .op-tier-row .op-player-name{font-size:clamp(12px,1.05cqw,25px)}
 #operationM .op-pool .op-player-name{font-size:clamp(12px,.95cqw,24px)}
-@container(max-width:739px){
+@container(max-width:760px){
  #operationM .op-coaches{grid-template-columns:repeat(2,minmax(0,1fr))}
  #operationM .op-coach{gap:5px;padding:4px}
  #operationM .op-coach-plate{padding:3px}
