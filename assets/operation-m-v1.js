@@ -545,7 +545,7 @@ function fitDraft(area,width,height,set){
   }
   const best=candidates.reduce((a,b)=>b.score>a.score?b:a);
   const floor=width>=1050?82:width>=650?78:78;
-  const card=Math.max(Math.min(floor,best.cardW),Math.min(best.card,best.cardW));
+  const card=width<650?best.cardW:Math.max(Math.min(floor,best.cardW),Math.min(best.card,best.cardW)); // mobile stacks teams; never compress them to fit the viewport height
   area.dataset.teamColumns=String(best.cols);area.dataset.teamFormation=String(best.per);
   root.style.setProperty('--op-team-columns',String(best.cols));root.style.setProperty('--op-team-per-row',String(best.per));
   set('--op-team-card',card);set('--op-team-gap',gap);set('--op-team-pad',pad);
