@@ -79,8 +79,8 @@ function pickerHtml(){
   const role=picker.startsWith('role:'),idx=role?Number(picker.slice(5)):-1;
   const used=new Set([...Object.entries(configDraft.links).filter(([n])=>n!==picker).map(([,id])=>id),...configDraft.roles.filter((_,i)=>i!==idx)]);
   const q=query.trim().toLocaleLowerCase('ko-KR');
-  const list=q?contacts.filter(c=>!used.has(String(c.id))&&String(c.name).toLocaleLowerCase('ko-KR').includes(q)).slice(0,40):[];
-  return '<div class="op-picker" role="dialog" aria-label="연락처 연결"><div class="op-picker-top"><strong>'+esc(role?(idx?'감독 '+idx:'주최자'):picker)+' 연락처 연결</strong>'+button('close-picker','닫기')+'</div><input type="search" data-op-search placeholder="연락처 이름 검색" value="'+esc(query)+'" aria-label="연락처 이름 검색"><div class="op-picker-results">'+(list.length?list.map(c=>'<button type="button" data-op-link="'+esc(c.id)+'">'+photo(c,c.name)+'<span>'+esc(c.name)+'</span></button>').join(''):'<span>'+(q?'검색 결과 없음':'이름을 입력하세요')+'</span>')+'</div></div>';
+  const list=q?contacts.filter(c=>String(c.name).toLocaleLowerCase('ko-KR').includes(q)).slice(0,40):[];
+  return '<div class="op-picker" role="dialog" aria-label="연락처 연결"><div class="op-picker-top"><strong>'+esc(role?(idx?'감독 '+idx:'주최자'):picker)+' 연락처 연결</strong>'+button('close-picker','닫기')+'</div><input type="search" data-op-search placeholder="연락처 이름 검색" value="'+esc(query)+'" aria-label="연락처 이름 검색"><div class="op-picker-results">'+(list.length?list.map(c=>'<button type="button" data-op-link="'+esc(c.id)+'">'+photo(c,c.name)+'<span>'+esc(c.name)+(used.has(String(c.id))?' · 교환':'')+'</span></button>').join(''):'<span>'+(q?'검색 결과 없음':'이름을 입력하세요')+'</span>')+'</div></div>';
 }
 function tierBoard(){
   const unassigned=ROSTER.filter(n=>!state.tiers[n]);
@@ -134,7 +134,10 @@ root.addEventListener('click',e=>{
   if(b.dataset.opConfig&&configDraft&&canConfigure()&&!configSaving){showPicker(b.dataset.opConfig);return}
   if(b.dataset.opLink&&picker&&configDraft&&canConfigure()&&!configSaving){
     const id=b.dataset.opLink,role=picker.startsWith('role:'),idx=role?Number(picker.slice(5)):-1;
-    if(!byId.has(id)||Object.entries(configDraft.links).some(([n,x])=>n!==picker&&x===id)||configDraft.roles.some((x,i)=>i!==idx&&x===id))return;
+    if(!byId.has(id))return;
+    const previous=role?configDraft.roles[idx]:configDraft.links[picker];
+    for(const n of ROSTER)if(n!==picker&&configDraft.links[n]===id){if(previous)configDraft.links[n]=previous;else delete configDraft.links[n]}
+    configDraft.roles=configDraft.roles.map((x,i)=>i!==idx&&x===id?(previous||''):x);
     if(role)configDraft.roles[idx]=id;else configDraft.links[picker]=id;
     picker='';query='';notice='';render();return;
   }
@@ -143,7 +146,7 @@ root.addEventListener('click',e=>{
     case 'tab-roster':tab='roster';selected='';notice='';render();break;
     case 'tab-tier':tab='tier';selected='';notice='';render();break;
     case 'tab-result':tab='result';selected='';notice='';render();break;
-    case 'open-config':if(canConfigure()){configDraft={links:{...state.links},roles:[...state.roles]};render()}break;
+    case 'open-config':if(canConfigure()){configDraft={links:{...state.links},roles:[...state.roles]};notice='';render();root.querySelector('.op-config-head button')?.focus()}break;
     case 'close-config':if(!configSaving){configDraft=null;picker='';notice='';render()}break;
     case 'save-config':void saveConfig();break;
     case 'close-picker':picker='';query='';render();break;
