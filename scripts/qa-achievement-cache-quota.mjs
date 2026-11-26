@@ -11,7 +11,8 @@ const db={transaction(_store,mode){
   return tx;
 }};
 const window={indexedDB:true,dispatchEvent(){},mwsGetAchievementCardsV1621:()=>[]};
-vm.runInNewContext(source,{window,Blob,Date,DOMException,crypto,console,Event,indexedDB:{open(){const req={result:db};queueMicrotask(()=>req.onsuccess());return req}},fetch:async()=>{getCalls++;return {ok:true,blob:async()=>cloudBlob}},setTimeout(){},queueMicrotask});
+// This fixture exercises the canonical media fallback, with batch media disabled.
+vm.runInNewContext(source,{window,document:{querySelector:()=>null},Blob,Date,DOMException,crypto,console,Event,indexedDB:{open(){const req={result:db};queueMicrotask(()=>req.onsuccess());return req}},fetch:async()=>{getCalls++;return {ok:true,blob:async()=>cloudBlob}},setTimeout(){},queueMicrotask});
 const media=window.mwsAchievementMediaV1;
 assert.equal(await media.getBlob('quota'),cloudBlob);
 assert.equal(local.size,0);
