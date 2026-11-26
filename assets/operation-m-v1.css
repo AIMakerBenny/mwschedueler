@@ -1,9 +1,9 @@
 /* Operation M is isolated from the shared tools and calendar layouts. */
 #operationM{min-width:0;--op-s:#f58c8a;--op-a:#f5b879;--op-b:#ead17d;--op-c:#8ccbb1;--op-d:#8bb4ef;--op-u:#858b9c}
 #operationM [data-tier="S"]{--tier:var(--op-s)}#operationM [data-tier="A"]{--tier:var(--op-a)}#operationM [data-tier="B"]{--tier:var(--op-b)}#operationM [data-tier="C"]{--tier:var(--op-c)}#operationM [data-tier="D"]{--tier:var(--op-d)}#operationM [data-tier="U"]{--tier:var(--op-u)}
-#operationM .op-shell{max-width:1520px;margin:0 auto;padding:4px 4px 24px;display:grid;gap:12px;min-width:0}
-#operationM .op-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-#operationM .op-eyebrow{font-size:clamp(20px,2vw,30px);font-weight:850;letter-spacing:.08em;line-height:1.25;color:var(--text)}
+#operationM .op-shell{max-width:none;margin:0;padding:0 0 18px;display:grid;gap:10px;min-width:0}
+
+
 #operationM .op-meta,#operationM .op-result-summary{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--muted);font-size:12px;margin-top:5px}
 #operationM .op-meta span,#operationM .op-result-summary span{border:1px solid var(--border);background:var(--panel);border-radius:7px;padding:5px 8px}
 #operationM .op-actions,#operationM .op-tabs,#operationM .op-bottom{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -61,3 +61,60 @@
 @media(max-width:1100px){#operationM .op-teams{grid-template-columns:repeat(2,minmax(0,1fr))}#operationM .op-role-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:600px){#operationM .op-shell{padding:0 0 18px;gap:9px}#operationM .op-tier-row{grid-template-columns:59px minmax(0,1fr);gap:5px;padding:5px}#operationM .op-tier-label strong{font-size:24px}#operationM [data-tier="U"] .op-tier-label strong{font-size:12px}#operationM .op-tier-label small{font-size:9px;white-space:normal}#operationM .op-player-grid{grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:5px}#operationM .op-role-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#operationM .op-teams{gap:6px}#operationM .op-team header{grid-template-columns:28px minmax(0,1fr);gap:5px;padding:7px}#operationM .op-team header b{grid-column:2;font-size:14px}#operationM .op-team-players{gap:4px;padding:5px}#operationM .op-team footer{padding:5px;gap:3px}#operationM .op-team footer span{padding:2px 4px;font-size:10px}#operationM .op-player-name{font-size:10px}}
 @media(prefers-reduced-motion:reduce){#operationM *,#operationM *::before,#operationM *::after{animation:none!important;transition:none!important}}
+
+/* Roster first: the toolbar occupies a single compact row, not a hero banner. */
+#operationM .op-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+#operationM .op-tabs{padding:3px;gap:3px;border-radius:10px}
+#operationM .op-tabs button{padding:7px 14px;font-size:13px}
+#operationM .op-progress{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+#operationM .op-block-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+#operationM .op-block-head h2{margin:0;font-size:15px;line-height:1.35;font-weight:750}
+#operationM .op-block-head h2 small{font-size:12px;color:var(--muted);font-weight:500;margin-left:5px}
+#operationM .op-roster{display:grid;gap:10px;min-width:0}
+#operationM .op-host{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
+#operationM .op-host .op-portrait{width:30px;flex:none}
+#operationM .op-coaches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;min-width:0}
+#operationM .op-coach{--team:#739bff;display:flex;align-items:center;gap:12px;padding:9px;border:1px solid color-mix(in srgb,var(--team) 50%,var(--border));border-radius:12px;min-width:0;background:linear-gradient(130deg,color-mix(in srgb,var(--team) 14%,var(--panel)),var(--panel));box-shadow:0 5px 16px #0002}
+#operationM .op-coach[data-team="1"]{--team:#ed8296}#operationM .op-coach[data-team="2"]{--team:#69caa4}#operationM .op-coach[data-team="3"]{--team:#e8bb65}
+#operationM .op-coach .op-portrait{width:clamp(76px,8.5vw,146px);max-width:58%;flex:none;border-radius:9px}
+#operationM .op-coach div{display:grid;gap:4px;min-width:0}
+#operationM .op-coach small{font-size:11px;color:var(--team);font-weight:650}
+#operationM .op-coach strong{font-size:clamp(13px,1.3vw,21px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+#operationM .op-roster-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:9px;min-width:0}
+#operationM .op-roster-grid .op-player{max-width:none;cursor:default;min-height:0;padding:5px}
+#operationM .op-roster-grid .op-player-name{font-size:12px}
+#operationM .op-block-head button.op-primary,#operationM .op-config-footer button.op-primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+#operationM .op-tier-workspace{display:grid;grid-template-columns:minmax(250px,30%) minmax(0,1fr);gap:12px;align-items:start;min-width:0}
+#operationM .op-pool{min-width:0;padding:10px;display:grid;gap:9px;position:sticky;top:8px;border:1px solid var(--border);border-radius:12px;background:var(--panel)}
+#operationM .op-pool .op-player-grid{grid-template-columns:repeat(auto-fill,minmax(88px,1fr));max-height:calc(100dvh - 205px);overflow:auto;overscroll-behavior:contain;padding:3px;scrollbar-width:thin}
+#operationM .op-pool .op-player{max-width:none}
+#operationM .op-pool .op-pool-return{font-size:11px;padding:8px}
+#operationM .op-board{gap:8px}
+#operationM .op-tier-row{grid-template-columns:92px minmax(0,1fr);min-height:110px;gap:10px;padding:8px}
+#operationM .op-tier-label{min-height:92px}
+#operationM .op-tier-row .op-player-grid{grid-template-columns:repeat(auto-fill,minmax(92px,1fr));align-content:center;min-height:92px}
+#operationM .op-tier-row .op-player{max-width:145px}
+#operationM .op-tier-row .op-empty{min-height:90px}
+#operationM .op-tier-label strong{font-size:36px}
+#operationM .op-pool.op-drop-active{border-color:var(--accent)}
+#operationM .op-overlay{position:fixed;inset:0;z-index:5000;background:#000a;display:grid;place-items:center;padding:16px}
+#operationM .op-config{position:relative;width:min(920px,100%);max-height:calc(100dvh - 32px);overflow:auto;border:1px solid var(--border);border-radius:16px;padding:16px;display:grid;gap:12px;background:var(--panel);box-shadow:0 20px 70px #0008}
+#operationM .op-config-head,#operationM .op-config-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#operationM .op-config h2{font-size:17px;margin:0}
+#operationM .op-config h3{font-size:13px;margin:0;color:var(--muted)}
+#operationM .op-config-roles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+#operationM .op-config-players{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+#operationM .op-config button.op-admin-slot{display:flex;align-items:center;text-align:left;gap:7px;min-width:0;padding:6px;border-radius:9px}
+#operationM .op-admin-slot .op-portrait{width:42px;flex:none}
+#operationM .op-admin-slot>span:last-child{display:grid;gap:2px;min-width:0}
+#operationM .op-admin-slot small,#operationM .op-admin-slot strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+#operationM .op-admin-slot small{color:var(--muted);font-weight:400}
+#operationM .op-config-footer{position:sticky;bottom:0;padding:9px 0;background:var(--panel);font-size:12px;color:var(--muted)}
+#operationM .op-picker{z-index:5001}
+#operationM .op-picker-results button{display:flex;align-items:center;gap:6px;max-width:100%}
+#operationM .op-picker-results .op-portrait{width:34px;flex:none}
+#operationM .op-empty-team{min-height:90px;display:grid;place-items:center;color:var(--muted);font-size:12px}
+#operationM .op-result-cta{display:flex;justify-content:center;margin:12px 0}
+@media(max-width:1100px){#operationM .op-roster-grid{grid-template-columns:repeat(8,minmax(0,1fr))}#operationM .op-tier-workspace{grid-template-columns:minmax(220px,30%) minmax(0,1fr)}#operationM .op-coach{gap:8px}}
+@media(max-width:760px){#operationM .op-coaches{grid-template-columns:repeat(2,minmax(0,1fr))}#operationM .op-roster-grid{grid-template-columns:repeat(5,minmax(0,1fr))}#operationM .op-tier-workspace{grid-template-columns:1fr}#operationM .op-pool{position:static}#operationM .op-pool .op-player-grid{max-height:260px}#operationM .op-tier-row{grid-template-columns:64px minmax(0,1fr);min-height:95px}#operationM .op-config-roles,#operationM .op-config-players{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){#operationM .op-roster-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}#operationM .op-coach{padding:6px;gap:6px}#operationM .op-coach .op-portrait{width:62px}#operationM .op-coach strong{font-size:13px}#operationM .op-tier-row{grid-template-columns:50px minmax(0,1fr);padding:5px;gap:6px}#operationM .op-tier-row .op-player-grid{grid-template-columns:repeat(auto-fill,minmax(70px,1fr))}#operationM .op-tier-label strong{font-size:27px}#operationM .op-tabs button{padding:7px 9px}#operationM .op-config{padding:10px}#operationM .op-config-footer{flex-wrap:wrap}}
