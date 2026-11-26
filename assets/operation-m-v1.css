@@ -696,3 +696,10 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 }
 @container(max-width:360px){#operationM .op-single-stage .op-completed-rank svg{display:none}#operationM .op-single-stage .op-guide-rank .op-rank-crest{width:16px}#operationM .op-single-stage .op-completed-slot{padding:5px 3px}}
 @media(prefers-reduced-motion:reduce){#operationM .op-single-stage .op-shuffle-layer{display:none}#operationM .op-single-stage .op-reveal-card.op-face-open .op-card-front{visibility:visible;transform:none}}
+
+#operationM .op-single-stage .op-deck-reserve.op-stack-shuffling,#operationM .op-single-stage .op-deck-reserve.op-stack-shuffling *{visibility:hidden!important}
+#operationM .op-single-stage .op-reveal-card.op-face-down{background:transparent;border-color:transparent;box-shadow:none;isolation:auto}
+#operationM .op-single-stage .op-reveal-card.op-is-flipping .op-card-front{background:linear-gradient(155deg,var(--dark),var(--input)) padding-box,var(--foil) border-box;border:2px solid transparent;outline:1px solid #bbb6d455;box-shadow:0 6px 14px #0006;box-sizing:border-box}
+#operationM .op-single-stage .op-reveal-card.op-is-flipping .op-card-back{inset:8px}
+#operationM .op-single-stage .op-reveal-card.op-face-down .op-card-back{box-shadow:0 8px 20px #0008,inset 0 0 0 3px #232336,inset 0 0 0 4px #a99ac75c}
+@container(max-width:760px){#operationM .op-single-stage .op-reveal-card.op-is-flipping .op-card-back{inset:5px}}

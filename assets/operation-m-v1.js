@@ -269,7 +269,7 @@ function confirmRank(t,source){
     if(!motion||!target){finish();return}
     const r=card.getBoundingClientRect(),d=target.getBoundingClientRect(),scale=root.offsetWidth?root.getBoundingClientRect().width/root.offsetWidth:1,dx=(d.left+d.width/2-r.left-r.width/2)/(scale||1),dy=(d.top+d.height/2-r.top-r.height/2)/(scale||1);
     card.classList.add('op-rank-flight');card.getAnimations().forEach(a=>a.cancel());
-    if(card.animate)card.animate([{transform:'none',opacity:1},{offset:.22,transform:'translate('+dx*.08+'px,'+(dy*.08-8)+'px) scale(1.025)',opacity:1},{transform:'translate('+dx+'px,'+dy+'px) scale(.22)',opacity:.45}],{duration:flight,easing:'cubic-bezier(.4,.1,.6,1)',fill:'forwards'});
+    if(card.animate)card.animate([{transform:'none',opacity:1},{offset:.22,transform:'translate('+dx*.17+'px,'+(dy*.17-8)+'px) scale(.92)',opacity:1},{transform:'translate('+dx+'px,'+dy+'px) scale(.22)',opacity:.45}],{duration:flight,easing:'cubic-bezier(.4,.1,.6,1)',fill:'forwards'});
     rankTimer=setTimeout(()=>{target.classList.remove('op-completed-impact');void target.offsetWidth;target.classList.add('op-completed-impact');refreshGuided();finish()},flight);
   };
   if(!motion){apply();rankTimer=setTimeout(finish,0);return}
