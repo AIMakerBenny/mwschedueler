@@ -98,7 +98,7 @@ function guidedBoard(){
 function tierBoard(){
   const unassigned=ROSTER.filter(n=>!state.tiers[n]);
   const maxCount=Math.max(...TIERS.map(t=>ROSTER.filter(n=>state.tiers[n]===t).length));
-  return '<div class="op-tier-workspace"><div class="op-pool '+(!unassigned.length?'op-pool-empty':'')+'" data-op-drop=""><div class="op-block-head"><h2>미분류 <small>'+unassigned.length+'</small></h2><div class="op-pool-actions">'+button('reset','초기화')+'<button type="button" data-op-tier="" '+(!selected?'disabled':'')+'>미분류로 이동</button></div></div>'+(unassigned.length?'<div class="op-player-grid">'+unassigned.map(n=>player(n)).join('')+'</div>':'')+'</div><div class="op-board" data-layout="'+(maxCount>8?'rows':'columns')+'">'+TIERS.map(row).join('')+'</div></div>';
+  return '<div class="op-tier-workspace"><div class="op-pool '+(!unassigned.length?'op-pool-empty':'')+'" data-op-drop=""><div class="op-block-head"><h2>미분류 <small>'+unassigned.length+'</small></h2><div class="op-pool-actions">'+(unassigned.length?button('start-guided','한 장씩 분류'):'')+button('reset','초기화')+'<button type="button" data-op-tier="" '+(!selected?'disabled':'')+'>미분류로 이동</button></div></div>'+(unassigned.length?'<div class="op-player-grid">'+unassigned.map(n=>player(n)).join('')+'</div>':'')+'</div><div class="op-board" data-layout="'+(maxCount>8?'rows':'columns')+'">'+TIERS.map(row).join('')+'</div></div>';
 }
 async function saveConfig(){
   if(!canConfigure()||!configDraft||configSaving)return;
@@ -169,7 +169,7 @@ root.addEventListener('click',e=>{
     if(role)configDraft.roles[idx]=id;else configDraft.links[picker]=id;
     picker='';query='';notice='';render();return;
   }
-  if(b.dataset.opAssign&&guided&&queue.length&&TIERS.includes(b.dataset.opAssign)){const n=queue.shift();if(!current(n)||state.tiers[n]){render();return}state.tiers[n]=b.dataset.opAssign;state.teams=[];save();if(!queue.length)guided=false;render();return}
+  if(b.dataset.opAssign&&guided&&queue.length&&TIERS.includes(b.dataset.opAssign)){if(e.detail>1)return;const n=queue.shift();if(!current(n)||state.tiers[n]){render();return}state.tiers[n]=b.dataset.opAssign;state.teams=[];save();if(!queue.length)guided=false;render();return}
   switch(b.dataset.opAction){
     case 'start-guided':startGuided();break;
     case 'exit-guided':guided=false;render();break;
