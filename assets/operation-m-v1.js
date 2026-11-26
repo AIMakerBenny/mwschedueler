@@ -535,7 +535,7 @@ function fitDraft(area,width,height,set){
   for(const [cols,per] of options){
     const rows=Math.ceil(4/cols),teamW=(width-(cols-1)*gap)/cols;
     const teamH=(height-(rows-1)*gap)/rows;
-    const cardW=(teamW-2*pad-(per-1)*gap)/per;
+    const cardW=(teamW-2*pad-(per-1)*gap-4)/per; // team border and fractional layout rounding
     const playerRows=Math.ceil(5/per);
     // Header, footer, border and spacing; card height follows width + nameplate.
     const chrome=Math.max(86,Math.min(134,teamH*.23));
