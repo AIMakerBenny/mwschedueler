@@ -72,7 +72,7 @@ function roster(){
 function adminConfig(){
   if(!configDraft||!canConfigure())return '';
   const slot=(label,id,key)=>{const c=byId.get(id);return '<button class="op-admin-slot" type="button" data-op-config="'+esc(key)+'">'+photo(c,c?.name||label)+'<span><small>'+esc(label)+'</small><strong>'+esc(c?.name||'연락처 선택')+'</strong></span></button>'};
-  return '<div class="op-overlay"><div class="op-config" role="dialog" aria-modal="true" aria-label="오퍼 M 인물 설정"><div class="op-config-head"><h2>인물 설정</h2>'+button('close-config','닫기',configSaving?'disabled':'')+'</div><h3>주최자 및 감독</h3><div class="op-config-roles">'+configDraft.roles.map((id,i)=>slot(i?'감독 '+i:'주최자',id,'role:'+i)).join('')+'</div><h3>참가자 20명</h3><div class="op-config-players">'+ROSTER.map(n=>slot(n,configDraft.links[n],n)).join('')+'</div><div class="op-config-footer"><span>저장하면 모든 방문자에게 동일하게 표시됩니다.</span>'+button('save-config',configSaving?'저장 중':'설정 저장','class="op-primary" '+(configSaving?'disabled':''))+'</div>'+pickerHtml()+'</div></div>';
+  return '<div class="op-overlay"><div class="op-config" role="dialog" aria-modal="true" aria-label="오퍼 M 인물 설정"><div class="op-config-head"><h2>인물 설정</h2>'+button('close-config','닫기',configSaving?'disabled':'')+'</div><h3>주최자 및 감독</h3><div class="op-config-roles">'+configDraft.roles.map((id,i)=>slot(i?'감독 '+i:'주최자',id,'role:'+i)).join('')+'</div><h3>참가자 20명</h3><div class="op-config-players">'+ROSTER.map(n=>slot(n,configDraft.links[n],n)).join('')+'</div><div class="op-config-footer"><span>'+esc(notice||'저장하면 모든 방문자에게 동일하게 표시됩니다.')+'</span>'+button('save-config',configSaving?'저장 중':'설정 저장','class="op-primary" '+(configSaving?'disabled':''))+'</div>'+pickerHtml()+'</div></div>';
 }
 function pickerHtml(){
   if(!picker||!configDraft||!canConfigure())return '';
@@ -101,7 +101,7 @@ async function saveConfig(){
   finally{configSaving=false;render()}
 }
 function results(){
-  if(!state.teams.length)return '<div class="op-result-empty">티어표에서 20명 모두 분류한 뒤 자동 드래프트를 실행하세요.</div>';
+  if(!state.teams.length)return '<div class="op-teams">'+state.roles.slice(1).map((id,i)=>{const c=byId.get(id);return '<article class="op-team" data-team="'+i+'"><header>'+photo(c,c?.name||'감독')+'<div><small>TEAM '+String.fromCharCode(65+i)+'</small><strong>'+esc(c?.name||'감독 '+(i+1))+'</strong></div><b>0/5</b></header><div class="op-empty-team">배정 대기</div></article>'}).join('')+'</div><div class="op-result-cta">'+button('tab-tier','티어표에서 참가자 분류하기')+'</div>';
   const stats=state.teams.map(t=>teamStats(t,state.tiers)),spread=Math.max(...stats.map(x=>x.score))-Math.min(...stats.map(x=>x.score));
   return '<div class="op-result-summary"><span>팀당 5명</span><span>최대 점수 차이 <b>'+spread+'</b></span><span>각 티어 인원 차이 최대 1명</span></div><div class="op-teams">'+state.teams.map((team,i)=>{
     const c=byId.get(state.roles[i+1]),s=stats[i];
@@ -152,7 +152,7 @@ root.addEventListener('click',e=>{
   }
 });
 root.addEventListener('error',e=>{if(e.target instanceof HTMLImageElement)e.target.style.visibility='hidden'},true);
-root.addEventListener('keydown',e=>{if(e.key==='Escape'&&picker){picker='';query='';render()}});
+root.addEventListener('keydown',e=>{if(e.key==='Escape'&&picker){picker='';query='';render()}else if(e.key==='Escape'&&configDraft&&!configSaving){configDraft=null;notice='';render()}});
 root.addEventListener('input',e=>{
   if(!e.target.hasAttribute('data-op-search'))return;
   query=e.target.value;const box=root.querySelector('.op-picker-results'),temp=document.createElement('div');temp.innerHTML=pickerHtml();box.replaceChildren(...temp.querySelector('.op-picker-results').childNodes);
