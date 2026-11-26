@@ -60,8 +60,8 @@ for(const [w,h] of [[1366,768],[1726,892],[1715,894],[1920,1080],[2560,1440],[25
  const first=await b.evaluate("document.querySelector('[data-op-current]').dataset.opCurrent");
  await b.keyPress('1');
  const charge=await b.evaluate(`(()=>({locked:[...document.querySelectorAll('[data-op-assign]')].every(x=>x.disabled),saved:Object.keys(JSON.parse(localStorage.getItem('mws.operationM.simulation.v1')).tiers).length}))()`);assert(charge.locked&&charge.saved===1);
- const visual=await b.evaluate(`(async()=>{const card=window.qaMoving,trace=card.querySelector('.op-portrait-trace'),frame=card.querySelector('.op-flow-frame'),seal=card.querySelector('.op-portrait-seal'),badge=card.querySelector('.op-flow-badge'),plate=card.querySelector('.op-flow-plate');const vals=[],gaps=[];let previous=null,lastSample=-Infinity;while(card.isConnected){const ts=await new Promise(requestAnimationFrame);if(!card.isConnected)break;if(previous!==null)gaps.push(ts-previous);previous=ts;if(ts-lastSample<45)continue;lastSample=ts;const op=e=>Number(getComputedStyle(e).opacity),r=card.getBoundingClientRect();vals.push({t:ts,stroke:parseFloat(getComputedStyle(trace).strokeDashoffset),trace:op(trace),seal:op(seal),frame:op(frame),plate:op(plate),badge:op(badge),width:r.width})}return {vals,gaps}})()`);
- assert(visual.gaps.length>15&&visual.vals.length>=12,JSON.stringify(visual));const samplesVisual=visual.vals;assert(samplesVisual.some(x=>x.trace>.15&&x.stroke>10&&x.stroke<90&&x.frame>.05),JSON.stringify(visual));assert(samplesVisual.some(x=>x.trace>.05&&x.seal>.05),JSON.stringify(visual));assert(samplesVisual.some(x=>x.frame>.1&&x.frame<.95&&x.plate>.05),JSON.stringify(visual));assert(samplesVisual.some(x=>x.plate>.2&&x.badge>.05&&x.badge<.95),JSON.stringify(visual));assert(samplesVisual.some(x=>x.width<samplesVisual[0].width*.8),JSON.stringify(visual));
+ const visual=await b.evaluate(`(async()=>{const card=window.qaMoving,frame=card.querySelector('.op-flow-frame'),seal=card.querySelector('.op-portrait-seal'),badge=card.querySelector('.op-flow-badge'),plate=card.querySelector('.op-flow-plate');const noSegments=!card.querySelector('.op-portrait-trace,.op-flow-frame i,.op-rank-beam');const vals=[],gaps=[];let previous=null,lastSample=-Infinity;while(card.isConnected){const ts=await new Promise(requestAnimationFrame);if(!card.isConnected)break;if(previous!==null)gaps.push(ts-previous);previous=ts;if(ts-lastSample<45)continue;lastSample=ts;const op=e=>Number(getComputedStyle(e).opacity),r=card.getBoundingClientRect();vals.push({t:ts,seal:op(seal),frame:op(frame),plate:op(plate),badge:op(badge),width:r.width})}return {vals,gaps,noSegments}})()`);
+ assert(visual.noSegments&&visual.gaps.length>15&&visual.vals.length>=12,JSON.stringify(visual));const samplesVisual=visual.vals;assert(samplesVisual.some(x=>x.seal>.1&&x.seal<.95&&Math.abs(x.seal-x.frame)<.08&&Math.abs(x.plate-x.badge)<.08),JSON.stringify(visual));assert(samplesVisual.some(x=>x.seal>.98&&x.frame>.98&&x.plate>.98&&x.badge>.98),JSON.stringify(visual));assert(samplesVisual.some(x=>x.width<samplesVisual[0].width*.8),JSON.stringify(visual));
  const frameGaps=visual.gaps.sort((a,b)=>a-b),p95=frameGaps[Math.floor(frameGaps.length*.95)],max=frameGaps.at(-1);assert(p95<=50&&max<=116.8,JSON.stringify({w,h,p95,max}));console.log('OPERATION_M_FRAME_CONTINUITY',w,h,JSON.stringify({frames:visual.gaps.length+1,p95,max,overlap:true}));
  const next=await b.evaluate(`(async()=>{for(let i=0;i<300&&!document.querySelector('.op-deck-phase-reveal');i++)await new Promise(r=>setTimeout(r,15));return{n:document.querySelector('[data-op-current]')?.dataset.opCurrent,one:document.querySelectorAll('[data-op-current]').length,stack:document.querySelectorAll('[data-op-draw]').length,stage:document.querySelector('.op-guided-stage')===window.qaStage,count:document.querySelector('[data-op-completed=S] b').textContent}})()`);assert.notEqual(next.n,first);assert(next.n&&next.one===1&&next.stack===1&&next.stage&&next.count==='1',JSON.stringify(next));
  await b.evaluate("document.querySelector('[data-op-action=undo-guided]').click()");
@@ -87,8 +87,8 @@ for(const [w,h] of [[1366,768],[1726,892],[1715,894],[1920,1080],[2560,1440],[25
      if(!full){q('[data-op-action=skip-guided]').click();if(!last)q('[data-op-action=skip-guided]').click()}
      let observedDraw=null,observedFlip=null,seenFlight=false,portraitSamples=[],seenName=false,seenBadge=false,sealed=false,materialOverlap=false,sealOverlap=false,plateOverlap=false,frameSamples=[];
      while(performance.now()-start<12000){
-       const overlay=card.querySelector('.op-portrait-forge'),trace=overlay?.querySelector('.op-portrait-trace'),frame=card.querySelector('.op-flow-frame'),plate=card.querySelector('.op-flow-plate'),badge=card.querySelector('.op-flow-badge'),seal=overlay?.querySelector('.op-portrait-seal');
-       if(card.isConnected&&trace&&frame&&plate&&badge&&seal){const opacity=e=>parseFloat(getComputedStyle(e).opacity),f=opacity(frame),p=opacity(plate),b=opacity(badge),tr=opacity(trace),sl=opacity(seal),offset=parseFloat(getComputedStyle(trace).strokeDashoffset);if(tr>.01){portraitSamples.push({offset,segments:overlay.querySelectorAll('.op-portrait-trace').length});if(offset>5&&offset<95&&f>.02)materialOverlap=true}if(sl>.02&&tr>.02)sealOverlap=true;if(f>.02&&f<.99&&p>.02)plateOverlap=true;if(sl>.98)sealed=true;if(p>.5)seenName=true;if(b>.5)seenBadge=true;frameSamples.push({f,p,b,tr,sl,offset,time:performance.now()})}
+       const overlay=card.querySelector('.op-portrait-forge'),frame=card.querySelector('.op-flow-frame'),plate=card.querySelector('.op-flow-plate'),badge=card.querySelector('.op-flow-badge'),seal=overlay?.querySelector('.op-portrait-seal');
+       if(card.isConnected&&frame&&plate&&badge&&seal){const opacity=e=>parseFloat(getComputedStyle(e).opacity),f=opacity(frame),p=opacity(plate),b=opacity(badge),sl=opacity(seal);const segments=overlay.querySelectorAll('.op-portrait-trace').length;if(sl>.02){portraitSamples.push({opacity:sl,segments});if(Math.abs(sl-f)<.08)materialOverlap=true}if(sl>.02&&Math.abs(sl-f)<.08)sealOverlap=true;if(f>.02&&Math.abs(f-p)<.08)plateOverlap=true;if(sl>.98)sealed=true;if(p>.5)seenName=true;if(b>.5)seenBadge=true;frameSamples.push({f,p,b,sl,time:performance.now()})}
        if(q('.op-rank-flight')===card)seenFlight=true;
        if(q('.op-deck-phase-draw')&&observedDraw===null)observedDraw=performance.now()-start;
        if(q('.op-deck-phase-flip')&&observedFlip===null)observedFlip=performance.now()-start;
@@ -104,11 +104,11 @@ for(const [w,h] of [[1366,768],[1726,892],[1715,894],[1920,1080],[2560,1440],[25
      const min=1160+(last?0:690);
      assert(observed.elapsed>=min-55&&observed.elapsed<min+800,JSON.stringify({w,h,tier,min,observed}));
      assert(observed.seenFlight&&observed.sealed&&observed.seenName&&observed.seenBadge&&observed.materialOverlap&&observed.sealOverlap&&observed.plateOverlap,JSON.stringify(observed));
-     const samples=observed.portraitSamples,offsets=samples.map(x=>x.offset);assert(samples.length>=3&&Math.max(...offsets)-Math.min(...offsets)>30&&samples[0].segments==={S:1,A:2,B:4,C:1,D:4}[tier],JSON.stringify({tier,samples}));
+     const samples=observed.portraitSamples,offsets=samples.map(x=>x.opacity*100);assert(samples.length>=3&&samples.every(x=>x.segments===0),JSON.stringify({tier,samples}));
      assert.deepEqual(observed.events.map(e=>e.phase),last?['confirm','portrait','material','name','badge','flight','land']:['confirm','portrait','material','name','badge','flight','land','draw','flip','reveal']);
      assert(observed.events.every(e=>e.mode==='full'),JSON.stringify(observed));
      const gaps=observed.events.slice(1).map((e,j)=>Math.round(e.at-observed.events[j].at));
-     const phaseOffsets=observed.events.slice(1,7).map(e=>Math.round(e.at-observed.events[0].at));assert(phaseOffsets.every((v,j)=>Math.abs(v-[130,350,480,550,780,1160][j])<=95),JSON.stringify({phaseOffsets,tier}));
+     const phaseOffsets=observed.events.slice(1,7).map(e=>Math.round(e.at-observed.events[0].at));assert(phaseOffsets.every((v,j)=>Math.abs(v-[0,0,0,0,780,1160][j])<=95),JSON.stringify({phaseOffsets,tier}));
      if(!last){assert(gaps[7]>=195&&gaps[8]>=350,JSON.stringify(gaps));assert(observed.observedDraw!==null&&observed.observedFlip!==null,JSON.stringify(observed))}
      timings.push({tier,ms:Math.round(observed.elapsed),gaps,portrait:{samples:samples.length,offsetRange:[Math.round(Math.min(...offsets)),Math.round(Math.max(...offsets))],segments:samples[0].segments,seal:observed.sealed,name:observed.seenName,badge:observed.seenBadge}});
    }else{assert(observed.events.some(e=>e.phase==='skip-confirm'),JSON.stringify(observed))}
@@ -170,16 +170,44 @@ for(const [w,h] of [[1366,768],[1024,768],[2560,1080],[3840,2160],[390,844]]){
  await b.setReducedMotion(false);
  console.log('OPERATION_M_SKEWED_OK',w,h,skew);
 }
-// Reproduce OS-reduced + application-full, explicit reduced, and one-shot skip.
-for(const [system,mode,expected] of [[true,'full','full'],[true,'system','reduced'],[false,'reduced','reduced']]){
+// General screen and OS settings must not disable Operation M's game animation.
+for(const [system,mode,expected] of [[true,'full','full'],[true,'system','full'],[false,'reduced','full']]){
  await b.navigate(url,1726,892);await b.evaluate("localStorage.removeItem('mws.operationM.simulation.v1');localStorage.removeItem('mws-screen-motion-v1')");await b.setReducedMotion(system);await b.navigate(url,1726,892);
  await b.evaluate(`(()=>{const el=document.getElementById('mwsScreenMotion');el.value=${JSON.stringify(mode)};el.dispatchEvent(new Event('change'));document.querySelector('[data-op-action=tab-tier]').click();document.querySelector('[data-op-action=start-guided]').click()})()`);
  const first=await b.evaluate(`(async()=>{for(let i=0;i<400&&!document.querySelector('.op-deck-phase-reveal');i++)await new Promise(r=>setTimeout(r,15));const r=window.mwsOperationM.motionReport(),card=document.querySelector('[data-op-current]');return {mode:r.mode,settings:r.settings,events:r.events,visible:!!card&&getComputedStyle(card.querySelector('.op-card-front')).visibility==='visible',enabled:[...document.querySelectorAll('[data-op-assign]')].every(x=>!x.disabled)}})()`);
- assert.equal(first.mode,expected);assert.equal(first.settings.app,expected==='reduced');assert.equal(first.settings.system,system);assert(first.visible&&first.enabled);assert.deepEqual(first.events.map(e=>e.phase),['shuffle','draw','flip','reveal']);assert(first.events.at(-1).at-first.events[0].at>=2350,JSON.stringify(first));
+ assert.equal(first.mode,expected);assert.equal(first.settings.app,mode==='reduced'||(mode==='system'&&system));assert.equal(first.settings.system,system);assert(first.visible&&first.enabled);assert.deepEqual(first.events.map(e=>e.phase),['shuffle','draw','flip','reveal']);assert(first.events.at(-1).at-first.events[0].at>=2350,JSON.stringify(first));
  const measured=await b.evaluate(`(async()=>{const start=performance.now(),old=document.querySelector('[data-op-current]').dataset.opCurrent,before=window.mwsOperationM.motionReport().events.length;document.querySelector('[data-op-assign=D]').click();await new Promise(r=>setTimeout(r,100));const still=document.querySelector('[data-op-current]').dataset.opCurrent===old&&document.querySelector('.op-deck-phase-confirm')!==null;for(let i=0;i<400&&!document.querySelector('.op-deck-phase-reveal');i++)await new Promise(r=>setTimeout(r,15));return {still,elapsed:Math.round(performance.now()-start),next:document.querySelector('[data-op-current]').dataset.opCurrent!==old,events:window.mwsOperationM.motionReport().events.slice(before)}})()`);
  assert(measured.still&&measured.next&&measured.elapsed>=1795&&measured.elapsed<2650,JSON.stringify(measured));assert.deepEqual(measured.events.map(x=>x.phase),['confirm','portrait','material','name','badge','flight','land','draw','flip','reveal']);assert(measured.events.every(e=>e.mode===expected));
  console.log('OPERATION_M_MOTION_PREFERENCE_OK',JSON.stringify({system,mode,expected,firstMs:Math.round(first.events.at(-1).at-first.events[0].at),transitionMs:measured.elapsed}));
 }
 await b.setReducedMotion(false);
+// Guided controls: no reset on contact update, no forced pause on tab visibility,
+// reshuffle includes the open unassigned card, full roster view, reset preserves configuration.
+await b.navigate(url,1726,892);
+await b.evaluate("localStorage.removeItem('mws.operationM.simulation.v1')");
+await b.navigate(url,1726,892);
+const controls=await b.evaluate(`(async()=>{
+ const q=s=>document.querySelector(s),click=s=>q(s).click(),skip=()=>click('[data-op-action=skip-guided]'),key='mws.operationM.simulation.v1';
+ click('[data-op-action=tab-tier]');click('[data-op-action=start-guided]');skip();skip();
+ const card=q('[data-op-current]'),old=card.dataset.opCurrent;
+ data.contacts[0].name='새로운 닉네임';window.mwsOperationM.refresh();
+ const stable=card===q('[data-op-current]')&&!window.mwsOperationM.motionReport().paused;
+ const original=Object.getOwnPropertyDescriptor(document,'hidden');
+ Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));
+ const notPaused=!window.mwsOperationM.motionReport().paused;
+ Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));
+ if(original)Object.defineProperty(document,'hidden',original);else delete document.hidden;
+ click('[data-op-assign=S]');skip();skip();
+ click('[data-op-completed=S]');const members=q('.op-tier-members-list').querySelectorAll('.op-tier-member').length;click('[data-op-action=close-tier-members]');
+ const canShuffle=!q('[data-op-action=shuffle-guided]').disabled;click('[data-op-action=shuffle-guided]');skip();skip();
+ const reshuffle=!!q('[data-op-current]')&&q('[data-op-current]').dataset.opCurrent!==old&&Object.keys(JSON.parse(localStorage.getItem(key)).tiers).length===1;
+ const before=JSON.parse(localStorage.getItem(key));window.confirm=()=>true;
+ click('[data-op-action=reset]');const after=JSON.parse(localStorage.getItem(key));
+ const reset=!!q('.op-deck-phase-shuffle')&&!Object.keys(after.tiers).length&&!after.teams.length&&JSON.stringify(before.links)===JSON.stringify(after.links)&&JSON.stringify(before.roles)===JSON.stringify(after.roles);
+ skip();skip();
+ return {stable,notPaused,members,canShuffle,reshuffle,reset,reveal:!!q('.op-deck-phase-reveal')};
+})()`);
+assert.deepEqual(controls,{stable:true,notPaused:true,members:1,canShuffle:true,reshuffle:true,reset:true,reveal:true});
+console.log('OPERATION_M_GUIDED_CONTROLS_OK',JSON.stringify(controls));
 assert(!requests.some(x=>x.startsWith('/api/')));console.log('OPERATION_M_NO_API_REQUESTS',requests.length);
 }finally{await b?.close();await new Promise(r=>server.close(r));rmSync(dir,{recursive:true,force:true})}
