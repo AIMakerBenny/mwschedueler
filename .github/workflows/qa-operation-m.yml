@@ -28,4 +28,6 @@ jobs:
           node --check assets/operation-m-v1.js
           node --test scripts/qa-operation-m-model.test.mjs
           node scripts/qa-operation-m-browser.mjs
-          node scripts/qa-friend-live-search-browser.mjs
+      - name: Verify Friend Finder LIVE search
+        if: success() || failure()
+        run: node scripts/qa-friend-live-search-browser.mjs
