@@ -8,6 +8,8 @@ let state=read(),tab='roster',selected='',dragName='',picker='',query='',notice=
 let configDraft=null,configSaving=false,workspaceReady=false,workspaceLoading=false,workspaceError=false;
 let arrived='',revealDraft=false,layoutFrame=0,queue=[],guided=false,choosingMode=false,rankLock=false,rankTimer=0;
 let lastView='',guidedHistory=[],lastMove=null;
+let deckPhase='pick',deckTimer=0,deckEpoch=0,fastDraw=false,skipMotion=false,drawSlot=-1;
+function stopShuffle(){clearTimeout(deckTimer);deckTimer=0;deckEpoch++;if(deckPhase==='shuffle')deckPhase='pick'}
 const reducedMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 let dragCard=null,dragOrigin=null;
 const boardCards=()=>[...root.querySelectorAll('.op-tier-workspace .op-player')];
@@ -101,7 +103,7 @@ function modeChoice(){
   return '<section class="op-mode-choice" aria-label="티어 분류 방식 선택"><div class="op-mode-options">'+[['guided','한 장씩 분류','카드를 한 장씩 공개하고 티어를 결정합니다.','start-guided'],['list','전체 목록 분류','원하는 참가자를 자유롭게 티어에 배치합니다.','start-list']].map(([mode,title,description,action])=>'<button type="button" class="op-mode-card" data-mode="'+mode+'" data-op-action="'+action+'">'+modePreview(mode)+'<span class="op-mode-caption"><strong>'+title+'</strong><span>'+description+'</span></span></button>').join('')+'</div><div class="op-mode-back">'+button('tab-roster','참가자 목록')+'</div></section>';
 }
 function chooseMode(){
-  tab='tier';guided=false;choosingMode=true;selected='';notice='';render();
+  stopShuffle();tab='tier';guided=false;choosingMode=true;selected='';notice='';render();
   root.querySelector('.op-mode-card')?.focus({preventScroll:true});
 }
 function adminConfig(){
@@ -117,16 +119,41 @@ function pickerHtml(){
   const list=q?contacts.filter(c=>String(c.name).toLocaleLowerCase('ko-KR').includes(q)).slice(0,40):[];
   return '<div class="op-picker" role="dialog" aria-label="연락처 연결"><div class="op-picker-top"><strong>'+esc(role?(idx?'감독 '+idx:'주최자'):picker)+' 연락처 연결</strong>'+button('close-picker','닫기')+'</div><input type="search" data-op-search placeholder="연락처 이름 검색" value="'+esc(query)+'" aria-label="연락처 이름 검색"><div class="op-picker-results">'+(list.length?list.map(c=>'<button type="button" data-op-link="'+esc(c.id)+'">'+photo(c,c.name)+'<span>'+esc(c.name)+(used.has(String(c.id))?' · 교환':'')+'</span></button>').join(''):'<span>'+(q?'검색 결과 없음':'이름을 입력하세요')+'</span>')+'</div></div>';
 }
-function startGuided(){
+function shuffleDeck(){
+  stopShuffle();
   queue=ROSTER.filter(n=>current(n)&&!state.tiers[n]);
   for(let i=queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[queue[i],queue[j]]=[queue[j],queue[i]]}
-  tab='tier';choosingMode=false;guided=queue.length>0;guidedHistory=[];selected='';notice=guided?'':'분류할 미분류 참가자가 없습니다.';render();
+  drawSlot=-1;deckPhase=skipMotion||reducedMotion()?'pick':'shuffle';render();
+  if(deckPhase==='shuffle'){const epoch=deckEpoch;deckTimer=setTimeout(()=>{if(epoch!==deckEpoch||!guided||!root.classList.contains('active'))return;deckTimer=0;deckPhase='pick';render()},1050)}
+  else if(fastDraw&&queue.length)drawCard(Math.floor(Math.random()*queue.length));
+}
+function startGuided(){
+  tab='tier';choosingMode=false;guided=ROSTER.some(n=>current(n)&&!state.tiers[n]);guidedHistory=[];selected='';notice=guided?'':'분류할 미분류 참가자가 없습니다.';fastDraw=false;skipMotion=false;
+  if(guided)shuffleDeck();else render();
+}
+function drawCard(i){
+  if(!guided||deckPhase!=='pick'||rankLock||!Number.isInteger(i)||i<0||i>=queue.length)return;
+  const n=queue[i];if(!current(n)||state.tiers[n]){shuffleDeck();return}
+  const slot=root.querySelector('[data-op-draw="'+i+'"]'),r=slot?.getBoundingClientRect(),stage=root.querySelector('.op-guided-stage')?.getBoundingClientRect();
+  const scale=root.offsetWidth?root.getBoundingClientRect().width/root.offsetWidth:1;
+  queue.splice(i,1);queue.unshift(n);drawSlot=i;deckPhase='reveal';render();
+  const card=root.querySelector('.op-reveal-card');
+  if(r&&stage&&card&&!skipMotion&&!reducedMotion()&&card.animate){
+    const dest=card.getBoundingClientRect(),dx=(r.left+r.width/2-dest.left-dest.width/2)/(scale||1),dy=(r.top+r.height/2-dest.top-dest.height/2)/(scale||1);
+    card.animate([{transform:'translate('+dx+'px,'+dy+'px) scale(.55)'},{transform:'none'}],{duration:360,easing:'cubic-bezier(.2,.7,.2,1)'});
+  }
+}
+function deckMarkup(shuffling){
+  const count=queue.length;
+  return '<div class="op-deck '+(shuffling?'op-deck-shuffling':'op-deck-pick')+'" aria-label="'+(shuffling?'카드 섞는 중':'카드 선택')+'">'+queue.map((_,i)=>{const group=i%2===0?-1:1,offset=(i-(count-1)/2);const style='--op-i:'+i+';--op-group:'+group+';--op-offset:'+offset+';--op-stagger:'+Math.min(i*9,150)+'ms';return shuffling?'<span class="op-deck-card" style="'+style+'">'+cardBack()+'</span>':'<button type="button" class="op-deck-card" style="'+style+'" data-op-draw="'+i+'" aria-label="카드 '+(i+1)+' 선택">'+cardBack()+'</button>'}).join('')+'</div>';
 }
 function guidedBoard(){
   queue=queue.filter(n=>current(n)&&!state.tiers[n]);
-  if(!queue.length){guided=false;return tierBoard()}
-  const n=queue[0],name=display(n),done=ROSTER.filter(x=>state.tiers[x]).length;
-  return '<div class="op-guided"><div class="op-guided-top"><span class="op-guided-count">'+(done+1)+' / 20</span><div class="op-guided-track" role="progressbar" aria-label="분류 진행률" aria-valuenow="'+done+'" aria-valuemin="0" aria-valuemax="20"><i style="width:'+(done*5)+'%"></i></div>'+button('undo-guided','이전',guidedHistory.length?'':'disabled')+button('choose-mode','방식 변경')+button('exit-guided','전체 티어표')+'</div><div class="op-guided-stage"><div class="op-stage-halo" aria-hidden="true"></div><article class="op-reveal-card op-card" data-rarity="neutral" data-op-current="'+esc(n)+'">'+cardFace(current(n),name)+cardBack()+'</article></div><div class="op-guided-ranks">'+TIERS.map((t,i)=>'<button type="button" class="op-guide-rank" data-op-assign="'+t+'" data-tier="'+t+'" aria-keyshortcuts="'+(i+1)+'"><span class="op-keyhint">'+(i+1)+'</span><strong>'+crest(t)+t+'</strong><small>'+ROSTER.filter(x=>state.tiers[x]===t).length+'명</small></button>').join('')+'</div></div>';
+  if(!queue.length){stopShuffle();guided=false;return tierBoard()}
+  const n=queue[0],name=display(n),done=ROSTER.filter(x=>state.tiers[x]).length,reveal=deckPhase==='reveal',shuffling=deckPhase==='shuffle';
+  const controls=button('undo-guided','이전',guidedHistory.length&&!shuffling?'':'disabled')+button('choose-mode','방식 변경')+button('exit-guided','전체 티어표');
+  const deckControls='<div class="op-deck-controls">'+button('shuffle-guided','다시 섞기',deckPhase==='pick'?'':'disabled')+button('draw-random','무작위 공개',deckPhase==='pick'?'':'disabled')+button('toggle-fast','빠른 진행','aria-pressed="'+fastDraw+'" '+(shuffling?'disabled':''))+button('skip-guided','연출 건너뛰기','aria-pressed="'+skipMotion+'"')+'</div>';
+  return '<div class="op-guided '+(skipMotion?'op-skip-motion ':'')+'op-deck-phase-'+deckPhase+'"><div class="op-guided-top"><span class="op-guided-count">'+done+' / 20</span><div class="op-guided-track" role="progressbar" aria-label="분류 진행률" aria-valuenow="'+done+'" aria-valuemin="0" aria-valuemax="20"><i style="width:'+(done*5)+'%"></i></div>'+controls+'</div><div class="op-guided-stage"><div class="op-stage-halo" aria-hidden="true"></div>'+(reveal?'<div class="op-deck-reserve" aria-hidden="true">'+Array.from({length:Math.min(5,queue.length-1)},(_,i)=>'<span style="--op-i:'+i+'">'+cardBack()+'</span>').join('')+'</div><article class="op-reveal-card op-card" data-rarity="neutral" data-op-current="'+esc(n)+'">'+cardFace(current(n),name)+cardBack()+'</article>':deckMarkup(shuffling))+'</div>'+deckControls+'<div class="op-guided-ranks" '+(!reveal?'hidden':'')+'>'+TIERS.map((t,i)=>'<button type="button" class="op-guide-rank" data-op-assign="'+t+'" data-tier="'+t+'" aria-keyshortcuts="'+(i+1)+'" '+(!reveal?'disabled':'')+'><span class="op-keyhint">'+(i+1)+'</span><strong>'+crest(t)+t+'</strong><small>'+ROSTER.filter(x=>state.tiers[x]===t).length+'명</small></button>').join('')+'</div><span class="op-deck-remaining" aria-live="polite">남은 카드 '+queue.length+'장</span></div>';
 }
 function tierBoard(){
   const unassigned=ROSTER.filter(n=>!state.tiers[n]);
@@ -189,7 +216,7 @@ function measureLayout(){
   root.style.setProperty('--op-workspace-height',Math.max(240,Math.floor((bottom-Math.max(0,rootRect.top))/(scale||1)))+'px');
   if(area.classList.contains('op-guided')){
     const top=area.querySelector('.op-guided-top').getBoundingClientRect().height/(scale||1),ranks=area.querySelector('.op-guided-ranks').getBoundingClientRect().height/(scale||1);
-    root.style.setProperty('--op-guided-card',Math.max(132,Math.min(560,available-top-ranks-116))+'px');
+    root.style.setProperty('--op-guided-card',Math.max(132,Math.min(560,available-top-ranks-158))+'px');
   }
 }
 function scheduleMeasure(){if(layoutFrame)cancelAnimationFrame(layoutFrame);layoutFrame=requestAnimationFrame(measureLayout)}
@@ -262,7 +289,7 @@ root.addEventListener('pointermove',e=>{
 });
 root.addEventListener('pointerout',e=>{if(hoverCard&&!hoverCard.contains(e.relatedTarget)){hoverCard.classList.remove('op-tilt');hoverCard.style.removeProperty('--op-rx');hoverCard.style.removeProperty('--op-ry');hoverCard=null}});
 root.addEventListener('click',e=>{
-  const b=e.target.closest('button');if(!b||!root.contains(b)){const target=e.target.closest('.op-tier-row');if(target&&selected&&!rankLock)move(selected,target.dataset.tier);else if(e.target.closest('.op-pool')&&selected&&!rankLock)move(selected,'');return;}
+  const b=e.target.closest('button');if(b?.hasAttribute('data-op-draw')&&root.contains(b)){drawCard(Number(b.dataset.opDraw));return}if(!b||!root.contains(b)){const target=e.target.closest('.op-tier-row');if(target&&selected&&!rankLock)move(selected,target.dataset.tier);else if(e.target.closest('.op-pool')&&selected&&!rankLock)move(selected,'');return;}
   const n=b.dataset.opPlayer;
   if(n){if(b.dataset.opResult||tab!=='tier'||!current(n))return;selected=selected===n?'':n;notice='';updateSelection();return}
   if(b.hasAttribute('data-op-tier')){if(selected)move(selected,b.dataset.opTier);return}
@@ -276,30 +303,34 @@ root.addEventListener('click',e=>{
     if(role)configDraft.roles[idx]=id;else configDraft.links[picker]=id;
     picker='';query='';notice='';render();return;
   }
-  if(b.dataset.opAssign&&guided&&queue.length&&TIERS.includes(b.dataset.opAssign)){if(e.detail>1||rankLock)return;const n=queue.shift(),t=b.dataset.opAssign;if(!current(n)||state.tiers[n]){render();return}state.tiers[n]=t;state.teams=[];guidedHistory.push(n);save();rankLock=true;const card=root.querySelector('.op-reveal-card');if(card){card.dataset.tier=t;card.dataset.rarity=RANK_STYLE[t];card.classList.add('op-rank-confirm');card.querySelector('.op-card-front')?.insertAdjacentHTML('beforeend',cardBadge(t,true))}root.querySelectorAll('[data-op-assign]').forEach(x=>x.disabled=true);const finish=()=>{rankLock=false;rankTimer=0;if(!queue.length)guided=false;render()};rankTimer=setTimeout(finish,matchMedia('(prefers-reduced-motion: reduce)').matches?0:{S:650,A:500,B:400,C:300,D:240}[t]);return}
-  if(rankLock){clearTimeout(rankTimer);rankTimer=0;rankLock=false;}
+  if(b.dataset.opAssign&&guided&&deckPhase==='reveal'&&queue.length&&TIERS.includes(b.dataset.opAssign)){if(e.detail>1||rankLock)return;const n=queue.shift(),t=b.dataset.opAssign;if(!current(n)||state.tiers[n]){render();return}state.tiers[n]=t;state.teams=[];guidedHistory.push(n);save();rankLock=true;const card=root.querySelector('.op-reveal-card');if(card){card.dataset.tier=t;card.dataset.rarity=RANK_STYLE[t];card.classList.add('op-rank-confirm');card.querySelector('.op-card-front')?.insertAdjacentHTML('beforeend',cardBadge(t,true))}root.querySelectorAll('[data-op-assign]').forEach(x=>x.disabled=true);const finish=()=>{rankLock=false;rankTimer=0;deckPhase='pick';if(!queue.length)guided=false;render();if(guided&&fastDraw)drawCard(Math.floor(Math.random()*queue.length))};rankTimer=setTimeout(finish,skipMotion||reducedMotion()?0:{S:650,A:500,B:400,C:300,D:240}[t]);return}
+  if(rankLock){if(!['choose-mode','exit-guided','tab-roster','tab-tier','tab-result'].includes(b.dataset.opAction))return;clearTimeout(rankTimer);rankTimer=0;rankLock=false;deckPhase='pick';}
   switch(b.dataset.opAction){
     case 'choose-mode':chooseMode();break;
     case 'start-guided':lastMove=null;startGuided();break;
-    case 'start-list':choosingMode=false;guided=false;tab='tier';selected='';notice='';render();break;
+    case 'shuffle-guided':if(guided&&deckPhase==='pick')shuffleDeck();break;
+    case 'draw-random':if(guided&&deckPhase==='pick')drawCard(Math.floor(Math.random()*queue.length));break;
+    case 'toggle-fast':if(guided){fastDraw=!fastDraw;if(fastDraw&&deckPhase==='pick')drawCard(Math.floor(Math.random()*queue.length));else render()}break;
+    case 'skip-guided':if(guided){skipMotion=!skipMotion;if(skipMotion&&deckPhase==='shuffle'){stopShuffle();render();if(fastDraw)drawCard(Math.floor(Math.random()*queue.length))}else render()}break;
+    case 'start-list':stopShuffle();choosingMode=false;guided=false;tab='tier';selected='';notice='';render();break;
     case 'undo-move':{const m=lastMove;lastMove=null;if(m&&current(m.n)&&(state.tiers[m.n]||'')===m.to){if(m.from)state.tiers[m.n]=m.from;else delete state.tiers[m.n];state.teams=[];selected='';save();refreshBoard(m.n,m.to,m.from)}break;}
-    case 'exit-guided':choosingMode=false;guided=false;render();break;
-    case 'undo-guided':{const n=guidedHistory.pop();if(n){delete state.tiers[n];state.teams=[];queue.unshift(n);guided=true;save();render()}break;}
+    case 'exit-guided':stopShuffle();choosingMode=false;guided=false;render();break;
+    case 'undo-guided':{const n=guidedHistory.pop();if(n){stopShuffle();delete state.tiers[n];state.teams=[];queue=[n,...queue.filter(x=>x!==n)];guided=true;deckPhase='reveal';save();render()}break;}
     case 'retry':void enter();break;
-    case 'tab-roster':choosingMode=false;guided=false;tab='roster';selected='';notice='';render();break;
-    case 'tab-tier':choosingMode=false;guided=false;tab='tier';selected='';notice='';render();break;
-    case 'tab-result':choosingMode=false;guided=false;tab='result';selected='';notice='';render();break;
+    case 'tab-roster':stopShuffle();choosingMode=false;guided=false;tab='roster';selected='';notice='';render();break;
+    case 'tab-tier':stopShuffle();choosingMode=false;guided=false;tab='tier';selected='';notice='';render();break;
+    case 'tab-result':stopShuffle();choosingMode=false;guided=false;tab='result';selected='';notice='';render();break;
     case 'open-config':if(canConfigure()){configDraft={links:{...state.links},roles:[...state.roles]};notice='';render();root.querySelector('.op-config-head button')?.focus()}break;
     case 'close-config':if(!configSaving){configDraft=null;picker='';notice='';render()}break;
     case 'save-config':void saveConfig();break;
     case 'close-picker':picker='';query='';render();break;
-    case 'reset':if(!confirm('20명의 티어와 가상 팀 결과를 초기화할까요?'))return;state.tiers={};state.teams=[];lastMove=null;choosingMode=false;guided=false;selected='';notice='';save();render();break;
+    case 'reset':if(!confirm('20명의 티어와 가상 팀 결과를 초기화할까요?'))return;stopShuffle();state.tiers={};state.teams=[];lastMove=null;choosingMode=false;guided=false;selected='';notice='';save();render();break;
     case 'draft':sync();if(!available())return;state.teams=balancedDraft(state.tiers);lastMove=null;choosingMode=false;tab='result';revealDraft=true;notice='';save();render();break;
   }
 });
 root.addEventListener('error',e=>{if(e.target instanceof HTMLImageElement)e.target.style.visibility='hidden'},true);
 root.addEventListener('keydown',e=>{if(e.key==='Escape'&&dragName){clearDrag(true)}else if(e.key==='Escape'&&picker){picker='';query='';render()}else if(e.key==='Escape'&&configDraft&&!configSaving){configDraft=null;notice='';render()}else if(e.key==='Escape'&&selected){selected='';updateSelection()}});
-window.addEventListener('keydown',e=>{if(!root.classList.contains('active')||!guided||rankLock||configDraft||e.repeat||e.ctrlKey||e.altKey||e.metaKey||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||'')||e.target?.isContentEditable)return;const i=Number(e.key)-1;if(/^[1-5]$/.test(e.key)&&TIERS[i]){e.preventDefault();root.querySelector('[data-op-assign="'+TIERS[i]+'"]')?.click()}});
+window.addEventListener('keydown',e=>{if(!root.classList.contains('active')||!guided||deckPhase!=='reveal'||rankLock||configDraft||e.repeat||e.ctrlKey||e.altKey||e.metaKey||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||'')||e.target?.isContentEditable)return;const i=Number(e.key)-1;if(/^[1-5]$/.test(e.key)&&TIERS[i]){e.preventDefault();root.querySelector('[data-op-assign="'+TIERS[i]+'"]')?.click()}});
 root.addEventListener('input',e=>{
   if(!e.target.hasAttribute('data-op-search'))return;
   query=e.target.value;const box=root.querySelector('.op-picker-results'),temp=document.createElement('div');temp.innerHTML=pickerHtml();box.replaceChildren(...temp.querySelector('.op-picker-results').childNodes);
@@ -314,7 +345,7 @@ root.addEventListener('dragover',e=>{const r=e.target.closest('[data-op-drop]');
 root.addEventListener('drop',e=>{const r=e.target.closest('[data-op-drop]');if(!r||!dragName)return;e.preventDefault();const n=dragName,t=r.dataset.opDrop;clearDrag(false);move(n,t)});
 root.addEventListener('dragleave',e=>{const r=e.target.closest('[data-op-drop]');if(r&&!r.contains(e.relatedTarget))r.classList.remove('op-drop-active')});
 root.addEventListener('dragend',()=>clearDrag(!!dragName));
-window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{clearTimeout(rankTimer);rankTimer=0;rankLock=false;tab='roster';choosingMode=false;guided=false;selected='';picker='';configDraft=null}});
+window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{stopShuffle();clearDrag(false);clearTimeout(rankTimer);rankTimer=0;rankLock=false;tab='roster';choosingMode=false;guided=false;selected='';picker='';configDraft=null}});
 window.addEventListener('mws:app-ready',()=>{workspaceReady=false;configDraft=null;picker='';if(root.classList.contains('active'))void enter()});
 window.addEventListener('mawang:datachange',()=>window.mwsOperationM?.refresh());
 window.mwsOperationM={render,refresh(){if(!root.classList.contains('active')||!workspaceReady)return;sync();if(signature()!==lastSignature)render()}};
