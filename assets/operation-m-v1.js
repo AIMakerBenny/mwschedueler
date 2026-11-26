@@ -511,14 +511,56 @@ function render(){
   measureLayout();
   if(layoutFrame)cancelAnimationFrame(layoutFrame);layoutFrame=requestAnimationFrame(()=>{measureLayout();if(moved&&tab==='tier'&&!guided){const card=[...root.querySelectorAll('.op-board .op-player,.op-pool .op-player')].find(x=>x.dataset.opPlayer===moved);if(card){const grid=card.closest('.op-player-grid');if(grid&&grid.scrollHeight>grid.clientHeight){const r=card.getBoundingClientRect(),g=grid.getBoundingClientRect();if(r.bottom>g.bottom)grid.scrollTop+=r.bottom-g.bottom+8;else if(r.top<g.top)grid.scrollTop-=g.top-r.top+8}card.focus({preventScroll:true})}}});
 }
+// Fit by measured CSS-space width AND height, not by physical monitor width alone.
+// A minimum readable card wins over forced fitting on small screens.
+function fitRoster(area,width,height,set){
+  const gap=width>=1050?10:8,coachCols=width>=740?4:2;
+  const coach=Math.max(58,Math.min((width-(coachCols-1)*gap)/coachCols*.44,height*.20, width*.10+28));
+  const coachRows=Math.ceil(4/coachCols);
+  const fixed=area.querySelector('.op-roster-next')?.offsetHeight||44;
+  const budget=Math.max(120,height-coachRows*(coach+12)-(coachRows-1)*gap-fixed-76);
+  const choices=width>=740?[5,7,8,10]:width>=480?[4,5]:[3,4];
+  const candidates=choices.map(cols=>{const rows=Math.ceil(20/cols),wide=(width-(cols-1)*gap)/cols,tall=(budget-(rows-1)*gap)/rows;return {cols,card:Math.min(wide,(tall-13)/1.16)}});
+  const best=candidates.reduce((a,b)=>b.card>a.card?b:a);
+  const min=width>=740?86:76;
+  const card=Math.max(min,Math.min(best.card,(width-(best.cols-1)*gap)/best.cols));
+  area.dataset.rosterColumns=String(best.cols);
+  set('--op-roster-card',card);set('--op-coach-size',coach);set('--op-roster-gap',gap);
+  root.style.setProperty('--op-roster-columns',String(best.cols));
+}
+function fitDraft(area,width,height,set){
+  const gap=width>=1100?12:8,pad=8;
+  const candidates=[];
+  const options=width>=1050?[[4,3],[4,2],[2,5],[2,3]]:width>=650?[[2,3],[2,5]]:[[1,3]];
+  for(const [cols,per] of options){
+    const rows=Math.ceil(4/cols),teamW=(width-(cols-1)*gap)/cols;
+    const teamH=(height-(rows-1)*gap)/rows;
+    const cardW=(teamW-2*pad-(per-1)*gap)/per;
+    const playerRows=Math.ceil(5/per);
+    // Header, footer, border and spacing; card height follows width + nameplate.
+    const chrome=Math.max(86,Math.min(134,teamH*.23));
+    const cardH=((teamH-chrome-2*pad-(playerRows-1)*gap)/playerRows-13)/1.15;
+    const card=Math.min(cardW,cardH);
+    candidates.push({cols,per,rows,card,cardW,teamH,chrome,score:card*(cols===2&&per===5?1.12:1)});
+  }
+  const best=candidates.reduce((a,b)=>b.score>a.score?b:a);
+  const floor=width>=1050?82:width>=650?78:78;
+  const card=Math.max(Math.min(floor,best.cardW),Math.min(best.card,best.cardW));
+  area.dataset.teamColumns=String(best.cols);area.dataset.teamFormation=String(best.per);
+  root.style.setProperty('--op-team-columns',String(best.cols));root.style.setProperty('--op-team-per-row',String(best.per));
+  set('--op-team-card',card);set('--op-team-gap',gap);set('--op-team-pad',pad);
+  set('--op-team-avatar',Math.max(42,Math.min(92,card*.43,best.chrome*.60)));
+  // Keep results visible without forcing extra blank panel height or tiny cards.
+  set('--op-result-height',height);
+}
 function measureLayout(){
   if(!root.classList.contains('active'))return;
-  const area=root.querySelector('.op-teams,.op-board,.op-guided,.op-mode-choice');if(!area)return;
+  const area=root.querySelector('.op-teams,.op-board,.op-guided,.op-mode-choice,.op-roster');if(!area)return;
   const rootRect=root.getBoundingClientRect(),scale=root.offsetWidth?rootRect.width/root.offsetWidth||1:1;
   const access=document.getElementById('mwsAccessTools'),accessRect=access?.getBoundingClientRect(),viewport=window.visualViewport;
   const viewportBottom=viewport?Math.min(innerHeight,viewport.offsetTop+viewport.height):innerHeight;
   const bottom=accessRect&&accessRect.height&&accessRect.top>0?Math.min(viewportBottom-14,accessRect.top-10):viewportBottom-18;
-  const rootTop=Math.max(0,rootRect.top);
+  const rootTop=Math.max(0,rootRect.top+(root.closest('.main')?.scrollTop||0)*scale);
   const set=(key,value)=>{const next=Math.floor(value)+'px';if(root.style.getPropertyValue(key)!==next)root.style.setProperty(key,next)};
   // Set the pool sizing budget first. The pool's new card sizes affect the board's top.
   set('--op-workspace-height',Math.max(240,(bottom-rootTop)/scale));
@@ -527,6 +569,8 @@ function measureLayout(){
   const areaTop=rootTop+Math.max(0,(layoutTop(area)-layoutTop(root))*scale);
   const available=Math.max(180,(bottom-areaTop)/scale);
   set('--op-available',available);
+  if(area.classList.contains('op-roster')){fitRoster(area,area.clientWidth,available,set);return}
+  if(area.classList.contains('op-teams')){const cta=root.querySelector('.op-result-cta');fitDraft(area,area.clientWidth,Math.max(180,available-(cta?cta.offsetHeight+12:0)),set);return}
   if(area.classList.contains('op-mode-choice'))return;
   if(area.classList.contains('op-single-stage')){
     const stage=area.querySelector('.op-guided-stage'),center=area.querySelector('.op-single-center'),style=getComputedStyle(area);
@@ -549,7 +593,7 @@ function measureLayout(){
 function scheduleMeasure(){if(layoutFrame)cancelAnimationFrame(layoutFrame);layoutFrame=requestAnimationFrame(()=>{layoutFrame=0;measureLayout()})}
 window.addEventListener('resize',scheduleMeasure);
 window.visualViewport?.addEventListener('resize',scheduleMeasure);
-if(typeof ResizeObserver==='function'){let lastWidth=-1;new ResizeObserver(()=>{if(root.classList.contains('active')&&root.clientWidth!==lastWidth){lastWidth=root.clientWidth;scheduleMeasure()}}).observe(root)}
+if(typeof ResizeObserver==='function'){let lastWidth=-1;const observer=new ResizeObserver(()=>{const width=root.getBoundingClientRect().width;if(root.classList.contains('active')&&Math.abs(width-lastWidth)>.5){lastWidth=width;scheduleMeasure()}});observer.observe(root);const main=root.closest('.main');if(main)observer.observe(main)}
 function signature(){return JSON.stringify(ROSTER.map(n=>{const c=current(n);return[c?.id,c?.name,c?.image]}).concat(state.roles.map(id=>{const c=byId.get(id);return[c?.id,c?.name,c?.image]})))}
 function updateSelection(){
   root.querySelectorAll('.op-player[aria-pressed]').forEach(b=>{const on=b.dataset.opPlayer===selected,was=b.classList.contains('op-selected');b.classList.toggle('op-selected',on);b.setAttribute('aria-pressed',String(on));if(on!==was&&!reducedMotion()){b.querySelector('.op-card-front')?.animate?.(on?[{filter:'brightness(1.25)',transform:'scale(.97)'},{filter:'none',transform:'none'}]:[{opacity:.82},{opacity:1}],{duration:180,easing:'ease-out'})}});
