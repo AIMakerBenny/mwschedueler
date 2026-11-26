@@ -255,3 +255,46 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-tier-row .op-player[data-rarity]{padding:4px}
 #operationM .op-tier-row .op-player:only-child{max-width:calc((100% - 6px)/2)}
 @container(max-width:800px){#operationM .op-tier-row .op-player:only-child{max-width:125px}}
+
+/* Interaction polish: fixed geometry while choosing, a stage that uses actual free height,
+   and distinct rarity controls without adding a second heading. */
+#operationM .op-board.op-awaiting-drop .op-tier-row{cursor:pointer}
+#operationM .op-board.op-awaiting-drop .op-tier-row:hover{box-shadow:0 0 20px color-mix(in srgb,var(--glow) 28%,transparent);outline:1px solid var(--tier);outline-offset:-1px}
+#operationM .op-player.op-selected{outline:2px solid #c6a9ff;outline-offset:1px;box-shadow:0 0 0 3px #9d75ff35,0 7px 16px #0005;z-index:4}
+#operationM .op-player.op-selected::after{content:"";position:absolute;z-index:5;right:7px;top:7px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;background:#a77afa;box-shadow:0 0 6px #0008;pointer-events:none}
+#operationM .op-tier-row .op-player-grid{scroll-padding:8px;scrollbar-color:color-mix(in srgb,var(--tier) 40%,transparent) transparent}
+#operationM .op-guide-rank{isolation:isolate;overflow:hidden}
+#operationM button.op-guide-rank{position:relative;min-height:92px;background:linear-gradient(140deg,color-mix(in srgb,var(--dark) 80%,var(--tier)),var(--dark));color:var(--tier);border:2px solid transparent;background:linear-gradient(140deg,color-mix(in srgb,var(--dark) 85%,white),var(--dark)) padding-box,var(--foil) border-box;text-shadow:0 1px 4px #0008;box-shadow:0 4px 14px #0005}
+#operationM button.op-guide-rank[data-tier="S"]{border-radius:15px;box-shadow:0 0 17px #c4a5ff40,inset 0 0 16px #c4a5ff20}
+#operationM button.op-guide-rank[data-tier="A"]{border-radius:4px 13px;box-shadow:0 0 13px #e5b55625}
+#operationM button.op-guide-rank[data-tier="B"]{border-radius:3px 15px 3px 15px}
+#operationM button.op-guide-rank[data-tier="C"]{border-radius:7px}
+#operationM button.op-guide-rank[data-tier="D"]{border-radius:5px;box-shadow:0 3px 8px #0004}
+#operationM button.op-guide-rank:hover:not(:disabled){background:linear-gradient(140deg,color-mix(in srgb,var(--dark) 63%,var(--tier)),var(--dark)) padding-box,var(--foil) border-box;color:var(--tier);transform:translateY(-3px);box-shadow:0 0 20px color-mix(in srgb,var(--glow) 45%,transparent)}
+#operationM .op-keyhint{position:absolute;top:6px;right:8px;padding:2px 5px;border:1px solid color-mix(in srgb,var(--tier) 40%,transparent);border-radius:4px;font-size:10px;line-height:1;color:var(--tier)}
+#operationM .op-guided{width:min(100%,1000px);margin:0 auto;min-height:0;height:auto;gap:10px;padding:10px 16px 12px}
+#operationM .op-guided-count{font-size:17px;font-variant-numeric:tabular-nums;white-space:nowrap}
+#operationM .op-guided-top{gap:9px}
+#operationM .op-guided-stage{position:relative;isolation:isolate;overflow:hidden;min-height:0;padding:16px;border-radius:18px;background:radial-gradient(ellipse at 50% 52%,#9d76ff18,transparent 66%),linear-gradient(150deg,#ffffff04,transparent 75%)}
+#operationM .op-stage-halo{position:absolute;z-index:-1;left:50%;top:50%;width:min(85%,650px);height:80%;transform:translate(-50%,-50%);background:radial-gradient(ellipse,#9d75ff24,transparent 65%);pointer-events:none}
+#operationM .op-reveal-card{width:min(100%,var(--op-guided-card,340px));transform-origin:50% 55%;isolation:isolate}
+#operationM .op-reveal-card:not(.op-rank-confirm)::after{content:"";position:absolute;inset:0;z-index:5;background:linear-gradient(125deg,#171225,#503775 50%,#19152a);border:2px solid #bea7ef99;border-radius:inherit;pointer-events:none;opacity:0;animation:op-card-back .38s ease-out both}
+@keyframes op-card-back{0%,16%{opacity:1;transform:rotateY(0deg)}60%,100%{opacity:0;transform:rotateY(85deg)}}
+#operationM .op-reveal-card[data-rarity="holo"] .op-confirm-rank{box-shadow:0 0 28px #d3afff99,0 6px 20px #0008}
+#operationM .op-reveal-card[data-rarity="gold"].op-rank-confirm{animation:op-gold-confirm .5s ease-out both}
+#operationM .op-reveal-card[data-rarity="crystal"].op-rank-confirm{animation:op-crystal-confirm .4s ease-out both}
+#operationM .op-reveal-card[data-rarity="steel"].op-rank-confirm{animation:op-steel-confirm .3s ease-out both}
+#operationM .op-reveal-card[data-rarity="silver"].op-rank-confirm{animation:op-silver-confirm .24s ease-out both}
+@keyframes op-gold-confirm{0%{transform:scale(.98);box-shadow:0 0 0 #f8c56c00}40%{transform:scale(1.035);box-shadow:0 0 52px #f8c56c88}100%{transform:none}}
+@keyframes op-crystal-confirm{0%{transform:scale(.96) rotate(-1deg)}50%{transform:scale(1.02) rotate(1deg);box-shadow:0 0 35px #ba8dff88}100%{transform:none}}
+@keyframes op-steel-confirm{0%{transform:translateY(4px)}55%{transform:translateY(-3px);box-shadow:0 0 24px #7cc8ff77}100%{transform:none}}
+@keyframes op-silver-confirm{0%{filter:brightness(1.12)}100%{filter:none}}
+#operationM .op-reveal .op-team header{position:relative;overflow:hidden}
+#operationM .op-reveal .op-team header::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(100deg,transparent 20%,#ffffff35 50%,transparent 80%);transform:translateX(-110%);animation:op-team-finish .55s .8s ease-out both}
+@keyframes op-team-finish{from{transform:translateX(-110%)}to{transform:translateX(110%)}}
+#operationM .op-team .op-player-name{font-size:clamp(12px,1.05cqw,17px)}
+#operationM .op-team-players{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+#operationM .op-team footer span{min-width:29px;text-align:center;font-variant-numeric:tabular-nums}
+@container(min-width:801px){#operationM .op-guided{width:min(100%,1000px)}}
+@container(max-width:600px){#operationM .op-guided{padding:4px 0 8px;gap:7px}#operationM .op-guided-stage{padding:8px}#operationM .op-guided-top{gap:5px;flex-wrap:wrap}#operationM .op-guided-count{font-size:14px}#operationM .op-guided-top button{font-size:11px;padding:6px 8px}#operationM button.op-guide-rank{min-height:68px;padding:5px;gap:3px}#operationM .op-guide-rank .op-rank-crest{width:22px;height:22px}#operationM .op-guide-rank strong{font-size:24px;gap:3px}#operationM .op-keyhint{display:none}#operationM .op-pool-actions{flex-wrap:wrap;justify-content:flex-end}#operationM .op-pool .op-block-head{align-items:flex-start}#operationM .op-pool .op-block-head h2{white-space:nowrap}#operationM .op-toolbar .op-actions{margin-left:auto}}
+@media(prefers-reduced-motion:reduce){#operationM *,#operationM *::before,#operationM *::after{animation:none!important;transition:none!important}#operationM .op-reveal-card:not(.op-rank-confirm)::after{display:none}}
