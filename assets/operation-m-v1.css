@@ -298,3 +298,39 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 @container(min-width:801px){#operationM .op-guided{width:min(100%,1000px)}}
 @container(max-width:600px){#operationM .op-guided{padding:4px 0 8px;gap:7px}#operationM .op-guided-stage{padding:8px}#operationM .op-guided-top{gap:5px;flex-wrap:wrap}#operationM .op-guided-count{font-size:14px}#operationM .op-guided-top button{font-size:11px;padding:6px 8px}#operationM button.op-guide-rank{min-height:68px;padding:5px;gap:3px}#operationM .op-guide-rank .op-rank-crest{width:22px;height:22px}#operationM .op-guide-rank strong{font-size:24px;gap:3px}#operationM .op-keyhint{display:none}#operationM .op-pool-actions{flex-wrap:wrap;justify-content:flex-end}#operationM .op-pool .op-block-head{align-items:flex-start}#operationM .op-pool .op-block-head h2{white-space:nowrap}#operationM .op-toolbar .op-actions{margin-left:auto}}
 @media(prefers-reduced-motion:reduce){#operationM *,#operationM *::before,#operationM *::after{animation:none!important;transition:none!important}#operationM .op-reveal-card:not(.op-rank-confirm)::after{display:none}}
+
+/* Density follows the available content width, not the physical monitor size.
+   Keep high-density tiers readable rather than shrinking 20 portraits into one row. */
+#operationM .op-tier-row .op-player-grid:focus-visible{outline:1px solid var(--tier);outline-offset:-2px;border-radius:8px}
+#operationM .op-tier-row .op-player:focus-visible{outline:2px solid var(--tier);outline-offset:1px}
+#operationM .op-tier-row .op-player-name{font-size:clamp(11px,1.05cqw,15px);min-width:0}
+#operationM .op-player-name{min-width:0;max-width:100%}
+#operationM .op-tier-row .op-player{min-width:0;max-width:min(100%,clamp(84px,calc((var(--op-available) - 100px)/2 - 24px),320px))}
+#operationM .op-tier-row[data-count="1"] .op-player{grid-column:1/-1;max-width:min(100%,clamp(110px,calc(var(--op-available) - 150px),220px))}
+#operationM .op-tier-row[data-count="3"] .op-player:last-child,#operationM .op-tier-row[data-count="5"] .op-player:last-child,#operationM .op-tier-row[data-count="7"] .op-player:last-child{grid-column:1/-1;width:calc((100% - 6px)/2)}
+#operationM .op-tier-row .op-player-grid{overscroll-behavior-y:contain}
+#operationM .op-pool-actions button[data-op-action="undo-move"]{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,var(--border))}
+#operationM .op-actions .op-progress{max-width:clamp(120px,22cqw,300px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#operationM .op-player[draggable="true"] .op-portrait img{pointer-events:none}
+#operationM .op-rank-heading>span{line-height:1.25}
+#operationM .op-rank-meta b,#operationM .op-rank-meta small{font-variant-numeric:tabular-nums}
+@container(min-width:1900px){
+  #operationM .op-tier-row:is([data-count="9"],[data-count="10"],[data-count="11"],[data-count="12"],[data-count="13"],[data-count="14"],[data-count="15"],[data-count="16"],[data-count="17"],[data-count="18"],[data-count="19"],[data-count="20"]) .op-player-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@container(max-width:1040px){
+  #operationM .op-board{grid-template-columns:1fr;height:auto}
+  #operationM .op-tier-row{grid-template-columns:108px minmax(0,1fr);grid-template-rows:auto;min-height:126px}
+  #operationM .op-tier-label{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  #operationM .op-rank-meta{display:flex;gap:5px;align-items:center}
+  #operationM .op-tier-row .op-player-grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr));overflow:visible;align-content:center}
+  #operationM .op-tier-row .op-player,#operationM .op-tier-row[data-count="1"] .op-player,#operationM .op-tier-row[data-count="3"] .op-player:last-child,#operationM .op-tier-row[data-count="5"] .op-player:last-child,#operationM .op-tier-row[data-count="7"] .op-player:last-child{grid-column:auto;width:100%;max-width:135px}
+  #operationM .op-tier-row .op-empty{min-height:108px}
+  #operationM .op-slot-grid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:1fr}
+}
+@container(max-width:480px){
+  #operationM .op-tier-row{grid-template-columns:82px minmax(0,1fr);min-height:115px}
+  #operationM .op-tier-row .op-player-grid{grid-template-columns:repeat(auto-fill,minmax(76px,1fr))}
+  #operationM .op-rank-heading>span{font-size:8px}
+  #operationM .op-actions .op-progress{max-width:112px}
+}
+@media(prefers-reduced-motion:reduce){#operationM .op-player.op-selected{transform:none}}
