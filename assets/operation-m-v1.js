@@ -8,12 +8,17 @@ let state=read(),tab='roster',selected='',dragName='',picker='',query='',notice=
 let configDraft=null,configSaving=false,workspaceReady=false,workspaceLoading=false,workspaceError=false;
 let arrived='',layoutFrame=0,queue=[],guided=false,choosingMode=false,rankLock=false,rankTimer=0;
 let lastView='',guidedHistory=[],lastMove=null;
-let rankPhaseTimers=[],rankEffect=null;
+let rankEffects=[],rankClock=0;
 let draftRun=null,draftRender=false;
 const draftLater=(run,ms,fn)=>{run.timers.push(setTimeout(()=>{if(draftRun===run&&root.classList.contains('active'))fn()},ms))};
-function clearRankMotion(){clearTimeout(rankTimer);rankTimer=0;rankPhaseTimers.forEach(clearTimeout);rankPhaseTimers=[];rankEffect?.cancel();rankEffect=null;root.querySelectorAll('.op-rank-beam').forEach(x=>x.remove())}
-function rankAfter(ms,fn){rankPhaseTimers.push(setTimeout(fn,ms))}
-const MOTION=Object.freeze({shuffle:1700,draw:640,flip:700,charge:240,portrait:Object.freeze({S:650,A:560,B:500,C:450,D:400}),hold:Object.freeze({S:900,A:740,B:640,C:540,D:440}),name:180,badge:260,flight:480});
+function clearRankMotion(){clearTimeout(rankTimer);rankTimer=0;cancelAnimationFrame(rankClock);rankClock=0;rankEffects.forEach(a=>a.cancel());rankEffects=[];root.querySelectorAll('.op-rank-beam').forEach(x=>x.remove())}
+// Absolute offsets on a common clock. No chained holds or per-tier speed differences.
+const MOTION=Object.freeze({shuffle:1700,draw:470,flipStart:250,flip:440,rankEnd:1160,flightStart:780,flight:380,portraitStart:130,portraitEnd:650,materialStart:350,nameStart:480,badgeStart:550});
+function onTimeline(node,frames,opts,origin,collection){
+  const a=node.animate(frames,{fill:'both',...opts});collection.push(a);
+  if(origin!=null)a.startTime=origin;
+  return a;
+}
 let deckPhase='pick',deckEpoch=0,paused=false,deckEffects=[],deckTimers=[],rebuildingGuided=false,guidedMode='full',motionTrace=[];
 function motionPreference(){return (typeof window.mwsMotionReduced==='function'?window.mwsMotionReduced():reducedMotion())?'reduced':'full'}
 function markMotion(phase,tier=''){motionTrace.push({phase,tier,mode:guidedMode,at:performance.now()});if(motionTrace.length>512)motionTrace.shift()}
@@ -218,7 +223,7 @@ function refreshGuided(){
 }
 function openDraw(card,epoch){
   if(!liveDeck(epoch)||!card.isConnected)return;
-  card.classList.remove('op-face-down','op-is-flipping');card.classList.add('op-face-open');deckPhase='reveal';markMotion('reveal');refreshGuided();
+  card.classList.remove('op-face-down','op-is-flipping','op-deal-flow');card.classList.add('op-face-open');deckPhase='reveal';markMotion('reveal');refreshGuided();
 }
 function drawCard(i=0){
   if(!guided||deckPhase!=='pick'||rankLock||!queue.length||!Number.isInteger(i)||i<0||i>=queue.length)return;
@@ -233,31 +238,33 @@ function drawCard(i=0){
   card.classList.remove('op-card-on-stack');center.replaceChildren(card);
   const to=card.getBoundingClientRect(),scale=draftScale(),dx=(from.left+from.width/2-to.left-to.width/2)/scale,dy=(from.top+from.height/2-to.top-to.height/2)/scale;
   const sx=from.width/to.width,sy=from.height/to.height;refreshGuided();
+  const front=card.querySelector('.op-card-front'),back=card.querySelector('.op-card-back');
+  const end=MOTION.flipStart+MOTION.flip,origin=document.timeline?.currentTime;
   const beginFlip=()=>{
     if(!liveDeck(epoch)||!card.isConnected)return;
     deckPhase='flip';markMotion('flip');refreshGuided();
-    const front=card.querySelector('.op-card-front'),back=card.querySelector('.op-card-back');
-    if(!guidedFull()||!front.animate||!back.animate){
-      // Accessibility mode replaces travel/rotation with fades, never a zero-duration state transition.
-      if(back.animate)deckAnimate(back,[{opacity:1},{opacity:.05}],{duration:MOTION.flip/2,fill:'both'});
-      deckWait(MOTION.flip/2,epoch,()=>{
-        if(!card.isConnected)return;
-        card.classList.remove('op-face-down');card.classList.add('op-face-open');
-        if(front.animate)deckAnimate(front,[{opacity:.05},{opacity:1}],{duration:MOTION.flip/2,fill:'both'});
-      });
-      deckWait(MOTION.flip,epoch,()=>{openDraw(card,epoch);deckEffects.forEach(a=>a.cancel());deckEffects=[]});return
-    }
-    card.classList.add('op-is-flipping');
-    const f=deckAnimate(front,[{transform:'rotateY(180deg)'},{transform:'rotateY(0deg)'}],{duration:MOTION.flip,easing:'cubic-bezier(.4,.12,.22,1)',fill:'both'});
-    const b=deckAnimate(back,[{transform:'rotateY(0deg)'},{transform:'rotateY(-180deg)'}],{duration:MOTION.flip,easing:'cubic-bezier(.4,.12,.22,1)',fill:'both'});
-    Promise.all([f.finished,b.finished]).then(()=>{if(!liveDeck(epoch)||!card.isConnected)return;openDraw(card,epoch);f.cancel();b.cancel();deckEffects=[]}).catch(()=>{});
+    if(guidedFull())card.classList.add('op-is-flipping');
   };
-  if(!guidedFull()||!card.animate){
-    if(card.animate)deckAnimate(card,[{opacity:.12},{opacity:1}],{duration:MOTION.draw,fill:'both'});
-    deckWait(MOTION.draw,epoch,()=>{deckEffects.forEach(a=>a.cancel());deckEffects=[];beginFlip()});return
+  const finish=()=>{if(!liveDeck(epoch)||!card.isConnected)return;openDraw(card,epoch);deckEffects.forEach(a=>a.cancel());deckEffects=[]};
+  if(!card.animate){
+    deckWait(MOTION.flipStart,epoch,beginFlip);deckWait(end,epoch,finish);return
   }
-  const flight=deckAnimate(card,[{transform:'translate('+dx+'px,'+dy+'px) scale('+sx+','+sy+') rotate(-7deg)'},{offset:.7,transform:'translate('+dx*.07+'px,'+(dy*.07-10)+'px) scale(1.015) rotate(1deg)'},{transform:'none'}],{duration:MOTION.draw,easing:'cubic-bezier(.2,.76,.22,1)',fill:'both'});
-  flight.finished.then(()=>{if(!liveDeck(epoch)||!card.isConnected)return;flight.cancel();deckEffects=[];beginFlip()}).catch(()=>{});
+  const play=(node,frames,opts)=>onTimeline(node,frames,opts,origin,deckEffects);
+  if(guidedFull()){
+    card.classList.add('op-deal-flow');
+    // Translation and rotation are separate tracks of the same timeline. No stop at center.
+    const flight=play(card,[{transform:'translate('+dx+'px,'+dy+'px) scale('+sx+','+sy+') rotate(-7deg)'},{transform:'none'}],{duration:MOTION.draw,easing:'cubic-bezier(.24,.62,.26,1)'});
+    const f=play(front,[{transform:'rotateY(180deg)',visibility:'hidden'},{offset:.48,transform:'rotateY(94deg)',visibility:'hidden'},{offset:.5,transform:'rotateY(90deg)',visibility:'visible'},{transform:'rotateY(0deg)',visibility:'visible'}],{delay:MOTION.flipStart,duration:MOTION.flip,easing:'cubic-bezier(.34,.12,.38,1)'});
+    const b=play(back,[{transform:'rotateY(0deg)',visibility:'visible'},{offset:.5,transform:'rotateY(-90deg)',visibility:'visible'},{offset:.52,transform:'rotateY(-94deg)',visibility:'hidden'},{transform:'rotateY(-180deg)',visibility:'hidden'}],{delay:MOTION.flipStart,duration:MOTION.flip,easing:'cubic-bezier(.34,.12,.38,1)'});
+    deckWait(MOTION.flipStart,epoch,beginFlip);
+    Promise.all([flight.finished,f.finished,b.finished]).then(finish).catch(()=>{});
+  }else{
+    const fade=play(card,[{opacity:.1},{opacity:1}],{duration:MOTION.draw,easing:'ease-out'});
+    const bf=play(back,[{opacity:1},{opacity:0}],{delay:MOTION.flipStart,duration:MOTION.flip*.5,easing:'ease-in-out'});
+    const ff=play(front,[{opacity:0,visibility:'visible',transform:'none'},{opacity:1,visibility:'visible',transform:'none'}],{delay:MOTION.flipStart+MOTION.flip*.5,duration:MOTION.flip*.5,easing:'ease-out'});
+    deckWait(MOTION.flipStart,epoch,beginFlip);
+    Promise.all([fade.finished,bf.finished,ff.finished]).then(finish).catch(()=>{});
+  }
 }
 
 function nextGuided(){
@@ -283,57 +290,67 @@ const PORTRAIT_PATHS={
   D:['M9 3H91Q97 3 97 9','M97 9V91Q97 97 91 97','M91 97H9Q3 97 3 91','M3 91V9Q3 3 9 3']
 };
 const PORTRAIT_COLORS={S:['#cf9dff','#fff2ad','#72eaff','#e8adff'],A:['#fff5c6','#f4c35e','#a86e24','#fff0ae'],B:['#e9c9ff','#b78aff','#6937bc','#ddc3ff'],C:['#d6f2ff','#75c6ff','#347bb5','#c4e8ff'],D:['#f2f4fb','#c0c9d9','#8593a7','#e4e9f2']};
-function portraitForge(t,ms){
+function portraitForge(t){
   const colors=PORTRAIT_COLORS[t],paths=PORTRAIT_PATHS[t];
   const path=(d,i)=>'<path class="op-portrait-trace" pathLength="100" d="'+d+'" style="--op-segment:'+i+'"/>';
-  return '<span class="op-portrait-forge" data-tier="'+t+'" aria-hidden="true" style="--op-forge-ms:'+ms+'ms"><svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="op-portrait-foil" x1="0" y1="0" x2="1" y2="1">'+colors.map((color,i)=>'<stop offset="'+i/3+'" stop-color="'+color+'"/>').join('')+'</linearGradient></defs><rect class="op-portrait-seal" x="3" y="3" width="94" height="94" rx="6"/>'+paths.map(path).join('')+'<rect class="op-portrait-sheen" x="3" y="3" width="94" height="94" rx="6"/></svg></span>';
+  return '<span class="op-portrait-forge" data-tier="'+t+'" aria-hidden="true"><svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="op-portrait-foil" x1="0" y1="0" x2="1" y2="1">'+colors.map((color,i)=>'<stop offset="'+i/3+'" stop-color="'+color+'"/>').join('')+'</linearGradient></defs><rect class="op-portrait-seal" x="3" y="3" width="94" height="94" rx="6"/>'+paths.map(path).join('')+'<rect class="op-portrait-sheen" x="3" y="3" width="94" height="94" rx="6"/></svg></span>';
 }
 function confirmRank(t,source){
   if(rankLock||!guided||deckPhase!=='reveal'||!queue.length||!TIERS.includes(t))return;
   const n=queue[0],card=root.querySelector('.op-reveal-card'),panel=root.querySelector('.op-guided');
   if(!current(n)||state.tiers[n]||!card||!panel)return;
+  const target=panel.querySelector('[data-op-completed="'+t+'"]'),portrait=card.querySelector('.op-portrait'),front=card.querySelector('.op-card-front'),name=card.querySelector('.op-player-name');
+  if(!target||!portrait||!front||!name)return;
   queue.shift();state.tiers[n]=t;state.teams=[];guidedHistory.push(n);save();rankLock=true;
-  deckPhase='confirm';guidedMode=motionPreference();markMotion('confirm',t);panel.classList.remove('op-deck-phase-reveal');panel.classList.add('op-deck-phase-confirm');panel.classList.toggle('op-motion-full',guidedFull());panel.classList.toggle('op-motion-reduced',!guidedFull());const charge=MOTION.charge,forge=MOTION.portrait[t],hold=MOTION.hold[t],flight=MOTION.flight;panel.querySelector('[data-op-action="skip-guided"]').disabled=false;
+  deckPhase='confirm';guidedMode=motionPreference();markMotion('confirm',t);panel.classList.remove('op-deck-phase-reveal');panel.classList.add('op-deck-phase-confirm');panel.classList.toggle('op-motion-full',guidedFull());panel.classList.toggle('op-motion-reduced',!guidedFull());
+  panel.querySelector('[data-op-action="skip-guided"]').disabled=false;
   root.querySelectorAll('[data-op-assign]').forEach(x=>x.disabled=true);panel.querySelector('[data-op-action="undo-guided"]').disabled=true;source.classList.add('op-rank-chosen');
-  const target=panel.querySelector('[data-op-completed="'+t+'"]');
-  const finish=()=>{markMotion('land',t);nextGuided()};
-  const active=()=>rankLock&&card.isConnected;
-  const apply=()=>{
-    if(!active())return;
-    markMotion('material',t);card.querySelector('.op-portrait-forge')?.classList.add('op-forge-complete');card.dataset.tier=t;card.dataset.rarity=RANK_STYLE[t];card.classList.remove('op-rank-charging');card.classList.add('op-rank-confirm');
-    rankAfter(hold,showName);
-  };
-  const showName=()=>{
-    if(!active())return;
-    markMotion('name',t);card.classList.remove('op-name-pending');card.classList.add('op-name-reveal');rankAfter(MOTION.name,showBadge);
-  };
-  const showBadge=()=>{
-    if(!active())return;
-    markMotion('badge',t);card.querySelector('.op-card-front')?.insertAdjacentHTML('beforeend',cardBadge(t,true));rankAfter(MOTION.badge,send);
-  };
-  const startForge=()=>{
-    if(!active())return;
-    markMotion('portrait',t);card.classList.remove('op-rank-charging');card.classList.add('op-name-pending');card.querySelector('.op-portrait')?.insertAdjacentHTML('beforeend',portraitForge(t,forge));
-    rankAfter(forge,apply);
-  };
-  const send=()=>{
-    if(!rankLock||!card.isConnected)return;
-    markMotion('flight',t);
-    if(!target){rankTimer=setTimeout(finish,flight);return}
-    const r=card.getBoundingClientRect(),d=target.getBoundingClientRect(),scale=root.offsetWidth?root.getBoundingClientRect().width/root.offsetWidth:1,dx=(d.left+d.width/2-r.left-r.width/2)/(scale||1),dy=(d.top+d.height/2-r.top-r.height/2)/(scale||1);
-    card.classList.add('op-rank-flight');card.getAnimations().forEach(a=>a.cancel());
-    const land=()=>{if(!rankLock||!card.isConnected)return;target.classList.remove('op-completed-impact');void target.offsetWidth;target.classList.add('op-completed-impact');finish()};
-    if(card.animate){
-      const frames=guidedFull()?[{transform:'none',opacity:1},{offset:.22,transform:'translate('+dx*.17+'px,'+(dy*.17-8)+'px) scale(.92)',opacity:1},{transform:'translate('+dx+'px,'+dy+'px) scale(.22)',opacity:.45}]:[{opacity:1},{opacity:.08}];
-      rankEffect=card.animate(frames,{duration:flight,easing:'cubic-bezier(.4,.1,.6,1)',fill:'forwards'});
-      rankEffect.finished.then(land).catch(()=>{});
-    }else rankTimer=setTimeout(land,flight);
-  };
-  if(!guidedFull()){rankAfter(charge,startForge);return}
-  card.classList.add('op-rank-charging');const a=source.getBoundingClientRect(),b=(card.querySelector('.op-portrait')||card).getBoundingClientRect(),p=panel.getBoundingClientRect(),scale=root.offsetWidth?root.getBoundingClientRect().width/root.offsetWidth:1;
-  const x=(a.left+a.width/2-p.left)/(scale||1),y=(a.top+a.height/2-p.top)/(scale||1),dx=(b.left+b.width/2-a.left-a.width/2)/(scale||1),dy=(b.top+b.height/2-a.top-a.height/2)/(scale||1);
-  const beam=document.createElement('span');beam.className='op-rank-beam';beam.dataset.tier=t;beam.setAttribute('aria-hidden','true');beam.style.cssText='left:'+x+'px;top:'+y+'px;width:'+Math.hypot(dx,dy)+'px;--op-angle:'+Math.atan2(dy,dx)+'rad';panel.append(beam);
-  rankAfter(charge,()=>{beam.remove();startForge()});
+  const full=guidedFull(),scale=draftScale(),a=source.getBoundingClientRect(),b=portrait.getBoundingClientRect(),p=panel.getBoundingClientRect(),r=card.getBoundingClientRect(),d=target.getBoundingClientRect();
+  const x=(a.left+a.width/2-p.left)/scale,y=(a.top+a.height/2-p.top)/scale,ex=(b.left+b.width/2-a.left-a.width/2)/scale,ey=(b.top+b.height/2-a.top-a.height/2)/scale;
+  const dx=(d.left+d.width/2-r.left-r.width/2)/scale,dy=(d.top+d.height/2-r.top-r.height/2)/scale;
+  // Mount all layers once. The portrait and card geometry are never replaced or restyled mid-effect.
+  card.classList.add('op-rank-flow');card.dataset.opPendingTier=t;
+  portrait.insertAdjacentHTML('beforeend',portraitForge(t));
+  const forge=portrait.querySelector('.op-portrait-forge');
+  const frame=document.createElement('span');frame.className='op-flow-frame';frame.dataset.tier=t;frame.setAttribute('aria-hidden','true');frame.innerHTML='<i></i><i></i><i></i><i></i><b></b>';card.append(frame);
+  const plate=document.createElement('span');plate.className='op-flow-plate';plate.dataset.tier=t;plate.setAttribute('aria-hidden','true');plate.textContent=name.textContent;name.append(plate);
+  front.insertAdjacentHTML('beforeend',cardBadge(t,true));const badge=front.querySelector('.op-confirm-rank');badge.classList.add('op-flow-badge');
+  let beam=null;
+  if(full){beam=document.createElement('span');beam.className='op-rank-beam op-flow-beam';beam.dataset.tier=t;beam.setAttribute('aria-hidden','true');beam.style.cssText='left:'+x+'px;top:'+y+'px;width:'+Math.hypot(ex,ey)+'px;--op-angle:'+Math.atan2(ey,ex)+'rad';panel.append(beam)}
+  const finish=()=>{if(!rankLock||!card.isConnected)return;markMotion('land',t);target.classList.remove('op-completed-impact');void target.offsetWidth;target.classList.add('op-completed-impact');nextGuided()};
+  const offsets=[['portrait',MOTION.portraitStart],['material',MOTION.materialStart],['name',MOTION.nameStart],['badge',MOTION.badgeStart],['flight',MOTION.flightStart]];
+  let phaseIndex=0;
+  const record=(elapsed)=>{while(phaseIndex<offsets.length&&elapsed>=offsets[phaseIndex][1]){const phase=offsets[phaseIndex++][0];markMotion(phase,t);if(phase==='flight')card.classList.add('op-rank-flight')}};
+  const origin=document.timeline?.currentTime??performance.now();
+  const tick=()=>{if(!rankLock||!card.isConnected)return;record((document.timeline?.currentTime??performance.now())-origin);if(phaseIndex<offsets.length)rankClock=requestAnimationFrame(tick)};
+  rankClock=requestAnimationFrame(tick);
+  if(!card.animate){card.classList.add('op-flow-fallback');rankTimer=setTimeout(()=>{record(MOTION.rankEnd);finish()},MOTION.rankEnd);return}
+  const play=(node,frames,opts)=>onTimeline(node,frames,opts,origin,rankEffects);
+  const fade=(node,start,duration)=>play(node,[{opacity:0},{opacity:1}],{delay:start,duration,easing:'cubic-bezier(.2,.55,.3,1)'});
+  if(beam)play(beam,[{opacity:0,transform:'rotate(var(--op-angle)) scaleX(.06)'},{offset:.15,opacity:.9},{offset:.65,opacity:1,transform:'rotate(var(--op-angle)) scaleX(1)'},{opacity:0,transform:'rotate(var(--op-angle)) scaleX(1)'}],{duration:310,easing:'linear'});
+  const traces=[...forge.querySelectorAll('.op-portrait-trace')],seal=forge.querySelector('.op-portrait-seal'),sheen=forge.querySelector('.op-portrait-sheen');
+  if(full){
+    traces.forEach((trace,i)=>{
+      const start=MOTION.portraitStart+(t==='D'?i*52:t==='B'?i*19:0),duration=MOTION.portraitEnd-start-55;
+      play(trace,[{strokeDashoffset:100},{strokeDashoffset:0}],{delay:start,duration,easing:'linear'});
+      play(trace,[{opacity:0},{offset:.12,opacity:1},{offset:.76,opacity:1},{opacity:0}],{delay:start,duration:740-start,easing:'linear'});
+    });
+    fade(seal,510,230);
+    if(t==='S'||t==='A')play(sheen,[{strokeDashoffset:100,opacity:0},{offset:.15,opacity:.8},{offset:.75,opacity:.7},{strokeDashoffset:0,opacity:0}],{delay:240,duration:530,easing:'linear'});
+  }else fade(seal,MOTION.portraitStart,380);
+  fade(frame,MOTION.materialStart,390);
+  if(full){const gleam=frame.querySelector('b');play(gleam,[{opacity:0,transform:'translateX(-110%)'},{offset:.24,opacity:.8},{offset:.72,opacity:.55},{opacity:0,transform:'translateX(110%)'}],{delay:400,duration:410,easing:'linear'})}
+  fade(plate,MOTION.nameStart,260);
+  play(badge,full?[{opacity:0,transform:'translateY(5px) scale(.88)'},{opacity:1,transform:'none'}]:[{opacity:0},{opacity:1}],{delay:MOTION.badgeStart,duration:260,easing:'cubic-bezier(.18,.65,.25,1)'});
+  // One uninterrupted transform track: neutral scale -> tiny lift -> transfer to the tier.
+  const duration=MOTION.rankEnd;
+  const travel=play(card,full?[
+    {offset:0,transform:'none',opacity:1},
+    {offset:0.42,transform:'scale(1.013)',opacity:1},
+    {offset:MOTION.flightStart/duration,transform:'scale(1.008)',opacity:1,easing:'cubic-bezier(.35,.06,.54,1)'},
+    {offset:1,transform:'translate('+dx+'px,'+dy+'px) scale(.19)',opacity:0}
+  ]:[{offset:0,opacity:1},{offset:MOTION.flightStart/duration,opacity:1},{offset:1,opacity:0}],{duration,easing:'linear'});
+  travel.finished.then(()=>{record(MOTION.rankEnd);finish()}).catch(()=>{});
 }
 function tierBoard(){
   const unassigned=ROSTER.filter(n=>!state.tiers[n]);
