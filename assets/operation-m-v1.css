@@ -80,7 +80,7 @@
 #operationM .op-result-cta{display:flex;justify-content:center;margin:12px 0}
 
 body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){display:none!important}
-#operationM{container-type:inline-size;--op-available:70dvh;--op-team-card:clamp(70px,calc((var(--op-available) - 236px)/3),320px)}
+#operationM{container-type:inline-size;--op-available:70dvh;--op-team-card:clamp(70px,calc((var(--op-available) - 264px)/3),320px)}
 #operationM .op-shell{gap:8px;padding-bottom:14px}
 #operationM .op-toolbar{gap:7px;justify-content:flex-start}
 #operationM .op-page-label{font-size:15px;font-weight:800;white-space:nowrap;margin-right:5px}
