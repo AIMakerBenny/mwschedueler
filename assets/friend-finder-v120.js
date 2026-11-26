@@ -291,19 +291,59 @@ async function loadCategories(){
   })();
   return categoriesPromise;
 }
+let catalogItems=[],catalogReady=false,categorySignature='';
+const normalizeSearch=s=>String(s??'').normalize('NFKC').toLowerCase().replace(/[\s\p{P}\p{S}]/gu,'');
+function searchableLive(entry,query){
+  if(!isLiveEntry(entry))return false;
+  const needle=normalizeSearch(query);if(!needle)return false;
+  const category=liveCategory(entry),title=liveTitle(entry);
+  const categoryKey=normalizeSearch(category);
+  const aliases=[];
+  if(/월드오브워크레[이]?프?트|월드오브워크래프트|worldofwarcraft/.test(categoryKey)){
+    aliases.push('와우','WOW','World of Warcraft','월드 오브 워크래프트','월드 오브 워크레프트');
+    if(/포에버|forever/.test(categoryKey))aliases.push('와우 포에버','와포','WOW Forever');
+  }
+  return [category,title,...aliases].some(v=>normalizeSearch(v).includes(needle));
+}
+window.mwsFriendLiveMatchesV120=(contact,query)=>searchableLive(liveByUserId.get(stationKey(contact?.stationUrl)),query);
+function updateCategoryOptions(root){
+  const select=root.querySelector('#mwsFriendCategorySelect');if(!select)return;
+  const unique=new Map(),active=new Map();
+  function put(item,isLive){
+    const id=String(item?.id||'').trim(),name=String(item?.name||'').trim();if(!name)return;
+    const value=id?'id:'+id:'name:'+name;
+    unique.set(value,{id,name,value});if(isLive)active.set(value,(active.get(value)||0)+1);
+  }
+  for(const item of catalogItems)put(item,false);
+  for(const entry of liveByUserId.values())if(isLiveEntry(entry))put({id:liveCategoryId(entry),name:liveCategory(entry)},true);
+  const options=[...unique.values()].sort((a,b)=>Number(active.has(b.value))-Number(active.has(a.value))||a.name.localeCompare(b.name,'ko'));
+  const signature=JSON.stringify(options.map(o=>[o.value,o.name,active.get(o.value)||0]));
+  if(signature===categorySignature&&select.options.length>1)return;
+  const selected=select.value,selectedLabel=select.selectedOptions[0]?.textContent||'';
+  select.replaceChildren(new Option('전체 카테고리',''));
+  const liveGroup=document.createElement('optgroup');liveGroup.label='현재 LIVE 카테고리';
+  const allGroup=document.createElement('optgroup');allGroup.label='전체 방송 카테고리';
+  for(const o of options){const n=active.get(o.value)||0;(n?liveGroup:allGroup).appendChild(new Option(o.name+(n?' · '+n+'명':''),o.value))}
+  if(liveGroup.children.length)select.appendChild(liveGroup);
+  if(allGroup.children.length)select.appendChild(allGroup);
+  if(selected&&!options.some(o=>o.value===selected))select.appendChild(new Option(selectedLabel,selected));
+  select.value=selected;categorySignature=signature;
+}
 async function ensureCategoryControl(root){
-  if(document.getElementById('mwsFriendCategorySelect'))return;
-  const refresh=[...root.querySelectorAll('button')].find(b=>String(b.textContent||'').includes('라이브 새로고침'));
-  const search=root.querySelector('input[placeholder*="이름"],input[placeholder*="검색"]');
-  const host=refresh?.parentElement||search?.parentElement||root.firstElementChild||root;
-  const select=document.createElement('select');select.id='mwsFriendCategorySelect';select.innerHTML='<option value="">전체 카테고리</option>';
-  if(search&&search.parentElement===host)host.insertBefore(select,search);else host.insertBefore(select,refresh||host.firstChild);
-  const badge=document.createElement('span');badge.id='mwsFriendFastBadge';badge.textContent='빠른 LIVE 조회';host.insertBefore(badge,refresh||null);
-  select.onchange=()=>decorate(root);
-  const items=await loadCategories();
-  const unique=new Map();for(const item of items){const id=String(item?.id||'').trim(),name=String(item?.name||'').trim();if(name)unique.set(`${id}|${name}`,{id,name})}
-  for(const entry of liveByUserId.values()){if(!isLiveEntry(entry))continue;const name=liveCategory(entry),id=liveCategoryId(entry);if(name)unique.set(`${id}|${name}`,{id,name})}
-  [...unique.values()].sort((a,b)=>a.name.localeCompare(b.name,'ko')).forEach(x=>{const o=document.createElement('option');o.value=x.id?`id:${x.id}`:`name:${x.name}`;o.textContent=x.name;select.appendChild(o)});
+  let select=root.querySelector('#mwsFriendCategorySelect');
+  if(!select){
+    const refresh=root.querySelector('#friendFinderRefreshV5')||[...root.querySelectorAll('button')].find(b=>String(b.textContent||'').includes('라이브 새로고침'));
+    const search=root.querySelector('#friendFinderSearchV5');
+    const host=refresh?.parentElement||search?.parentElement||root.firstElementChild||root;
+    select=document.createElement('select');select.id='mwsFriendCategorySelect';select.setAttribute('aria-label','방송 카테고리');select.innerHTML='<option value="">전체 카테고리</option>';
+    if(search&&search.parentElement===host)host.insertBefore(select,search);else host.insertBefore(select,refresh||host.firstChild);
+    const badge=document.createElement('span');badge.id='mwsFriendFastBadge';badge.textContent='빠른 LIVE 조회';host.insertBefore(badge,refresh||null);
+    select.onchange=()=>decorate(root);
+    if(search)search.placeholder='이름, 태그, 방송 제목, 카테고리 검색';
+    categorySignature='';
+  }
+  updateCategoryOptions(root);
+  if(!catalogReady){catalogItems=await loadCategories();catalogReady=true;updateCategoryOptions(root)}
 }
 const thumbPreferred=new Map(),thumbFailedAt=new Map();
 const THUMB_FAILURE_COOLDOWN=60000;
@@ -344,7 +384,7 @@ function decorate(root=friendRoot()){
   for(const {card,id} of cardRows(root)){
     card.parentElement?.classList.add('mws-friend-live-grid-v120');
     const entry=id?liveByUserId.get(id):null;const live=isLiveEntry(entry);const cat=liveCategory(entry),catId=liveCategoryId(entry),viewers=liveViewers(entry);
-    let match=true;if(selected){match=live&&(selected.startsWith('id:')?catId===selected.slice(3):cat===selected.slice(5))}
+    let match=true;if(selected){match=live&&(selected.startsWith('id:')?catId===selected.slice(3):normalizeSearch(cat)===normalizeSearch(selected.slice(5)))}
     card.classList.toggle('mws-category-hidden-v120',!match);
 
     let meta=card.querySelector('.mws-live-category-v120');if(!meta){meta=document.createElement('div');meta.className='mws-live-category-v120';const actions=[...card.querySelectorAll('button,a')].find(x=>String(x.textContent||'').trim()==='프로필')?.parentElement;actions?.parentElement?.insertBefore(meta,actions)||card.appendChild(meta)}
@@ -368,6 +408,14 @@ function decorate(root=friendRoot()){
       if(visible&&shouldRefreshLiveImage(img,bno,thumbStamp,visible))setLiveImage(img,screen,bno,thumbStamp)
     }
   }
+  const grid=root.querySelector('#friendFinderGridV5');
+  if(grid){
+    const cards=[...grid.querySelectorAll('.friend-finder-card-v5[data-id]')];
+    const hidden=cards.length>0&&cards.every(c=>c.classList.contains('mws-category-hidden-v120'));
+    const existing=grid.querySelector('.mws-friend-filter-empty');
+    if(hidden&&!existing){const message=document.createElement('div');message.className='friend-finder-empty-v5 mws-friend-filter-empty';message.textContent='선택한 카테고리에 해당하는 LIVE 방송이 없습니다.';grid.appendChild(message)}
+    else if(!hidden&&existing)existing.remove();
+  }
 }
 let friendGridObserver=null,friendGridObserved=null;
 function bindFriendGridObserver(){
@@ -384,7 +432,7 @@ function bindFriendGridObserver(){
   return true;
 }
 function scheduleUi(){if(uiScheduled)return;uiScheduled=true;requestAnimationFrame(()=>{uiScheduled=false;decorate()})}
-window.addEventListener('mws:friend-live-updated',scheduleUi);
+window.addEventListener('mws:friend-live-updated',()=>{const root=activeFriendRoot();if(root?.querySelector('#friendFinderSearchV5')?.value.trim())window.renderFriendFinderV5?.();scheduleUi()});
 window.addEventListener('mawang:datachange',()=>{bindFriendGridObserver();scheduleUi();scheduleActiveRefresh(250)});
 document.addEventListener('click',event=>{
   const text=String(event.target?.closest?.('button')?.textContent||'').trim();
