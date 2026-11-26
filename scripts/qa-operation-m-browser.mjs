@@ -104,7 +104,7 @@ for(const [w,h] of [[1366,768],[1726,892],[1715,894],[1920,1080],[2560,1440],[25
      assert.deepEqual(observed.events.map(e=>e.phase),last?['confirm','portrait','material','name','badge','flight','land']:['confirm','portrait','material','name','badge','flight','land','draw','flip','reveal']);
      assert(observed.events.every(e=>e.mode==='full'),JSON.stringify(observed));
      const gaps=observed.events.slice(1).map((e,j)=>Math.round(e.at-observed.events[j].at));
-     const offsets=observed.events.slice(1,7).map(e=>Math.round(e.at-observed.events[0].at));assert(offsets.every((v,j)=>Math.abs(v-[130,350,480,550,780,1160][j])<=95),JSON.stringify({offsets,tier}));
+     const phaseOffsets=observed.events.slice(1,7).map(e=>Math.round(e.at-observed.events[0].at));assert(phaseOffsets.every((v,j)=>Math.abs(v-[130,350,480,550,780,1160][j])<=95),JSON.stringify({phaseOffsets,tier}));
      if(!last){assert(gaps[7]>=195&&gaps[8]>=350,JSON.stringify(gaps));assert(observed.observedDraw!==null&&observed.observedFlip!==null,JSON.stringify(observed))}
      timings.push({tier,ms:Math.round(observed.elapsed),gaps,portrait:{samples:samples.length,offsetRange:[Math.round(Math.min(...offsets)),Math.round(Math.max(...offsets))],segments:samples[0].segments,seal:observed.sealed,name:observed.seenName,badge:observed.seenBadge}});
    }else{assert(observed.events.some(e=>e.phase==='skip-confirm'),JSON.stringify(observed))}
