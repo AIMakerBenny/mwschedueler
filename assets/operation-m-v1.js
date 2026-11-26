@@ -6,7 +6,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const read=()=>{try{return normalizeState(JSON.parse(localStorage.getItem(KEY)||'null'))}catch(_){return normalizeState(null)}};
 let state=read(),tab='roster',selected='',dragName='',picker='',query='',notice='',lastSignature='',saveFailed=false;
 let configDraft=null,configSaving=false,workspaceReady=false,workspaceLoading=false,workspaceError=false;
-let arrived='',revealDraft=false,layoutFrame=0,queue=[],guided=false,rankLock=false,rankTimer=0;
+let arrived='',revealDraft=false,layoutFrame=0,queue=[],guided=false,choosingMode=false,rankLock=false,rankTimer=0;
 let lastView='',guidedHistory=[],lastMove=null;
 const RANK_STYLE={S:'holo',A:'gold',B:'crystal',C:'steel',D:'silver'};
 const RANK_ART={
@@ -86,7 +86,18 @@ function row(t){
 }
 function roster(){
   const host=byId.get(state.roles[0]);
-  return '<div class="op-roster"><div class="op-block-head"><h2>감독</h2><span class="op-host">'+photo(host,host?.name||'주최자')+'<span>주최자 · '+esc(host?.name||'미지정')+'</span></span></div><div class="op-coaches">'+state.roles.slice(1).map((id,i)=>{const c=byId.get(id);return '<article class="op-coach" data-team="'+i+'">'+photo(c,c?.name||'감독')+'<div><small>감독 '+(i+1)+'</small><strong>'+esc(c?.name||'미지정')+'</strong></div></article>'}).join('')+'</div><div class="op-block-head"><h2>참가자 <small>'+ (20-missing.length)+' / 20</small></h2>'+'</div><div class="op-roster-grid">'+ROSTER.map(n=>player(n,'roster')).join('')+'</div><div class="op-roster-next">'+button('start-guided','다음 · 티어표 →','class="op-primary"')+'</div></div>';
+  return '<div class="op-roster"><div class="op-block-head"><h2>감독</h2><span class="op-host">'+photo(host,host?.name||'주최자')+'<span>주최자 · '+esc(host?.name||'미지정')+'</span></span></div><div class="op-coaches">'+state.roles.slice(1).map((id,i)=>{const c=byId.get(id),name=c?.name||'미지정';return '<article class="op-coach" data-team="'+i+'" style="--op-order:'+i+'">'+photo(c,name)+'<div class="op-coach-plate"><strong title="'+esc(name)+'">'+esc(name)+'</strong></div><span class="op-coach-frame" aria-hidden="true"><i></i><i></i><i></i><i></i></span></article>'}).join('')+'</div><div class="op-block-head"><h2>참가자 <small>'+(20-missing.length)+' / 20</small></h2></div><div class="op-roster-grid">'+ROSTER.map(n=>player(n,'roster')).join('')+'</div><div class="op-roster-next">'+button('choose-mode','다음','class="op-primary"')+'</div></div>';
+}
+function modePreview(mode){
+  if(mode==='guided')return '<span class="op-mode-preview op-mode-preview-guided" aria-hidden="true"><span class="op-preview-stack">'+[0,1,2].map(i=>'<span class="op-preview-card op-preview-back" style="--op-i:'+i+'">'+cardBack()+'</span>').join('')+'<span class="op-preview-card op-preview-draw"><span class="op-preview-portrait"></span><span class="op-preview-plate"></span></span></span></span>';
+  return '<span class="op-mode-preview op-mode-preview-list" aria-hidden="true"><span class="op-preview-board">'+TIERS.map(t=>'<span class="op-preview-row" data-tier="'+t+'"><span>'+crest(t)+t+'</span><i></i><i></i><i></i></span>').join('')+'<span class="op-preview-token op-preview-token-one"></span><span class="op-preview-token op-preview-token-two"></span></span></span>';
+}
+function modeChoice(){
+  return '<section class="op-mode-choice" aria-label="티어 분류 방식 선택"><div class="op-mode-options">'+[['guided','한 장씩 분류','카드를 한 장씩 공개하고 티어를 결정합니다.','start-guided'],['list','전체 목록 분류','원하는 참가자를 자유롭게 티어에 배치합니다.','start-list']].map(([mode,title,description,action])=>'<button type="button" class="op-mode-card" data-mode="'+mode+'" data-op-action="'+action+'">'+modePreview(mode)+'<span class="op-mode-caption"><strong>'+title+'</strong><span>'+description+'</span></span></button>').join('')+'</div><div class="op-mode-back">'+button('tab-roster','참가자 목록')+'</div></section>';
+}
+function chooseMode(){
+  tab='tier';guided=false;choosingMode=true;selected='';notice='';render();
+  root.querySelector('.op-mode-card')?.focus({preventScroll:true});
 }
 function adminConfig(){
   if(!configDraft||!canConfigure())return '';
@@ -104,18 +115,18 @@ function pickerHtml(){
 function startGuided(){
   queue=ROSTER.filter(n=>current(n)&&!state.tiers[n]);
   for(let i=queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[queue[i],queue[j]]=[queue[j],queue[i]]}
-  tab='tier';guided=queue.length>0;guidedHistory=[];selected='';notice='';render();
+  tab='tier';choosingMode=false;guided=queue.length>0;guidedHistory=[];selected='';notice=guided?'':'분류할 미분류 참가자가 없습니다.';render();
 }
 function guidedBoard(){
   queue=queue.filter(n=>current(n)&&!state.tiers[n]);
   if(!queue.length){guided=false;return tierBoard()}
   const n=queue[0],name=display(n),done=ROSTER.filter(x=>state.tiers[x]).length;
-  return '<div class="op-guided"><div class="op-guided-top"><span class="op-guided-count">'+(done+1)+' / 20</span><div class="op-guided-track" role="progressbar" aria-label="분류 진행률" aria-valuenow="'+done+'" aria-valuemin="0" aria-valuemax="20"><i style="width:'+(done*5)+'%"></i></div>'+button('undo-guided','이전',guidedHistory.length?'':'disabled')+button('exit-guided','전체 티어표')+'</div><div class="op-guided-stage"><div class="op-stage-halo" aria-hidden="true"></div><article class="op-reveal-card op-card" data-rarity="neutral" data-op-current="'+esc(n)+'">'+cardFace(current(n),name)+cardBack()+'</article></div><div class="op-guided-ranks">'+TIERS.map((t,i)=>'<button type="button" class="op-guide-rank" data-op-assign="'+t+'" data-tier="'+t+'" aria-keyshortcuts="'+(i+1)+'"><span class="op-keyhint">'+(i+1)+'</span><strong>'+crest(t)+t+'</strong><small>'+ROSTER.filter(x=>state.tiers[x]===t).length+'명</small></button>').join('')+'</div></div>';
+  return '<div class="op-guided"><div class="op-guided-top"><span class="op-guided-count">'+(done+1)+' / 20</span><div class="op-guided-track" role="progressbar" aria-label="분류 진행률" aria-valuenow="'+done+'" aria-valuemin="0" aria-valuemax="20"><i style="width:'+(done*5)+'%"></i></div>'+button('undo-guided','이전',guidedHistory.length?'':'disabled')+button('choose-mode','방식 변경')+button('exit-guided','전체 티어표')+'</div><div class="op-guided-stage"><div class="op-stage-halo" aria-hidden="true"></div><article class="op-reveal-card op-card" data-rarity="neutral" data-op-current="'+esc(n)+'">'+cardFace(current(n),name)+cardBack()+'</article></div><div class="op-guided-ranks">'+TIERS.map((t,i)=>'<button type="button" class="op-guide-rank" data-op-assign="'+t+'" data-tier="'+t+'" aria-keyshortcuts="'+(i+1)+'"><span class="op-keyhint">'+(i+1)+'</span><strong>'+crest(t)+t+'</strong><small>'+ROSTER.filter(x=>state.tiers[x]===t).length+'명</small></button>').join('')+'</div></div>';
 }
 function tierBoard(){
   const unassigned=ROSTER.filter(n=>!state.tiers[n]);
 
-  return '<div class="op-tier-workspace"><div class="op-pool '+(!unassigned.length?'op-pool-empty':'')+'" data-count="'+unassigned.length+'" data-op-drop=""><div class="op-block-head"><h2>미분류 <small>'+unassigned.length+'</small></h2><div class="op-pool-actions">'+(unassigned.length?button('start-guided','한 장씩 분류'):'')+(lastMove?button('undo-move','되돌리기'):'')+button('reset','초기화')+'<button type="button" data-op-tier="" '+(!selected?'disabled':'')+'>미분류로 이동</button></div></div>'+(unassigned.length?'<div class="op-player-grid">'+unassigned.map(n=>player(n)).join('')+'</div>':'')+'</div><div class="op-board" data-layout="columns">'+TIERS.map(row).join('')+'</div></div>';
+  return '<div class="op-tier-workspace"><div class="op-pool '+(!unassigned.length?'op-pool-empty':'')+'" data-count="'+unassigned.length+'" data-op-drop=""><div class="op-block-head"><h2>미분류 <small>'+unassigned.length+'</small></h2><div class="op-pool-actions">'+button('choose-mode','방식 변경')+(lastMove?button('undo-move','되돌리기'):'')+button('reset','초기화')+'<button type="button" data-op-tier="" '+(!selected?'disabled':'')+'>미분류로 이동</button></div></div>'+(unassigned.length?'<div class="op-player-grid">'+unassigned.map(n=>player(n)).join('')+'</div>':'')+'</div><div class="op-board" data-layout="columns">'+TIERS.map(row).join('')+'</div></div>';
 }
 async function saveConfig(){
   if(!canConfigure()||!configDraft||configSaving)return;
@@ -145,14 +156,15 @@ function render(){
     root.innerHTML='<div class="op-shell"><div class="op-result-empty">'+(workspaceError?'인물 설정을 불러오지 못했습니다. '+button('retry','다시 시도'):'참가자 정보를 불러오는 중…')+'</div></div>';return;
   }
   if(rankLock)return;
-  const view=tab+(guided?':guided':'');
+  const view=tab+(choosingMode?':choice':guided?':guided':'');
+  const entering=lastView!==view;
   const scrolls=lastView===view?Object.fromEntries([...root.querySelectorAll('.op-tier-row')].map(r=>[r.dataset.tier,r.querySelector('.op-player-grid')?.scrollTop||0])):{};
   lastView=view;
   sync();const assigned=ROSTER.filter(n=>TIERS.includes(state.tiers[n])).length;
-  const action=tab==='roster'||guided?'':button('draft',state.teams.length?'다시 자동 드래프트':'자동 드래프트','class="op-primary" '+(!available()?'disabled':''));
+  const action=tab==='roster'||guided||choosingMode?'':button('draft',state.teams.length?'다시 자동 드래프트':'자동 드래프트','class="op-primary" '+(!available()?'disabled':''));
   const scoreSpread=state.teams.length?Math.max(...state.teams.map(t=>teamStats(t,state.tiers).score))-Math.min(...state.teams.map(t=>teamStats(t,state.tiers).score)):null;
   const status=notice||(saveFailed?'브라우저 저장 불가':missing.length?'연락처 미연결 '+missing.length+'명 · 관리자 설정이 필요합니다.':'');
-  root.innerHTML='<div class="op-shell" data-view="'+tab+'"><div class="op-toolbar"><span class="op-page-label">오퍼 M</span><nav class="op-tabs" aria-label="오퍼 M 도구">'+[['roster','참가자'],['tier','티어표'],['result','가상 드래프트']].map(([id,label])=>button('tab-'+id,label,'aria-pressed="'+(tab===id)+'"')).join('')+'</nav><div class="op-actions">'+(tab==='tier'?'<span class="op-progress">'+assigned+' / 20</span>':tab==='result'&&scoreSpread!==null?'<span class="op-progress">점수 차이 <b>'+scoreSpread+'</b></span>':'')+action+(canConfigure()?button('open-config','인물 설정','class="op-settings" aria-label="관리자 인물 설정"'):'')+'</div></div>'+(status?'<div class="op-status" role="status">'+esc(status)+'</div>':'')+(tab==='roster'?roster():tab==='tier'?(guided?guidedBoard():tierBoard()):results())+adminConfig()+'</div>';
+  root.innerHTML='<div class="op-shell'+(entering?' op-view-enter':'')+'" data-view="'+tab+'"><div class="op-toolbar"><span class="op-page-label">오퍼 M</span><nav class="op-tabs" aria-label="오퍼 M 도구">'+[['roster','참가자'],['tier','티어표'],['result','가상 드래프트']].map(([id,label])=>button('tab-'+id,label,'aria-pressed="'+(tab===id)+'"')).join('')+'</nav><div class="op-actions">'+(tab==='tier'?'<span class="op-progress">'+assigned+' / 20</span>':tab==='result'&&scoreSpread!==null?'<span class="op-progress">점수 차이 <b>'+scoreSpread+'</b></span>':'')+action+(canConfigure()?button('open-config','인물 설정','class="op-settings" aria-label="관리자 인물 설정"'):'')+'</div></div>'+(status?'<div class="op-status" role="status">'+esc(status)+'</div>':'')+(tab==='roster'?roster():tab==='tier'?(choosingMode?modeChoice():guided?guidedBoard():tierBoard()):results())+adminConfig()+'</div>';
   for(const r of root.querySelectorAll('.op-tier-row')){const g=r.querySelector('.op-player-grid');if(g&&scrolls[r.dataset.tier])g.scrollTop=scrolls[r.dataset.tier]}
   updateSelection();
   lastSignature=signature();
@@ -225,20 +237,22 @@ root.addEventListener('click',e=>{
   if(b.dataset.opAssign&&guided&&queue.length&&TIERS.includes(b.dataset.opAssign)){if(e.detail>1||rankLock)return;const n=queue.shift(),t=b.dataset.opAssign;if(!current(n)||state.tiers[n]){render();return}state.tiers[n]=t;state.teams=[];guidedHistory.push(n);save();rankLock=true;const card=root.querySelector('.op-reveal-card');if(card){card.dataset.tier=t;card.dataset.rarity=RANK_STYLE[t];card.classList.add('op-rank-confirm');card.querySelector('.op-card-front')?.insertAdjacentHTML('beforeend',cardBadge(t,true))}root.querySelectorAll('[data-op-assign]').forEach(x=>x.disabled=true);const finish=()=>{rankLock=false;rankTimer=0;if(!queue.length)guided=false;render()};rankTimer=setTimeout(finish,matchMedia('(prefers-reduced-motion: reduce)').matches?0:{S:650,A:500,B:400,C:300,D:240}[t]);return}
   if(rankLock){clearTimeout(rankTimer);rankTimer=0;rankLock=false;}
   switch(b.dataset.opAction){
+    case 'choose-mode':chooseMode();break;
     case 'start-guided':lastMove=null;startGuided();break;
+    case 'start-list':choosingMode=false;guided=false;tab='tier';selected='';notice='';render();break;
     case 'undo-move':{const m=lastMove;lastMove=null;if(m&&current(m.n)&&(state.tiers[m.n]||'')===m.to){if(m.from)state.tiers[m.n]=m.from;else delete state.tiers[m.n];state.teams=[];selected='';arrived=m.n;save();render()}break;}
-    case 'exit-guided':guided=false;render();break;
+    case 'exit-guided':choosingMode=false;guided=false;render();break;
     case 'undo-guided':{const n=guidedHistory.pop();if(n){delete state.tiers[n];state.teams=[];queue.unshift(n);guided=true;save();render()}break;}
     case 'retry':void enter();break;
-    case 'tab-roster':guided=false;tab='roster';selected='';notice='';render();break;
-    case 'tab-tier':guided=false;tab='tier';selected='';notice='';render();break;
-    case 'tab-result':guided=false;tab='result';selected='';notice='';render();break;
+    case 'tab-roster':choosingMode=false;guided=false;tab='roster';selected='';notice='';render();break;
+    case 'tab-tier':choosingMode=false;guided=false;tab='tier';selected='';notice='';render();break;
+    case 'tab-result':choosingMode=false;guided=false;tab='result';selected='';notice='';render();break;
     case 'open-config':if(canConfigure()){configDraft={links:{...state.links},roles:[...state.roles]};notice='';render();root.querySelector('.op-config-head button')?.focus()}break;
     case 'close-config':if(!configSaving){configDraft=null;picker='';notice='';render()}break;
     case 'save-config':void saveConfig();break;
     case 'close-picker':picker='';query='';render();break;
-    case 'reset':if(!confirm('20명의 티어와 가상 팀 결과를 초기화할까요?'))return;state.tiers={};state.teams=[];lastMove=null;guided=false;selected='';notice='';save();render();break;
-    case 'draft':sync();if(!available())return;state.teams=balancedDraft(state.tiers);lastMove=null;tab='result';revealDraft=true;notice='';save();render();break;
+    case 'reset':if(!confirm('20명의 티어와 가상 팀 결과를 초기화할까요?'))return;state.tiers={};state.teams=[];lastMove=null;choosingMode=false;guided=false;selected='';notice='';save();render();break;
+    case 'draft':sync();if(!available())return;state.teams=balancedDraft(state.tiers);lastMove=null;choosingMode=false;tab='result';revealDraft=true;notice='';save();render();break;
   }
 });
 root.addEventListener('error',e=>{if(e.target instanceof HTMLImageElement)e.target.style.visibility='hidden'},true);
@@ -253,7 +267,7 @@ root.addEventListener('dragover',e=>{const r=e.target.closest('[data-op-drop]');
 root.addEventListener('drop',e=>{const r=e.target.closest('[data-op-drop]');if(!r||!dragName)return;e.preventDefault();const n=dragName;dragName='';move(n,r.dataset.opDrop)});
 root.addEventListener('dragleave',e=>{const r=e.target.closest('[data-op-drop]');if(r&&!r.contains(e.relatedTarget))r.classList.remove('op-drop-active')});
 root.addEventListener('dragend',()=>{dragName='';root.querySelectorAll('.op-drop-active,.op-dragging').forEach(x=>x.classList.remove('op-drop-active','op-dragging'))});
-window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{clearTimeout(rankTimer);rankTimer=0;rankLock=false;tab='roster';guided=false;selected='';picker='';configDraft=null}});
+window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{clearTimeout(rankTimer);rankTimer=0;rankLock=false;tab='roster';choosingMode=false;guided=false;selected='';picker='';configDraft=null}});
 window.addEventListener('mws:app-ready',()=>{workspaceReady=false;configDraft=null;picker='';if(root.classList.contains('active'))void enter()});
 window.addEventListener('mawang:datachange',()=>window.mwsOperationM?.refresh());
 window.mwsOperationM={render,refresh(){if(!root.classList.contains('active')||!workspaceReady)return;sync();if(signature()!==lastSignature)render()}};
