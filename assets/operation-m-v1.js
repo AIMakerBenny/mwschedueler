@@ -13,10 +13,10 @@ let draftRun=null,draftRender=false;
 const draftLater=(run,ms,fn)=>{run.timers.push(setTimeout(()=>{if(draftRun===run&&root.classList.contains('active'))fn()},ms))};
 function clearRankMotion(){clearTimeout(rankTimer);rankTimer=0;rankPhaseTimers.forEach(clearTimeout);rankPhaseTimers=[];rankEffect?.cancel();rankEffect=null;root.querySelectorAll('.op-rank-beam').forEach(x=>x.remove())}
 function rankAfter(ms,fn){rankPhaseTimers.push(setTimeout(fn,ms))}
-const MOTION=Object.freeze({shuffle:1700,draw:640,flip:700,charge:240,hold:Object.freeze({S:900,A:740,B:640,C:540,D:440}),flight:480});
+const MOTION=Object.freeze({shuffle:1700,draw:640,flip:700,charge:240,portrait:Object.freeze({S:650,A:560,B:500,C:450,D:400}),hold:Object.freeze({S:900,A:740,B:640,C:540,D:440}),name:180,badge:260,flight:480});
 let deckPhase='pick',deckEpoch=0,paused=false,deckEffects=[],deckTimers=[],rebuildingGuided=false,guidedMode='full',motionTrace=[];
 function motionPreference(){return (typeof window.mwsMotionReduced==='function'?window.mwsMotionReduced():reducedMotion())?'reduced':'full'}
-function markMotion(phase,tier=''){motionTrace.push({phase,tier,mode:guidedMode,at:performance.now()});if(motionTrace.length>256)motionTrace.shift()}
+function markMotion(phase,tier=''){motionTrace.push({phase,tier,mode:guidedMode,at:performance.now()});if(motionTrace.length>512)motionTrace.shift()}
 function canSkipGuided(){return ['shuffle','draw','flip','confirm'].includes(deckPhase)}
 const guidedFull=()=>guidedMode==='full';
 function stopShuffle(){
@@ -274,18 +274,47 @@ function skipGuidedMotion(){
   if(deckPhase==='shuffle'){stopShuffle();finishShuffle(deckEpoch);return}
   if(['draw','flip'].includes(deckPhase)){stopShuffle();const card=root.querySelector('.op-single-center .op-reveal-card');if(card)openDraw(card,deckEpoch);else{refreshGuided();if(!paused&&!document.hidden)drawCard(0)}}
 }
+// The portrait is forged independently of the card's outer material.
+const PORTRAIT_PATHS={
+  S:['M50 3H91Q97 3 97 9V91Q97 97 91 97H9Q3 97 3 91V9Q3 3 9 3H50'],
+  A:['M50 3H91Q97 3 97 9V91Q97 97 91 97H50','M50 3H9Q3 3 3 9V91Q3 97 9 97H50'],
+  B:['M50 3H9Q3 3 3 9V50','M50 3H91Q97 3 97 9V50','M97 50V91Q97 97 91 97H50','M50 97H9Q3 97 3 91V50'],
+  C:['M3 50V9Q3 3 9 3H91Q97 3 97 9V91Q97 97 91 97H9Q3 97 3 91V50'],
+  D:['M9 3H91Q97 3 97 9','M97 9V91Q97 97 91 97','M91 97H9Q3 97 3 91','M3 91V9Q3 3 9 3']
+};
+const PORTRAIT_COLORS={S:['#cf9dff','#fff2ad','#72eaff','#e8adff'],A:['#fff5c6','#f4c35e','#a86e24','#fff0ae'],B:['#e9c9ff','#b78aff','#6937bc','#ddc3ff'],C:['#d6f2ff','#75c6ff','#347bb5','#c4e8ff'],D:['#f2f4fb','#c0c9d9','#8593a7','#e4e9f2']};
+function portraitForge(t,ms){
+  const colors=PORTRAIT_COLORS[t],paths=PORTRAIT_PATHS[t];
+  const path=(d,i)=>'<path class="op-portrait-trace" pathLength="100" d="'+d+'" style="--op-segment:'+i+'"/>';
+  return '<span class="op-portrait-forge" data-tier="'+t+'" aria-hidden="true" style="--op-forge-ms:'+ms+'ms"><svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="op-portrait-foil" x1="0" y1="0" x2="1" y2="1">'+colors.map((color,i)=>'<stop offset="'+i/3+'" stop-color="'+color+'"/>').join('')+'</linearGradient></defs><rect class="op-portrait-seal" x="3" y="3" width="94" height="94" rx="6"/>'+paths.map(path).join('')+'<rect class="op-portrait-sheen" x="3" y="3" width="94" height="94" rx="6"/></svg></span>';
+}
 function confirmRank(t,source){
   if(rankLock||!guided||deckPhase!=='reveal'||!queue.length||!TIERS.includes(t))return;
   const n=queue[0],card=root.querySelector('.op-reveal-card'),panel=root.querySelector('.op-guided');
   if(!current(n)||state.tiers[n]||!card||!panel)return;
   queue.shift();state.tiers[n]=t;state.teams=[];guidedHistory.push(n);save();rankLock=true;
-  deckPhase='confirm';guidedMode=motionPreference();markMotion('confirm',t);panel.classList.remove('op-deck-phase-reveal');panel.classList.add('op-deck-phase-confirm');panel.classList.toggle('op-motion-full',guidedFull());panel.classList.toggle('op-motion-reduced',!guidedFull());const charge=MOTION.charge,hold=MOTION.hold[t],flight=MOTION.flight;panel.querySelector('[data-op-action="skip-guided"]').disabled=false;
+  deckPhase='confirm';guidedMode=motionPreference();markMotion('confirm',t);panel.classList.remove('op-deck-phase-reveal');panel.classList.add('op-deck-phase-confirm');panel.classList.toggle('op-motion-full',guidedFull());panel.classList.toggle('op-motion-reduced',!guidedFull());const charge=MOTION.charge,forge=MOTION.portrait[t],hold=MOTION.hold[t],flight=MOTION.flight;panel.querySelector('[data-op-action="skip-guided"]').disabled=false;
   root.querySelectorAll('[data-op-assign]').forEach(x=>x.disabled=true);panel.querySelector('[data-op-action="undo-guided"]').disabled=true;source.classList.add('op-rank-chosen');
   const target=panel.querySelector('[data-op-completed="'+t+'"]');
   const finish=()=>{markMotion('land',t);nextGuided()};
+  const active=()=>rankLock&&card.isConnected;
   const apply=()=>{
-    if(!rankLock||!card.isConnected)return;
-    markMotion('material',t);card.dataset.tier=t;card.dataset.rarity=RANK_STYLE[t];card.classList.remove('op-rank-charging');card.classList.add('op-rank-confirm');card.querySelector('.op-card-front')?.insertAdjacentHTML('beforeend',cardBadge(t,true));
+    if(!active())return;
+    markMotion('material',t);card.querySelector('.op-portrait-forge')?.classList.add('op-forge-complete');card.dataset.tier=t;card.dataset.rarity=RANK_STYLE[t];card.classList.remove('op-rank-charging');card.classList.add('op-rank-confirm');
+    rankAfter(hold,showName);
+  };
+  const showName=()=>{
+    if(!active())return;
+    markMotion('name',t);card.classList.remove('op-name-pending');card.classList.add('op-name-reveal');rankAfter(MOTION.name,showBadge);
+  };
+  const showBadge=()=>{
+    if(!active())return;
+    markMotion('badge',t);card.querySelector('.op-card-front')?.insertAdjacentHTML('beforeend',cardBadge(t,true));rankAfter(MOTION.badge,send);
+  };
+  const startForge=()=>{
+    if(!active())return;
+    markMotion('portrait',t);card.classList.remove('op-rank-charging');card.classList.add('op-name-pending');card.querySelector('.op-portrait')?.insertAdjacentHTML('beforeend',portraitForge(t,forge));
+    rankAfter(forge,apply);
   };
   const send=()=>{
     if(!rankLock||!card.isConnected)return;
@@ -300,11 +329,11 @@ function confirmRank(t,source){
       rankEffect.finished.then(land).catch(()=>{});
     }else rankTimer=setTimeout(land,flight);
   };
-  if(!guidedFull()){rankAfter(charge,()=>{apply();rankAfter(hold,send)});return}
-  card.classList.add('op-rank-charging');const a=source.getBoundingClientRect(),b=card.getBoundingClientRect(),p=panel.getBoundingClientRect(),scale=root.offsetWidth?root.getBoundingClientRect().width/root.offsetWidth:1;
+  if(!guidedFull()){rankAfter(charge,startForge);return}
+  card.classList.add('op-rank-charging');const a=source.getBoundingClientRect(),b=(card.querySelector('.op-portrait')||card).getBoundingClientRect(),p=panel.getBoundingClientRect(),scale=root.offsetWidth?root.getBoundingClientRect().width/root.offsetWidth:1;
   const x=(a.left+a.width/2-p.left)/(scale||1),y=(a.top+a.height/2-p.top)/(scale||1),dx=(b.left+b.width/2-a.left-a.width/2)/(scale||1),dy=(b.top+b.height/2-a.top-a.height/2)/(scale||1);
   const beam=document.createElement('span');beam.className='op-rank-beam';beam.dataset.tier=t;beam.setAttribute('aria-hidden','true');beam.style.cssText='left:'+x+'px;top:'+y+'px;width:'+Math.hypot(dx,dy)+'px;--op-angle:'+Math.atan2(dy,dx)+'rad';panel.append(beam);
-  rankAfter(charge,()=>{beam.remove();apply();rankAfter(hold,send)});
+  rankAfter(charge,()=>{beam.remove();startForge()});
 }
 function tierBoard(){
   const unassigned=ROSTER.filter(n=>!state.tiers[n]);
