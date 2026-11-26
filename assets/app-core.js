@@ -1522,6 +1522,9 @@ function renderCalendarSearchResultsV172(){
   const range=document.getElementById('calendarSearchRangeV172')?.value||'all';
   const sort=document.getElementById('calendarSearchSortV172')?.value||'asc';
   if(clear)clear.hidden=!query;
+  const quick=document.getElementById('calendarQuickSearchV174'),quickClear=document.getElementById('calendarQuickSearchClearV174');
+  if(quick&&quick.value!==input.value&&quick.dataset.composing!=='1')quick.value=input.value;
+  if(quickClear)quickClear.hidden=!query;
   if(custom)custom.hidden=range!=='custom';
 
   if(!query){
@@ -1603,6 +1606,30 @@ function initCalendarSearchV172(){
   const input=document.getElementById('calendarSearchV171');
   if(!input||input.dataset.calendarSearchReady==='172')return;
   input.dataset.calendarSearchReady='172';
+  const quick=document.getElementById('calendarQuickSearchV174');
+  if(quick){
+    const quickClear=document.getElementById('calendarQuickSearchClearV174');
+    const commit=(immediate=false,force=false)=>{
+      input.value=quick.value;
+      if(quickClear)quickClear.hidden=!quick.value;
+      if(calendarViewModeV172!=='search'){
+        if(!quick.value.trim()&&!force)return;
+        clearTimeout(calendarSearchTimerV171);
+        setCalendarViewModeV172('search');
+      }else if(immediate){clearTimeout(calendarSearchTimerV171);renderCalendarSearchResultsV172()}
+      else scheduleCalendarSearchResultsV172();
+    };
+    quick.addEventListener('compositionstart',()=>{quick.dataset.composing='1';clearTimeout(calendarSearchTimerV171)});
+    quick.addEventListener('input',event=>{if(!event.isComposing&&quick.dataset.composing!=='1')commit()});
+    quick.addEventListener('compositionend',()=>{delete quick.dataset.composing;commit(true)});
+    quick.addEventListener('keydown',event=>{
+      if(event.isComposing||quick.dataset.composing==='1'||event.keyCode===229)return;
+      if(event.key==='Enter'){event.preventDefault();commit(true,true)}
+      if(event.key==='Escape'&&quick.value){event.preventDefault();quick.value='';commit(true)}
+    });
+    quickClear?.addEventListener('click',()=>{quick.value='';input.value='';quickClear.hidden=true;clearTimeout(calendarSearchTimerV171);renderCalendarSearchResultsV172();quick.focus()});
+    document.getElementById('calendar')?.classList.add('calendar-inline-search-ready-v174');
+  }
 
   input.addEventListener('input',event=>{if(!event.isComposing)scheduleCalendarSearchResultsV172();});
   input.addEventListener('compositionend',()=>{
@@ -1632,7 +1659,7 @@ function initCalendarViewTabsV172(){
   if(!root||root.dataset.calendarTabsReady==='172')return;
   root.dataset.calendarTabsReady='172';
   root.querySelectorAll('[data-calendar-view-tab]').forEach(button=>{
-    button.addEventListener('click',()=>setCalendarViewModeV172(button.dataset.calendarViewTab));
+    button.addEventListener('click',()=>{setCalendarViewModeV172(button.dataset.calendarViewTab);if(button.dataset.calendarViewTab==='search')document.getElementById('calendarQuickSearchV174')?.focus({preventScroll:true})});
   });
   initCalendarSearchV172();
   window.addEventListener('mawang:datachange',()=>{

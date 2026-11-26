@@ -13,9 +13,12 @@ const shared=part(app,'const MWS_KOREAN_INITIALS=','function contactMatches(c');
 const match=part(app,'function calendarSearchNormalizeV173','function calendarSearchShiftDateV172');
 const render=part(app,'function calendarSearchShiftDateV172','function setCalendarViewModeV172');
 const init=part(app,'function initCalendarSearchV172','function initCalendarViewTabsV172');
+const view=part(app,'function setCalendarViewModeV172','function initCalendarSearchV172');
+const tabs=part(app,'function initCalendarViewTabsV172','window.setCalendarViewModeV172=');
+const topbar=part(index,'<div class="calendar-topbar-v4">','        <div class="toolbar calendar-toolbar">')+'</div>';
 const preview=part(app,'function calendarGamePreviewV3','window.mwsCalendarGamePreviewV3');
 const markup=part(index,'<div id="calendarSearchPanelV172"','    </section>').replace('data-calendar-view-panel="search" hidden','data-calendar-view-panel="search"');
-const styles=['app-core.css','mawang-premium-v1621.css','device-ui.css','ui-frame-presets.css','workspace-clean-v1.css','calendar-search-v173.css'].map(p=>read('assets/'+p)).join('\n');
+const styles=['app-core.css','mawang-premium-v1621.css','device-ui.css','ui-frame-presets.css','workspace-clean-v1.css','calendar-toolbar-v4.css','calendar-search-v173.css'].map(p=>read('assets/'+p)).join('\n');
 const fixtures=`
 const data={gameLibrary:[{id:'wow',name:'월드 오브 워크래프트: 포에버',image:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jw1cAAAAASUVORK5CYII='},{id:'custom',name:'New registered title',aliases:['My alias']}]};
 const people={p1:{name:'우왁굳'},p2:{name:'마왕0216'}};
@@ -54,5 +57,23 @@ try{
     const options=await browser.evaluate(`(()=>{const sort=document.getElementById('calendarSearchSortV172');sort.value='desc';sort.dispatchEvent(new Event('change'));const order=[...document.querySelectorAll('[data-calendar-search-event-id]')].map(x=>x.dataset.calendarSearchEventId);document.getElementById('calendarSearchClearV171').click();return {order,empty:document.querySelector('.calendar-search-empty-v172 strong').textContent,input:document.getElementById('calendarSearchV171').value}})()`);
     assert.equal(options.order.at(-1),'wow1');assert.equal(options.input,'');assert.equal(options.empty,'찾고 싶은 일정을 검색하세요');
     console.log('CALENDAR_SEARCH_V173_OK',width,height,JSON.stringify(result));
+  }
+  const inlineFixture=fixture.replace('<section id="calendar" class="section active">','<section id="calendar" class="section active">'+topbar+'<div data-calendar-view-panel="month">월간 보기</div>').replace('data-calendar-view-panel="search">','data-calendar-view-panel="search" hidden>').replace('initCalendarSearchV172();</script>','let calendarViewModeV172="month";'+view+tabs+'initCalendarViewTabsV172();</script>').replace('#calendarSearchPanelV172{display:block}','');
+  const inlineFile=path.join(temp,'inline.html');writeFileSync(inlineFile,inlineFixture);
+  for(const [width,height] of [[1366,768],[1920,1080],[390,844]]){
+    await browser.navigate(pathToFileURL(inlineFile).href+'?w='+width,width,height);
+    const inline=await browser.evaluate(`(async()=>{
+      const root=document.getElementById('calendar'),q=document.getElementById('calendarQuickSearchV174'),panel=document.getElementById('calendarSearchPanelV172'),inner=document.getElementById('calendarSearchV171'),tab=document.querySelector('[data-calendar-view-tab=search]');
+      const ids=()=>[...document.querySelectorAll('[data-calendar-search-event-id]')].map(e=>e.dataset.calendarSearchEventId);
+      const initial=root.dataset.calendarViewMode==='month'&&panel.hidden&&!q.hidden;
+      q.focus();q.dispatchEvent(new CompositionEvent('compositionstart'));q.value='와';q.dispatchEvent(new InputEvent('input',{isComposing:true}));const composing=root.dataset.calendarViewMode==='month';
+      q.value='와우';q.dispatchEvent(new CompositionEvent('compositionend'));const searched=!panel.hidden&&document.activeElement===q&&JSON.stringify(ids())==='["wow1","wow2","title"]';
+      document.querySelector('[data-calendar-search-type=game]').click();const filter=ids().length===2;
+      document.getElementById('calendarQuickSearchClearV174').click();const clear=!q.value&&!inner.value&&!ids().length&&document.activeElement===q;
+      document.querySelector('[data-calendar-view-tab=month]').click();tab.click();const icon=document.activeElement===q&&!panel.hidden;
+      const fit=document.documentElement.scrollWidth<=innerWidth+2&&q.getBoundingClientRect().width>=85;
+      return {initial,composing,searched,filter,clear,icon,fit};
+    })()`);
+    assert(Object.values(inline).every(Boolean),JSON.stringify({width,height,inline}));console.log('CALENDAR_INLINE_SEARCH_OK',width,height,JSON.stringify(inline));
   }
 }finally{await browser?.close();rmSync(temp,{recursive:true,force:true})}
