@@ -339,15 +339,14 @@ function confirmRank(t,source){
     if(t==='S'||t==='A')play(sheen,[{strokeDashoffset:100,opacity:0},{offset:.15,opacity:.8},{offset:.75,opacity:.7},{strokeDashoffset:0,opacity:0}],{delay:240,duration:530,easing:'linear'});
   }else fade(seal,MOTION.portraitStart,380);
   fade(frame,MOTION.materialStart,390);
-  if(full){const gleam=frame.querySelector('b');play(gleam,[{opacity:0,transform:'translateX(-110%)'},{offset:.24,opacity:.8},{offset:.72,opacity:.55},{opacity:0,transform:'translateX(110%)'}],{delay:400,duration:410,easing:'linear'})}
+  if(full){const gleam=frame.querySelector('b');play(gleam,[{opacity:0,transform:'scaleX(.1)'},{offset:.24,opacity:.8},{offset:.72,opacity:.55},{opacity:0,transform:'scaleX(1)'}],{delay:400,duration:410,easing:'linear'})}
   fade(plate,MOTION.nameStart,260);
   play(badge,full?[{opacity:0,transform:'translateY(5px) scale(.88)'},{opacity:1,transform:'none'}]:[{opacity:0},{opacity:1}],{delay:MOTION.badgeStart,duration:260,easing:'cubic-bezier(.18,.65,.25,1)'});
   // One uninterrupted transform track: neutral scale -> tiny lift -> transfer to the tier.
   const duration=MOTION.rankEnd;
   const travel=play(card,full?[
     {offset:0,transform:'none',opacity:1},
-    {offset:0.42,transform:'scale(1.013)',opacity:1},
-    {offset:MOTION.flightStart/duration,transform:'scale(1.008)',opacity:1,easing:'cubic-bezier(.35,.06,.54,1)'},
+    {offset:MOTION.flightStart/duration,transform:'none',opacity:1,easing:'cubic-bezier(.35,.06,.54,1)'},
     {offset:1,transform:'translate('+dx+'px,'+dy+'px) scale(.19)',opacity:0}
   ]:[{offset:0,opacity:1},{offset:MOTION.flightStart/duration,opacity:1},{offset:1,opacity:0}],{duration,easing:'linear'});
   travel.finished.then(()=>{record(MOTION.rankEnd);finish()}).catch(()=>{});

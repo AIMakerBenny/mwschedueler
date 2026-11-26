@@ -730,7 +730,8 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-single-stage .op-reveal-card.op-deal-flow .op-card-front,
 #operationM .op-single-stage .op-reveal-card.op-is-flipping .op-card-front{border:0;outline:0;box-shadow:none;background:none}
 #operationM .op-single-stage .op-reveal-card.op-deal-flow .op-card-back{inset:0}
-#operationM .op-rank-flow{will-change:transform,opacity}
+#operationM .op-rank-flow{will-change:transform,opacity;transform-style:flat}
+#operationM .op-rank-flow .op-flow-frame,#operationM .op-rank-flow .op-flow-plate,#operationM .op-rank-flow .op-flow-badge{will-change:opacity}
 #operationM .op-portrait-forge{position:absolute;inset:0;z-index:5;pointer-events:none;display:block;overflow:hidden;border-radius:inherit;isolation:isolate}
 #operationM .op-portrait-forge svg{display:block;width:100%;height:100%;fill:none;stroke-linecap:round;stroke-linejoin:round}
 #operationM .op-portrait-forge .op-portrait-trace{stroke:url(#op-portrait-foil);stroke-width:1.9;stroke-dasharray:100 100;stroke-dashoffset:100;opacity:0}
@@ -743,19 +744,19 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-portrait-forge[data-tier="C"] .op-portrait-trace{stroke-width:1.65}
 #operationM .op-portrait-forge[data-tier="D"] .op-portrait-trace{stroke-width:1.25}
 #operationM .op-flow-frame{position:absolute;inset:0;z-index:7;opacity:0;pointer-events:none;border-radius:inherit;border:3px solid color-mix(in srgb,var(--tier) 75%,white);box-shadow:inset 0 0 0 1px var(--glow),0 0 18px color-mix(in srgb,var(--glow) 48%,transparent)}
-#operationM .op-flow-frame::before{content:"";position:absolute;inset:-3px;padding:4px;border-radius:inherit;background:var(--foil);mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
+#operationM .op-flow-frame::before{content:"";position:absolute;inset:-3px;border:2px solid color-mix(in srgb,var(--tier) 48%,white);border-radius:inherit;pointer-events:none}
 #operationM .op-flow-frame i{position:absolute;width:12%;height:12%;border:0 solid var(--tier);border-top-width:3px;border-left-width:3px;border-radius:4px 0 0 0;top:2px;left:2px}
 #operationM .op-flow-frame i:nth-child(2){left:auto;right:2px;transform:scaleX(-1)}
 #operationM .op-flow-frame i:nth-child(3){top:auto;bottom:2px;transform:scaleY(-1)}
 #operationM .op-flow-frame i:nth-child(4){top:auto;bottom:2px;left:auto;right:2px;transform:scale(-1)}
-#operationM .op-flow-frame[data-tier="S"]{border-width:4px;box-shadow:0 0 22px #c9aaff80,inset 0 0 0 1px #f4dfbc}
+#operationM .op-flow-frame[data-tier="S"]{border-width:4px;box-shadow:0 0 10px #c9aaff65,inset 0 0 0 1px #f4dfbc}
 #operationM .op-flow-frame[data-tier="S"] i{width:17%;height:17%;border-width:4px 0 0 4px;border-color:#fff0c5}
-#operationM .op-flow-frame[data-tier="A"]{border-width:3px;box-shadow:0 0 14px #e9b65f60,inset 0 0 0 1px #ffe2a0}
+#operationM .op-flow-frame[data-tier="A"]{border-width:3px;box-shadow:0 0 8px #e9b65f60,inset 0 0 0 1px #ffe2a0}
 #operationM .op-flow-frame[data-tier="B"] i{width:10%;height:10%;border-radius:0;border-style:double}
 #operationM .op-flow-frame[data-tier="C"]{border-width:2px}
 #operationM .op-flow-frame[data-tier="D"]{border-width:1px;box-shadow:inset 0 0 0 1px #d4dce8}
 #operationM .op-flow-frame[data-tier="D"] i{width:7%;height:7%;border-width:1px 0 0 1px}
-#operationM .op-flow-frame b{position:absolute;inset:0;opacity:0;background:linear-gradient(115deg,transparent 35%,#fff6 50%,transparent 65%);pointer-events:none;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);padding:7px;mask-composite:exclude}
+#operationM .op-flow-frame b{position:absolute;left:4px;right:4px;top:0;height:3px;opacity:0;background:linear-gradient(90deg,transparent,#fff,transparent);pointer-events:none;transform-origin:50% 50%}
 #operationM .op-flow-plate{position:absolute;inset:0;display:grid;place-items:center;opacity:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:inherit;border-radius:inherit;background:linear-gradient(180deg,color-mix(in srgb,var(--dark) 72%,white),var(--dark) 38%,#10131b);color:var(--tier);border-top:1px solid var(--tier);font-weight:750}
 #operationM .op-rank-flow .op-confirm-rank.op-flow-badge{animation:none!important;opacity:0;left:auto;right:10px;top:10px;max-width:40%;font-size:clamp(18px,3cqw,40px);padding:5px 10px}
 #operationM .op-rank-flow .op-flow-badge .op-rank-crest{width:clamp(19px,2.5cqw,36px);height:auto;flex:none}
@@ -766,3 +767,6 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-single-stage .op-reveal-card[data-rarity="neutral"]{background:none;border-color:transparent;box-shadow:none}
 #operationM .op-single-stage .op-reveal-card .op-card-front::before{inset:-7px;border:2px solid #7b8297;border-radius:9px;box-shadow:0 0 0 3px #282b3b,inset 0 0 0 2px #333849,0 5px 12px #0006}
 @container(max-width:760px){#operationM .op-single-stage .op-reveal-card .op-card-front::before{inset:-4px}}
+
+/* Avoid full-frame shadow rasterization at high DPI; retain colored outlines. */
+@container(min-width:1600px){#operationM .op-flow-frame{box-shadow:inset 0 0 0 1px var(--glow)}#operationM .op-single-stage .op-reveal-card .op-card-front::before{box-shadow:0 0 0 3px #282b3b,inset 0 0 0 2px #333849}}
