@@ -205,13 +205,14 @@ async function saveConfig(){
   if(ids.some(id=>!id||!byId.has(id))||new Set(ids).size!==25){notice='주최자, 감독 및 참가자 25명을 중복 없이 연결하세요.';render();return}
   configSaving=true;notice='';render();
   const d=getData();d.miniGames[CONFIG_KEY]={links:{...configDraft.links},roles:[...configDraft.roles]};
+  let saved=false;
   try{
     window.saveData('오퍼 M 인물 설정');
     const ok=await window.mwsV55SaveNow();
-    if(ok){configDraft=null;picker='';notice='';feedback('공용 인물 설정 저장 완료');}
+    if(ok){configDraft=null;picker='';notice='';saved=true;}
     else notice='온라인 저장을 확인하지 못했습니다. 기존 저장 상태를 확인해 주세요.';
   }catch(_){notice='온라인 저장 실패';}
-  finally{configSaving=false;render()}
+  finally{configSaving=false;render();if(saved&&root.classList.contains('active'))feedback('공용 인물 설정 저장 완료');}
 }
 function teamHeader(i,score){
   const c=byId.get(state.roles[i+1]),name=c?.name||'감독 '+(i+1);
@@ -243,21 +244,21 @@ function resultText(){
   }).join('\n\n');
 }
 async function copyResults(){
-  if(draftRun||state.teams.length!==4)return;
+  if(draftRun||state.teams.length!==4||root.querySelector('.op-copy-overlay'))return;
   const value=resultText();let copied=false;
   try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(value);copied=true}}catch(_){}
   if(!copied){const field=document.createElement('textarea');field.value=value;field.className='op-copy-temp';field.setAttribute('readonly','');root.append(field);field.select();try{copied=document.execCommand('copy')}catch(_){}field.remove()}
-  if(copied){feedback('팀 명단 복사 완료');return}
+  if(copied){if(root.classList.contains('active')&&tab==='result')feedback('팀 명단 복사 완료');return}
   if(!root.classList.contains('active')||tab!=='result')return;
   const overlay=document.createElement('div');overlay.className='op-overlay op-copy-overlay';overlay.innerHTML='<div class="op-copy-dialog" role="dialog" aria-modal="true" aria-label="팀 명단 복사"><div class="op-config-head"><strong>팀 명단 복사</strong>'+button('close-copy','닫기')+'</div><textarea readonly aria-label="팀 명단"></textarea></div>';
   root.append(overlay);const field=overlay.querySelector('textarea');field.value=value;field.focus();field.select();feedback('자동 복사를 사용할 수 없습니다. 명단을 선택해 복사하세요.','error');
 }
 function updateTeamScore(run,panel,stats,n){
-  const score=panel.querySelector('[data-op-team-score]'),from=Number.parseInt(score.textContent,10)||0,delta=SCORE[state.tiers[n]]||0;
+  const score=panel.querySelector('[data-op-team-score]'),delta=SCORE[state.tiers[n]]||0;
   score.textContent=stats.score+'점';
   if(!reducedMotion()&&delta){
     score.animate?.([{transform:'translateY(3px) scale(.94)',filter:'brightness(1.6)'},{transform:'translateY(-2px) scale(1.1)'},{transform:'none',filter:'none'}],{duration:260,easing:'cubic-bezier(.2,.8,.2,1)'});
-    const gain=document.createElement('span');gain.className='op-score-gain';gain.textContent='+'+delta;gain.setAttribute('aria-hidden','true');score.append(gain);draftLater(run,300,()=>gain.remove());
+    const gain=document.createElement('span');gain.className='op-score-gain';gain.textContent='+'+delta;gain.setAttribute('aria-hidden','true');score.parentElement.append(gain);draftLater(run,300,()=>gain.remove());
   }
   panel.querySelectorAll('footer [data-tier]').forEach(x=>{const count=stats.counts[x.dataset.tier],label=x.querySelector('b');if(label&&label.textContent!==String(count)){label.textContent=String(count);x.setAttribute('aria-label',x.dataset.tier+' 티어 '+count+'명');if(!reducedMotion())x.animate?.([{transform:'scale(.94)',filter:'brightness(1.6)'},{transform:'none',filter:'none'}],{duration:220})}});
 }
@@ -291,7 +292,7 @@ function startDraft(){
   if(reducedMotion()||typeof root.animate!=='function'||document.hidden){tab='result';render();return}
   clearHover();const run={timers:[],animations:[],layer:null,phase:'collect',dealt:[[],[],[],[]]};draftRun=run;root.classList.add('op-drafting');draftPhase(run,'collect');
   const draft=root.querySelector('[data-op-action="draft"]');if(draft)draft.disabled=true;
-  root.querySelector('.op-actions')?.insertAdjacentHTML('beforeend',button('skip-draft','연출 건너뛰기','class="op-skip-draft"'));
+  root.querySelector('[data-op-action="copy-results"]')?.remove();root.querySelector('.op-actions')?.insertAdjacentHTML('beforeend',button('skip-draft','연출 건너뛰기','class="op-skip-draft"'));
   draftLayer(run);const center=draftCenter();
   ROSTER.forEach((n,i)=>{
     const source=oldCards.get(n),r=source?.getBoundingClientRect(),visible=r&&r.width&&r.height&&r.bottom>0&&r.top<innerHeight;
@@ -392,7 +393,7 @@ function updateSelection(){
 function refreshBoard(n,from,to){
   const pool=root.querySelector('.op-pool'),board=root.querySelector('.op-board'),card=findBoardCard(n);
   if(!pool||!board||!card){arrived=n;render();return}
-  const cards=boardCards(),animate=!reducedMotion()&&typeof card.animate==='function';
+  clearHover();const cards=boardCards(),animate=!reducedMotion()&&typeof card.animate==='function';
   cards.forEach(c=>{c.getAnimations?.().filter(a=>a.id==='op-board-flip').forEach(a=>a.cancel());c.classList.remove('op-tilt','op-dragging','op-arrived')});
   const before=animate?new Map(cards.map(c=>[c,c.getBoundingClientRect()])):null;
   const getRegion=t=>t?[...board.querySelectorAll('.op-tier-row')].find(r=>r.dataset.tier===t):pool;
