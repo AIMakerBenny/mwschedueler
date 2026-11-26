@@ -334,3 +334,19 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
   #operationM .op-actions .op-progress{max-width:112px}
 }
 @media(prefers-reduced-motion:reduce){#operationM .op-player.op-selected{transform:none}}
+
+/* Phone layouts favor legible portraits over dense side-by-side team panels. */
+@container(max-width:480px){
+  #operationM .op-tier-row .op-player-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #operationM .op-tier-row .op-player{max-width:160px}
+  #operationM .op-teams{grid-template-columns:minmax(0,1fr)}
+  #operationM .op-team header{grid-template-columns:52px minmax(0,1fr) auto;padding:9px;gap:8px}
+  #operationM .op-team header b{grid-column:auto;font-size:19px}
+  #operationM .op-team header strong{font-size:17px}
+  #operationM .op-team-players{grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:10px}
+  #operationM .op-team-players .op-player{grid-column:span 2;max-width:none;width:100%}
+  #operationM .op-team-players .op-player:nth-child(4){grid-column:2/span 2}
+  #operationM .op-team-players .op-player:last-child{grid-column:4/span 2;width:100%}
+  #operationM .op-team .op-player-name{font-size:12px}
+  #operationM .op-team footer span{padding:4px 7px}
+}
