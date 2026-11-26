@@ -12,6 +12,7 @@ function sync(){
   contacts=(getData()?.contacts||[]).filter(c=>c&&c.id!=null&&c.name);
   const before=JSON.stringify(state.links),result=syncContacts(state,contacts);byId=result.byId;missing=result.missing;
   if(before!==JSON.stringify(state.links))save();
+  if(missing.length&&state.teams.length){state.teams=[];save()}
 }
 const current=n=>byId.get(state.links[n]);
 const display=n=>current(n)?.name||n;
@@ -75,7 +76,7 @@ function showPicker(n){picker=n;query='';render();root.querySelector('[data-op-s
 root.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b||!root.contains(b))return;
   const n=b.dataset.opPlayer;
-  if(n){if(b.dataset.opResult)return;if(!current(n)){showPicker(n);return}selected=selected===n?'':n;notice='';render();return}
+  if(n){if(b.dataset.opResult)return;if(!current(n)){showPicker(n);return}selected=selected===n?'':n;notice='';render();[...root.querySelectorAll('[data-op-player]')].find(x=>x.dataset.opPlayer===n)?.focus({preventScroll:true});return}
   if(b.hasAttribute('data-op-tier')){if(selected)move(selected,b.dataset.opTier);return}
   if(b.dataset.opLink&&picker){
     const id=b.dataset.opLink;if(!byId.has(id)||Object.entries(state.links).some(([n,x])=>n!==picker&&x===id)||state.roles.includes(id))return;
@@ -90,6 +91,8 @@ root.addEventListener('click',e=>{
     case 'draft':sync();if(!available())return;state.teams=balancedDraft(state.tiers);tab='result';notice='티어 균형을 만족하는 모의 팀이 구성되었습니다.';save();render();break;
   }
 });
+root.addEventListener('error',e=>{if(e.target instanceof HTMLImageElement)e.target.style.visibility='hidden'},true);
+root.addEventListener('keydown',e=>{if(e.key==='Escape'&&picker){picker='';query='';render()}});
 root.addEventListener('change',e=>{
   if(!e.target.hasAttribute('data-op-role'))return;
   const i=Number(e.target.dataset.opRole),id=e.target.value;
