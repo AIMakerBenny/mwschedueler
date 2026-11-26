@@ -6,14 +6,14 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const read=()=>{try{return normalizeState(JSON.parse(localStorage.getItem(KEY)||'null'))}catch(_){return normalizeState(null)}};
 let state=read(),tab='roster',selected='',dragName='',picker='',query='',notice='',lastSignature='',saveFailed=false;
 let configDraft=null,configSaving=false,workspaceReady=false,workspaceLoading=false,workspaceError=false;
-let arrived='',revealDraft=false,layoutFrame=0,queue=[],guided=false,choosingMode=false,rankLock=false,rankTimer=0;
+let arrived='',layoutFrame=0,queue=[],guided=false,choosingMode=false,rankLock=false,rankTimer=0;
 let lastView='',guidedHistory=[],lastMove=null;
 let rankPhaseTimers=[];
 let draftRun=null,draftRender=false;
 const draftLater=(run,ms,fn)=>{run.timers.push(setTimeout(()=>{if(draftRun===run&&root.classList.contains('active'))fn()},ms))};
 function clearRankMotion(){clearTimeout(rankTimer);rankTimer=0;rankPhaseTimers.forEach(clearTimeout);rankPhaseTimers=[];root.querySelectorAll('.op-rank-beam').forEach(x=>x.remove())}
 function rankAfter(ms,fn){rankPhaseTimers.push(setTimeout(fn,ms))}
-let deckPhase='pick',deckTimer=0,deckEpoch=0,fastDraw=false,skipMotion=false,drawSlot=-1;
+let deckPhase='pick',deckTimer=0,deckEpoch=0,fastDraw=false,skipMotion=false;
 function stopShuffle(){clearTimeout(deckTimer);deckTimer=0;deckEpoch++;if(deckPhase==='shuffle')deckPhase='pick'}
 const reducedMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 let dragCard=null,dragOrigin=null;
@@ -128,8 +128,8 @@ function shuffleDeck(){
   stopShuffle();
   queue=ROSTER.filter(n=>current(n)&&!state.tiers[n]);
   for(let i=queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[queue[i],queue[j]]=[queue[j],queue[i]]}
-  drawSlot=-1;deckPhase=skipMotion||reducedMotion()?'pick':'shuffle';render();
-  if(deckPhase==='shuffle'){const epoch=deckEpoch;deckTimer=setTimeout(()=>{if(epoch!==deckEpoch||!guided||!root.classList.contains('active'))return;deckTimer=0;deckPhase='pick';render()},1050)}
+  deckPhase=skipMotion||reducedMotion()?'pick':'shuffle';render();
+  if(deckPhase==='shuffle'){const epoch=deckEpoch;deckTimer=setTimeout(()=>{if(epoch!==deckEpoch||!guided||!root.classList.contains('active'))return;deckTimer=0;deckPhase='pick';render();if(fastDraw&&queue.length)drawCard(Math.floor(Math.random()*queue.length))},1050)}
   else if(fastDraw&&queue.length)drawCard(Math.floor(Math.random()*queue.length));
 }
 function startGuided(){
@@ -141,7 +141,7 @@ function drawCard(i){
   const n=queue[i];if(!current(n)||state.tiers[n]){shuffleDeck();return}
   const slot=root.querySelector('[data-op-draw="'+i+'"]'),r=slot?.getBoundingClientRect(),stage=root.querySelector('.op-guided-stage')?.getBoundingClientRect();
   const scale=root.offsetWidth?root.getBoundingClientRect().width/root.offsetWidth:1;
-  queue.splice(i,1);queue.unshift(n);drawSlot=i;deckPhase='reveal';render();
+  queue.splice(i,1);queue.unshift(n);deckPhase='reveal';render();
   const card=root.querySelector('.op-reveal-card');
   if(r&&stage&&card&&!skipMotion&&!reducedMotion()&&card.animate){
     const dest=card.getBoundingClientRect(),dx=(r.left+r.width/2-dest.left-dest.width/2)/(scale||1),dy=(r.top+r.height/2-dest.top-dest.height/2)/(scale||1);
@@ -280,7 +280,7 @@ function draftAnimation(run,c,frames,options){const effect=c.animate(frames,opti
 function draftPhase(run,phase){run.phase=phase;root.querySelector('.op-shell')?.setAttribute('data-draft-phase',phase)}
 function finishDraft(show=true){
   const run=draftRun;if(!run)return;
-  run.timers.forEach(clearTimeout);run.animations.forEach(a=>a.cancel());run.layer?.remove();draftRun=null;root.classList.remove('op-drafting');
+  run.timers.forEach(clearTimeout);run.animations.forEach(a=>a.cancel());run.layer?.remove();draftRun=null;root.classList.remove('op-drafting');root.querySelectorAll('.op-draft-source').forEach(c=>c.classList.remove('op-draft-source'));
   if(show){tab='result';render()}
 }
 function startDraft(){
@@ -295,7 +295,7 @@ function startDraft(){
   root.querySelector('[data-op-action="copy-results"]')?.remove();root.querySelector('.op-actions')?.insertAdjacentHTML('beforeend',button('skip-draft','연출 건너뛰기','class="op-skip-draft"'));
   draftLayer(run);const center=draftCenter();
   ROSTER.forEach((n,i)=>{
-    const source=oldCards.get(n),r=source?.getBoundingClientRect(),visible=r&&r.width&&r.height&&r.bottom>0&&r.top<innerHeight;
+    const source=oldCards.get(n),r=source?.getBoundingClientRect(),clip=source?.closest('.op-player-grid')?.getBoundingClientRect(),visible=r&&r.width&&r.height&&r.bottom>0&&r.top<innerHeight&&(!clip||r.bottom>clip.top&&r.top<clip.bottom);
     const point=visible?draftPoint(r):{x:center.x+(i%5-2)*36,y:center.y+75,w:80,h:104};
     const token=draftCard(run,point,visible?source:null);token.dataset.tier=state.tiers[n];
     if(visible)source.classList.add('op-draft-source');
@@ -361,27 +361,37 @@ function render(){
   animateTab(previousTab);
   lastSignature=signature();
   const moved=arrived;
-  arrived='';revealDraft=false;
+  arrived='';
   measureLayout();
   if(layoutFrame)cancelAnimationFrame(layoutFrame);layoutFrame=requestAnimationFrame(()=>{measureLayout();if(moved&&tab==='tier'&&!guided){const card=[...root.querySelectorAll('.op-board .op-player,.op-pool .op-player')].find(x=>x.dataset.opPlayer===moved);if(card){const grid=card.closest('.op-player-grid');if(grid&&grid.scrollHeight>grid.clientHeight){const r=card.getBoundingClientRect(),g=grid.getBoundingClientRect();if(r.bottom>g.bottom)grid.scrollTop+=r.bottom-g.bottom+8;else if(r.top<g.top)grid.scrollTop-=g.top-r.top+8}card.focus({preventScroll:true})}}});
 }
 function measureLayout(){
   if(!root.classList.contains('active'))return;
   const area=root.querySelector('.op-teams,.op-board,.op-guided');if(!area)return;
-  const rect=area.getBoundingClientRect(),rootRect=root.getBoundingClientRect(),scale=root.offsetWidth?rootRect.width/root.offsetWidth:1;
-  const access=document.getElementById('mwsAccessTools'),accessRect=access?.getBoundingClientRect();
-  const bottom=accessRect&&accessRect.height&&accessRect.top>0?Math.min(innerHeight-14,accessRect.top-10):innerHeight-18;
-  const available=Math.max(180,(bottom-Math.max(0,rect.top))/(scale||1));
-  root.style.setProperty('--op-available',Math.floor(available)+'px');
-  root.style.setProperty('--op-workspace-height',Math.max(240,Math.floor((bottom-Math.max(0,rootRect.top))/(scale||1)))+'px');
+  const rect=area.getBoundingClientRect(),rootRect=root.getBoundingClientRect(),scale=root.offsetWidth?rootRect.width/root.offsetWidth||1:1;
+  const access=document.getElementById('mwsAccessTools'),accessRect=access?.getBoundingClientRect(),viewport=window.visualViewport;
+  const viewportBottom=viewport?Math.min(innerHeight,viewport.offsetTop+viewport.height):innerHeight;
+  const bottom=accessRect&&accessRect.height&&accessRect.top>0?Math.min(viewportBottom-14,accessRect.top-10):viewportBottom-18;
+  // Relative coordinates remain stable when a long board is scrolled off the viewport.
+  const rootTop=Math.max(0,rootRect.top),areaTop=rootTop+Math.max(0,rect.top-rootRect.top);
+  const available=Math.max(180,(bottom-areaTop)/scale);
+  const set=(key,value)=>{const next=Math.floor(value)+'px';if(root.style.getPropertyValue(key)!==next)root.style.setProperty(key,next)};
+  set('--op-available',available);set('--op-workspace-height',Math.max(240,(bottom-rootTop)/scale));
   if(area.classList.contains('op-guided')){
-    const top=area.querySelector('.op-guided-top').getBoundingClientRect().height/(scale||1),ranks=area.querySelector('.op-guided-ranks').getBoundingClientRect().height/(scale||1);
-    root.style.setProperty('--op-guided-card',Math.max(132,Math.min(560,available-top-ranks-185))+'px');
+    const stage=area.querySelector('.op-guided-stage'),card=area.querySelector('.op-reveal-card'),width=stage?.clientWidth||area.clientWidth;
+    const style=getComputedStyle(area),stageStyle=stage?getComputedStyle(stage):null;
+    const gap=parseFloat(style.rowGap)||0,padding=(parseFloat(style.paddingTop)||0)+(parseFloat(style.paddingBottom)||0);
+    const children=[...area.children].filter(el=>!el.hidden&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).position!=='absolute');
+    const chrome=children.filter(el=>el!==stage).reduce((sum,el)=>sum+el.getBoundingClientRect().height/scale,0)+gap*Math.max(0,children.length-1)+padding;
+    const stagePadding=stageStyle?(parseFloat(stageStyle.paddingTop)||0)+(parseFloat(stageStyle.paddingBottom)||0):0;
+    const cardChrome=card?Math.max(32,card.offsetHeight-(card.querySelector('.op-portrait')?.offsetHeight||0)):44;
+    set('--op-guided-card',Math.max(132,Math.min(560,width-24,available-chrome-stagePadding-cardChrome-10)));
   }
 }
-function scheduleMeasure(){if(layoutFrame)cancelAnimationFrame(layoutFrame);layoutFrame=requestAnimationFrame(measureLayout)}
+function scheduleMeasure(){if(layoutFrame)cancelAnimationFrame(layoutFrame);layoutFrame=requestAnimationFrame(()=>{layoutFrame=0;measureLayout()})}
 window.addEventListener('resize',scheduleMeasure);
-if(typeof ResizeObserver==='function'){let lastWidth=-1;new ResizeObserver(()=>{if(root.clientWidth!==lastWidth){lastWidth=root.clientWidth;scheduleMeasure()}}).observe(root)}
+window.visualViewport?.addEventListener('resize',scheduleMeasure);
+if(typeof ResizeObserver==='function'){let lastWidth=-1;new ResizeObserver(()=>{if(root.classList.contains('active')&&root.clientWidth!==lastWidth){lastWidth=root.clientWidth;scheduleMeasure()}}).observe(root)}
 function signature(){return JSON.stringify(ROSTER.map(n=>{const c=current(n);return[c?.id,c?.name,c?.image]}).concat(state.roles.map(id=>{const c=byId.get(id);return[c?.id,c?.name,c?.image]})))}
 function updateSelection(){
   root.querySelectorAll('.op-player[aria-pressed]').forEach(b=>{const on=b.dataset.opPlayer===selected,was=b.classList.contains('op-selected');b.classList.toggle('op-selected',on);b.setAttribute('aria-pressed',String(on));if(on!==was&&!reducedMotion()){b.querySelector('.op-card-front')?.animate?.(on?[{filter:'brightness(1.25)',transform:'scale(.97)'},{filter:'none',transform:'none'}]:[{opacity:.82},{opacity:1}],{duration:180,easing:'ease-out'})}});
@@ -482,6 +492,7 @@ root.addEventListener('click',e=>{
     picker='';query='';notice='';render();return;
   }
   if(b.dataset.opAssign){if(e.detail<=1)confirmRank(b.dataset.opAssign,b);return}
+  if(rankLock&&b.dataset.opAction==='skip-guided'){clearRankMotion();rankLock=false;skipMotion=true;deckPhase='pick';if(!queue.length)guided=false;render();if(guided&&fastDraw)drawCard(Math.floor(Math.random()*queue.length));return}
   if(rankLock){if(!['choose-mode','exit-guided','tab-roster','tab-tier','tab-result'].includes(b.dataset.opAction))return;clearRankMotion();rankLock=false;deckPhase='pick';}
   switch(b.dataset.opAction){
     case 'choose-mode':chooseMode();break;
@@ -527,7 +538,7 @@ root.addEventListener('dragleave',e=>{const r=e.target.closest('[data-op-drop]')
 root.addEventListener('dragend',()=>clearDrag(!!dragName));
 window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{clearHover();finishDraft(false);stopShuffle();clearDrag(false);clearRankMotion();rankLock=false;tab='roster';choosingMode=false;guided=false;selected='';picker='';configDraft=null}});
 window.addEventListener('mws:app-ready',()=>{finishDraft(false);workspaceReady=false;configDraft=null;picker='';if(root.classList.contains('active'))void enter()});
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&draftRun)finishDraft(true)});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)return;clearHover();if(draftRun)finishDraft(true);if(rankLock){clearRankMotion();rankLock=false;deckPhase='pick';if(!queue.length)guided=false;render()}if(deckPhase==='shuffle'){stopShuffle();if(guided)render()}});
 window.addEventListener('mawang:datachange',()=>window.mwsOperationM?.refresh());
 window.mwsOperationM={render,refresh(){if(!root.classList.contains('active')||!workspaceReady)return;sync();if(signature()!==lastSignature){finishDraft(false);render()}}};
 if(root.classList.contains('active'))void enter();
