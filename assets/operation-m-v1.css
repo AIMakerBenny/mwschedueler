@@ -229,7 +229,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-tier-row[data-tier="B"] .op-tier-label{border-radius:3px 14px 3px 14px;background:linear-gradient(140deg,#4b3270,#241b38)}
 #operationM .op-tier-row[data-tier="C"] .op-tier-label{border-radius:6px;background:linear-gradient(145deg,#294c70,#16283d)}
 #operationM .op-tier-row[data-tier="D"] .op-tier-label{border-radius:5px;background:linear-gradient(145deg,#3b414e,#232630)}
-#operationM .op-tier-row[data-count="0"] .op-player-grid{display:flex;align-items:stretch;min-height:0;padding:0;overflow:hidden}
+#operationM .op-tier-row[data-count="0"] .op-player-grid{display:flex;align-items:stretch;min-height:0;padding:0;overflow:hidden;scrollbar-gutter:auto}
 #operationM .op-tier-row .op-empty{position:relative;display:grid;place-items:center;flex:1;align-self:stretch;min-width:0;min-height:0;height:auto;width:100%;padding:10px;border:1px dashed color-mix(in srgb,var(--tier) 38%,transparent);border-radius:10px;overflow:hidden;color:var(--tier);background:radial-gradient(ellipse at center,color-mix(in srgb,var(--tier) 13%,transparent),transparent 74%);cursor:pointer;transition:background .18s,border-color .18s}
 #operationM .op-slot-grid{position:absolute;inset:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:10px;pointer-events:none;opacity:.5}
 #operationM .op-slot-grid i{border:1px solid color-mix(in srgb,var(--tier) 24%,transparent);border-radius:9px;background:linear-gradient(135deg,#ffffff04,transparent 60%);min-height:0}
