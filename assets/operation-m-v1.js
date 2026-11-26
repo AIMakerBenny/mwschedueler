@@ -514,7 +514,7 @@ function render(){
 // Fit by measured CSS-space width AND height, not by physical monitor width alone.
 // A minimum readable card wins over forced fitting on small screens.
 function fitRoster(area,width,height,set){
-  const gap=width>=1050?10:8,coachCols=width>=740?4:2;
+  const gap=width>=1050?10:8,coachCols=width>760?4:2;
   const coach=Math.max(58,Math.min((width-(coachCols-1)*gap)/coachCols*.44,height*.20, width*.10+28));
   const coachRows=Math.ceil(4/coachCols);
   const fixed=area.querySelector('.op-roster-next')?.offsetHeight||44;
