@@ -16,7 +16,7 @@ const fixture='<!doctype html><html><meta name="viewport" content="width=device-
 let requests=[];const server=createServer((req,res)=>{const route=new URL(req.url,'http://localhost').pathname;requests.push(route);if(route==='/fixture'){res.setHeader('content-type','text/html; charset=utf-8');res.end(fixture);return}if(!/^\/assets\/operation-m-[a-z0-9-]+\.(js|css)$/.test(route)){res.writeHead(404).end();return}res.setHeader('content-type',route.endsWith('.css')?'text/css':'application/javascript');res.end(readFileSync(path.join(root,'.'+route)))});
 const dir=mkdtempSync(path.join(os.tmpdir(),'opm-'));let b;
 const captures=process.env.MWS_OPERATION_M_CAPTURE;if(captures)mkdirSync(captures,{recursive:true});
-async function capture(label,w,h){if(!captures)return;const data=await b.captureScreenshot();writeFileSync(path.join(captures,label+'-'+w+'x'+h+'.jpg'),Buffer.from(data,'base64'));if(w===1366&&['shuffle-motion','draw-motion','flip-motion','guided','rank-flight'].includes(label))console.log('OPERATION_M_VISUAL_'+label+' '+data)}
+async function capture(label,w,h){if(!captures)return;const data=await b.captureScreenshot();writeFileSync(path.join(captures,label+'-'+w+'x'+h+'.jpg'),Buffer.from(data,'base64'));if(w===1366&&['shuffle-motion','draw-motion','flip-motion','guided','portrait-forge','portrait-sealed','rank-flight'].includes(label))console.log('OPERATION_M_VISUAL_'+label+' '+data)}
 try{await new Promise(r=>server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+server.address().port+'/fixture';b=await launchCalendarBrowser(dir);
 for(const [w,h] of [[1366,768],[1726,892],[1715,894],[1920,1080],[2560,1440],[2560,1080],[3440,1440],[3840,2160],[390,844]]){
  await b.navigate(url,w,h);await b.evaluate("localStorage.removeItem('mws.operationM.simulation.v1')");await b.navigate(url,w,h);
@@ -56,7 +56,8 @@ for(const [w,h] of [[1366,768],[1726,892],[1715,894],[1920,1080],[2560,1440],[25
  const first=await b.evaluate("document.querySelector('[data-op-current]').dataset.opCurrent");
  await b.keyPress('1');
  const charge=await b.evaluate(`(()=>({locked:[...document.querySelectorAll('[data-op-assign]')].every(x=>x.disabled),saved:Object.keys(JSON.parse(localStorage.getItem('mws.operationM.simulation.v1')).tiers).length}))()`);assert(charge.locked&&charge.saved===1);
- const confirmed=await b.evaluate(`(async()=>{for(let i=0;i<160&&!document.querySelector('.op-rank-confirm');i++)await new Promise(r=>setTimeout(r,15));const card=document.querySelector('.op-rank-confirm');return{same:card===window.qaMoving,tier:card?.dataset.tier,rarity:card?.dataset.rarity,stillLocked:[...document.querySelectorAll('[data-op-assign]')].every(x=>x.disabled)}})()`);assert.deepEqual(confirmed,{same:true,tier:'S',rarity:'holo',stillLocked:true});
+ const forging=await b.evaluate(`(async()=>{for(let i=0;i<160&&!document.querySelector('.op-portrait-forge');i++)await new Promise(r=>setTimeout(r,15));await new Promise(r=>setTimeout(r,230));const card=document.querySelector('[data-op-current]'),fx=card.querySelector('.op-portrait-forge'),trace=fx.querySelector('.op-portrait-trace');return{neutral:card.dataset.rarity==='neutral',noBadge:!card.querySelector('.op-confirm-rank'),offset:parseFloat(getComputedStyle(trace).strokeDashoffset),rect:fx.getBoundingClientRect().width,portrait:card.querySelector('.op-portrait').getBoundingClientRect().width}})()`);assert(forging.neutral&&forging.noBadge&&forging.offset>0&&forging.offset<100&&Math.abs(forging.rect-forging.portrait)<2,JSON.stringify(forging));await capture('portrait-forge',w,h);
+ const confirmed=await b.evaluate(`(async()=>{for(let i=0;i<160&&!document.querySelector('.op-rank-confirm');i++)await new Promise(r=>setTimeout(r,15));const card=document.querySelector('.op-rank-confirm');return{same:card===window.qaMoving,tier:card?.dataset.tier,rarity:card?.dataset.rarity,stillLocked:[...document.querySelectorAll('[data-op-assign]')].every(x=>x.disabled)}})()`);assert.deepEqual(confirmed,{same:true,tier:'S',rarity:'holo',stillLocked:true});await capture('portrait-sealed',w,h);
  const leaving=await b.evaluate(`(async()=>{for(let i=0;i<160&&!document.querySelector('.op-rank-flight');i++)await new Promise(r=>setTimeout(r,15));const c=document.querySelector('.op-rank-flight'),r=c.getBoundingClientRect();await new Promise(r=>setTimeout(r,230));const z=c.getBoundingClientRect();return{same:c===window.qaMoving,travel:Math.hypot(z.x-r.x,z.y-r.y),shrink:z.width<r.width,fromWidth:r.width,toWidth:z.width}})()`);assert(leaving.same&&leaving.travel>10&&leaving.shrink,JSON.stringify(leaving));await capture('rank-flight',w,h);
  const next=await b.evaluate(`(async()=>{for(let i=0;i<300&&!document.querySelector('.op-deck-phase-reveal');i++)await new Promise(r=>setTimeout(r,15));return{n:document.querySelector('[data-op-current]')?.dataset.opCurrent,one:document.querySelectorAll('[data-op-current]').length,stack:document.querySelectorAll('[data-op-draw]').length,stage:document.querySelector('.op-guided-stage')===window.qaStage,count:document.querySelector('[data-op-completed=S] b').textContent}})()`);assert.notEqual(next.n,first);assert(next.n&&next.one===1&&next.stack===1&&next.stage&&next.count==='1',JSON.stringify(next));
  await b.evaluate("document.querySelector('[data-op-action=undo-guided]').click()");
@@ -80,14 +81,18 @@ for(const [w,h] of [[1366,768],[1726,892],[1715,894],[1920,1080],[2560,1440],[25
      q('[data-op-assign='+tier+']').click();
      if(![...document.querySelectorAll('[data-op-assign]')].every(x=>x.disabled))throw Error('input unlocked during confirm');
      if(!full){q('[data-op-action=skip-guided]').click();if(!last)q('[data-op-action=skip-guided]').click()}
-     let observedDraw=null,observedFlip=null,seenMaterial=false,seenFlight=false;
+     let observedDraw=null,observedFlip=null,seenMaterial=false,seenFlight=false,portraitSamples=[],seenName=false,seenBadge=false,materialBeforeBadge=false,neutralDuringForge=false,sealed=false;
      while(performance.now()-start<12000){
-       if(q('.op-rank-confirm')===card)seenMaterial=true;
+       const overlay=card.querySelector('.op-portrait-forge'),trace=overlay?.querySelector('.op-portrait-trace');
+       if(overlay&&!overlay.classList.contains('op-forge-complete')&&trace){const style=getComputedStyle(trace);portraitSamples.push({offset:parseFloat(style.strokeDashoffset),visible:parseFloat(style.opacity)>0,stroke:style.stroke,width:parseFloat(style.strokeWidth),segments:overlay.querySelectorAll('.op-portrait-trace').length});if(card.dataset.rarity==='neutral'&&!card.querySelector('.op-confirm-rank'))neutralDuringForge=true}
+       if(q('.op-rank-confirm')===card){seenMaterial=true;if(!card.querySelector('.op-confirm-rank')&&card.classList.contains('op-name-pending'))materialBeforeBadge=true;if(overlay?.classList.contains('op-forge-complete')&&getComputedStyle(overlay.querySelector('.op-portrait-seal')).opacity==='1')sealed=true}
+       if(card.classList.contains('op-name-reveal')&&!card.querySelector('.op-confirm-rank'))seenName=true;
+       if(card.querySelector('.op-confirm-rank'))seenBadge=true;
        if(q('.op-rank-flight')===card)seenFlight=true;
        if(q('.op-deck-phase-draw')&&observedDraw===null)observedDraw=performance.now()-start;
        if(q('.op-deck-phase-flip')&&observedFlip===null)observedFlip=performance.now()-start;
        if(last?q('.op-board'):q('.op-deck-phase-reveal')&&q('[data-op-current]')?.dataset.opCurrent!==old){
-         return{old,elapsed:performance.now()-start,observedDraw,observedFlip,seenMaterial,seenFlight,events:window.mwsOperationM.motionReport().events.slice(before),same:last||stage===q('.op-guided-stage'),open:last||getComputedStyle(q('[data-op-current] .op-card-front')).visibility==='visible',enabled:last||[...document.querySelectorAll('[data-op-assign]')].every(x=>!x.disabled)};
+         return{old,elapsed:performance.now()-start,observedDraw,observedFlip,seenMaterial,seenFlight,portraitSamples,neutralDuringForge,sealed,materialBeforeBadge,seenName,seenBadge,events:window.mwsOperationM.motionReport().events.slice(before),same:last||stage===q('.op-guided-stage'),open:last||getComputedStyle(q('[data-op-current] .op-card-front')).visibility==='visible',enabled:last||[...document.querySelectorAll('[data-op-assign]')].every(x=>!x.disabled)};
        }
        if(![...document.querySelectorAll('[data-op-assign]')].every(x=>x.disabled))throw Error('input unlocked before next card');
        await new Promise(r=>setTimeout(r,15));
@@ -95,15 +100,16 @@ for(const [w,h] of [[1366,768],[1726,892],[1715,894],[1920,1080],[2560,1440],[25
    })()`);
    order.push(observed.old);assert(observed.same&&observed.open&&observed.enabled,JSON.stringify(observed));
    if(i<fullCount){
-     const hold={S:900,A:740,B:640,C:540,D:440}[tier],min=240+hold+480+(last?0:640+700);
+     const hold={S:900,A:740,B:640,C:540,D:440}[tier],forge={S:650,A:560,B:500,C:450,D:400}[tier],min=240+forge+hold+180+260+480+(last?0:640+700);
      assert(observed.elapsed>=min-55&&observed.elapsed<min+2000,JSON.stringify({w,h,tier,min,observed}));
-     assert(observed.seenMaterial&&observed.seenFlight,JSON.stringify(observed));
-     assert.deepEqual(observed.events.map(e=>e.phase),last?['confirm','material','flight','land']:['confirm','material','flight','land','draw','flip','reveal']);
+     assert(observed.seenMaterial&&observed.seenFlight&&observed.neutralDuringForge&&observed.sealed&&observed.materialBeforeBadge&&observed.seenName&&observed.seenBadge,JSON.stringify(observed));
+     const samples=observed.portraitSamples,offsets=samples.map(x=>x.offset);assert(samples.length>=3&&Math.max(...offsets)-Math.min(...offsets)>30&&samples.every(x=>x.visible&&x.width>0)&&samples[0].segments==={S:1,A:2,B:4,C:1,D:4}[tier],JSON.stringify({tier,samples}));
+     assert.deepEqual(observed.events.map(e=>e.phase),last?['confirm','portrait','material','name','badge','flight','land']:['confirm','portrait','material','name','badge','flight','land','draw','flip','reveal']);
      assert(observed.events.every(e=>e.mode==='full'),JSON.stringify(observed));
      const gaps=observed.events.slice(1).map((e,j)=>Math.round(e.at-observed.events[j].at));
-     assert(gaps[0]>=235&&gaps[1]>=hold-5&&gaps[2]>=450,JSON.stringify({gaps,tier}));
-     if(!last){assert(gaps[4]>=610&&gaps[5]>=670,JSON.stringify(gaps));assert(observed.observedDraw!==null&&observed.observedFlip!==null,JSON.stringify(observed))}
-     timings.push({tier,ms:Math.round(observed.elapsed),gaps});
+     assert(gaps[0]>=235&&gaps[1]>=forge-5&&gaps[2]>=hold-5&&gaps[3]>=175&&gaps[4]>=255&&gaps[5]>=450,JSON.stringify({gaps,tier}));
+     if(!last){assert(gaps[7]>=610&&gaps[8]>=670,JSON.stringify(gaps));assert(observed.observedDraw!==null&&observed.observedFlip!==null,JSON.stringify(observed))}
+     timings.push({tier,ms:Math.round(observed.elapsed),gaps,portrait:{samples:samples.length,offsetRange:[Math.round(Math.min(...offsets)),Math.round(Math.max(...offsets))],segments:samples[0].segments,seal:observed.sealed,name:observed.seenName,badge:observed.seenBadge}});
    }else{assert(observed.events.some(e=>e.phase==='skip-confirm'),JSON.stringify(observed))}
  }
  assert.equal(new Set(order).size,20);
@@ -170,7 +176,7 @@ for(const [system,mode,expected] of [[true,'full','full'],[true,'system','reduce
  const first=await b.evaluate(`(async()=>{for(let i=0;i<400&&!document.querySelector('.op-deck-phase-reveal');i++)await new Promise(r=>setTimeout(r,15));const r=window.mwsOperationM.motionReport(),card=document.querySelector('[data-op-current]');return {mode:r.mode,settings:r.settings,events:r.events,visible:!!card&&getComputedStyle(card.querySelector('.op-card-front')).visibility==='visible',enabled:[...document.querySelectorAll('[data-op-assign]')].every(x=>!x.disabled)}})()`);
  assert.equal(first.mode,expected);assert.equal(first.settings.app,expected==='reduced');assert.equal(first.settings.system,system);assert(first.visible&&first.enabled);assert.deepEqual(first.events.map(e=>e.phase),['shuffle','draw','flip','reveal']);assert(first.events.at(-1).at-first.events[0].at>=2990,JSON.stringify(first));
  const measured=await b.evaluate(`(async()=>{const start=performance.now(),old=document.querySelector('[data-op-current]').dataset.opCurrent,before=window.mwsOperationM.motionReport().events.length;document.querySelector('[data-op-assign=D]').click();await new Promise(r=>setTimeout(r,100));const still=document.querySelector('[data-op-current]').dataset.opCurrent===old&&document.querySelector('.op-deck-phase-confirm')!==null;for(let i=0;i<400&&!document.querySelector('.op-deck-phase-reveal');i++)await new Promise(r=>setTimeout(r,15));return {still,elapsed:Math.round(performance.now()-start),next:document.querySelector('[data-op-current]').dataset.opCurrent!==old,events:window.mwsOperationM.motionReport().events.slice(before)}})()`);
- assert(measured.still&&measured.next&&measured.elapsed>=2445&&measured.elapsed<4500,JSON.stringify(measured));assert.deepEqual(measured.events.map(x=>x.phase),['confirm','material','flight','land','draw','flip','reveal']);assert(measured.events.every(e=>e.mode===expected));
+ assert(measured.still&&measured.next&&measured.elapsed>=3285&&measured.elapsed<5500,JSON.stringify(measured));assert.deepEqual(measured.events.map(x=>x.phase),['confirm','portrait','material','name','badge','flight','land','draw','flip','reveal']);assert(measured.events.every(e=>e.mode===expected));
  console.log('OPERATION_M_MOTION_PREFERENCE_OK',JSON.stringify({system,mode,expected,firstMs:Math.round(first.events.at(-1).at-first.events[0].at),transitionMs:measured.elapsed}));
 }
 await b.setReducedMotion(false);
