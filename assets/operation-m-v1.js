@@ -463,7 +463,13 @@ function measureLayout(){
   const available=Math.max(180,(bottom-areaTop)/scale);
   const set=(key,value)=>{const next=Math.floor(value)+'px';if(root.style.getPropertyValue(key)!==next)root.style.setProperty(key,next)};
   set('--op-available',available);set('--op-workspace-height',Math.max(240,(bottom-rootTop)/scale));
-  if(area.classList.contains('op-single-stage')){const center=area.querySelector('.op-single-center');set('--op-single-card',Math.max(132,Math.min(480,(center?.clientWidth||area.clientWidth)-20,(center?.clientHeight||available)-60)));return}
+  if(area.classList.contains('op-single-stage')){
+    const stage=area.querySelector('.op-guided-stage'),center=area.querySelector('.op-single-center'),style=getComputedStyle(area);
+    const chrome=[...area.children].filter(el=>el!==stage).reduce((sum,el)=>sum+el.offsetHeight,0)+(parseFloat(style.rowGap)||0)*3+(parseFloat(style.paddingTop)||0)+(parseFloat(style.paddingBottom)||0);
+    set('--op-single-stage-height',Math.max(310,Math.min(760,available-chrome-8)));
+    set('--op-single-card',Math.max(132,Math.min(480,(center?.clientWidth||area.clientWidth)-20,(center?.clientHeight||available)-60)));
+    return
+  }
   if(area.classList.contains('op-guided')){
     const stage=area.querySelector('.op-guided-stage'),card=area.querySelector('.op-reveal-card'),width=stage?.clientWidth||area.clientWidth;
     const style=getComputedStyle(area),stageStyle=stage?getComputedStyle(stage):null;
