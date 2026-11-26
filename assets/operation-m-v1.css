@@ -105,7 +105,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-tier-label strong,#operationM .op-guide-rank strong{font-size:34px;font-weight:900;line-height:1;letter-spacing:-.04em;text-shadow:0 1px 0 #ffffff50}
 #operationM .op-tier-label small,#operationM .op-guide-rank small{font-size:11px;font-weight:800;white-space:nowrap}
 
-#operationM .op-tier-row .op-player-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-content:start;align-items:start;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;padding:3px;scrollbar-gutter:stable}
+#operationM .op-tier-row .op-player-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-content:start;align-items:start;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;padding:3px;scrollbar-gutter:auto}
 #operationM .op-tier-row .op-player{width:100%;max-width:clamp(76px,calc((var(--op-available) - 110px)/2 - 28px),320px);justify-self:center}
 #operationM .op-tier-row .op-player:only-child{grid-column:1/-1;max-width:calc((100% - 8px)/2)}
 
@@ -250,3 +250,8 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-player.op-tilt:not(.op-dragging){transform:perspective(700px) rotateX(var(--op-rx,0deg)) rotateY(var(--op-ry,0deg)) translateY(-2px);transition:transform .08s,box-shadow .16s;z-index:5}
 #operationM .op-player.op-tilt .op-rarity-art::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at var(--op-light-x,50%) var(--op-light-y,50%),#ffffff45,transparent 54%);mix-blend-mode:screen}
 @media(prefers-reduced-motion:reduce){#operationM .op-player.op-tilt{transform:none;transition:none}}
+
+/* Compact frame allowance preserves the image at narrow desktop widths. */
+#operationM .op-tier-row .op-player[data-rarity]{padding:4px}
+#operationM .op-tier-row .op-player:only-child{max-width:calc((100% - 6px)/2)}
+@container(max-width:800px){#operationM .op-tier-row .op-player:only-child{max-width:125px}}
