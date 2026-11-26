@@ -526,3 +526,50 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-guided.op-skip-motion .op-reveal-card .op-card-back{visibility:hidden}
 @container(max-width:600px){#operationM .op-guided-stage{padding:5px}#operationM .op-deck-pick{grid-template-columns:repeat(auto-fit,minmax(47px,1fr));gap:5px;padding:8px 4px}#operationM .op-deck-controls{gap:4px}#operationM .op-deck-controls button{font-size:11px;padding:6px 7px}#operationM .op-deck-shuffling .op-deck-card{width:70px}}
 @media(prefers-reduced-motion:reduce){#operationM .op-deck-card,#operationM .op-deck-card:hover{transform:none!important}}
+
+/* Guided rank confirmation: button energy, material change, flight to classified tray. */
+#operationM .op-guided{position:relative;grid-template-rows:auto auto auto auto auto auto}
+#operationM .op-completed-tray{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;width:min(100%,410px);margin:0 auto;min-width:0}
+#operationM .op-completed-slot{position:relative;display:flex;align-items:center;justify-content:center;gap:4px;min-width:0;padding:3px 5px;border:1px solid color-mix(in srgb,var(--tier) 44%,var(--border));border-radius:5px;background:linear-gradient(145deg,color-mix(in srgb,var(--dark) 74%,var(--panel)),var(--panel));color:var(--tier);font-size:12px;line-height:1.2}
+#operationM .op-completed-slot svg{width:15px;height:15px;flex:none}
+#operationM .op-completed-slot b{font-variant-numeric:tabular-nums;color:var(--text);font-size:11px}
+#operationM .op-completed-impact{animation:op-completed-impact .4s ease-out both}
+@keyframes op-completed-impact{0%,100%{transform:none}45%{transform:scale(1.09);box-shadow:0 0 17px var(--glow);filter:brightness(1.4)}}
+#operationM button.op-guide-rank.op-rank-chosen:disabled{opacity:1;filter:brightness(1.2);box-shadow:0 0 18px var(--glow),inset 0 0 14px color-mix(in srgb,var(--glow) 30%,transparent)}
+#operationM .op-rank-beam{position:absolute;z-index:10;height:5px;border-radius:999px;background:linear-gradient(90deg,transparent,var(--tier),#fff);box-shadow:0 0 9px var(--glow);pointer-events:none;transform-origin:0 50%;animation:op-rank-transfer .12s ease-out both}
+@keyframes op-rank-transfer{0%{transform:rotate(var(--op-angle)) scaleX(.08);opacity:.3}70%{transform:rotate(var(--op-angle)) scaleX(1);opacity:1}100%{transform:rotate(var(--op-angle)) scaleX(1);opacity:0}}
+#operationM .op-reveal-card.op-rank-charging{box-shadow:0 0 22px #d1bcff70}
+#operationM .op-guided-stage:has(.op-rank-flight){overflow:visible;z-index:4}
+#operationM .op-rank-flight{pointer-events:none}
+#operationM .op-reveal-card.op-rank-confirm:not(.op-rank-flight){transition:background .14s ease,border-color .14s ease,box-shadow .14s ease}
+
+/* Draft animation is a transient layer: real team data is already saved locally. */
+#operationM.op-drafting{position:relative}
+#operationM .op-draft-layer{position:absolute;inset:0;z-index:12;overflow:visible;pointer-events:none;perspective:1000px}
+#operationM .op-draft-token{position:absolute;display:grid;box-sizing:border-box;padding:4px;border:1px solid #a4abc9;border-radius:9px;background:linear-gradient(140deg,#303747,#171b27);box-shadow:0 7px 17px #0009;transform:translate(-50%,-50%);transform-style:preserve-3d;pointer-events:none}
+#operationM .op-draft-token .op-card-front{min-width:0;overflow:hidden;border-radius:5px}
+#operationM .op-draft-token .op-player-name{font-size:10px;color:var(--tier,#e0e4ed);font-weight:700}
+#operationM .op-draft-token .op-rarity-art,#operationM .op-draft-token .op-chip{display:none}
+#operationM .op-draft-token .op-card-back{visibility:visible;transform:rotateY(0)}
+#operationM .op-draft-collect-token:has(.op-card-front) .op-card-front{animation:op-collect-front .4s ease-in-out both}
+#operationM .op-draft-collect-token:has(.op-card-front) .op-card-back{animation:op-collect-back .4s ease-in-out both}
+@keyframes op-collect-front{0%,36%{visibility:visible;transform:rotateY(0)}54%{visibility:hidden;transform:rotateY(90deg)}100%{visibility:hidden;transform:rotateY(180deg)}}
+@keyframes op-collect-back{0%,53%{visibility:hidden;transform:rotateY(-180deg)}54%{visibility:visible;transform:rotateY(-90deg)}100%{visibility:visible;transform:rotateY(0)}}
+#operationM.op-drafting .op-draft-source{visibility:hidden}
+#operationM .op-draft-back-only{border:0;background:none;padding:0}
+#operationM .op-draft-animating .op-team-players .op-player:not(.op-draft-dealt){border:1px dashed color-mix(in srgb,var(--team) 48%,var(--border));background:linear-gradient(150deg,#ffffff04,#0002);box-shadow:none;pointer-events:none}
+#operationM .op-draft-animating .op-team-players .op-player:not(.op-draft-dealt) .op-card-front{visibility:hidden}
+#operationM .op-draft-animating .op-team-players .op-player.op-draft-dealt{animation:op-draft-land .28s cubic-bezier(.2,.8,.2,1) both}
+@keyframes op-draft-land{0%{transform:scale(.92) rotateY(-18deg);filter:brightness(1.35)}65%{transform:scale(1.025)}100%{transform:none;filter:none}}
+#operationM .op-draft-animating .op-team header{position:relative}
+#operationM .op-draft-animating .op-team header b{align-self:center;padding-bottom:12px;font-variant-numeric:tabular-nums}
+#operationM .op-deal-count{position:absolute;right:9px;bottom:5px;font-size:10px;color:var(--team);font-variant-numeric:tabular-nums}
+#operationM .op-draft-highlight .op-team{animation:op-draft-team-highlight .3s ease-out both}
+@keyframes op-draft-team-highlight{0%,100%{box-shadow:0 7px 20px #0003}45%{box-shadow:0 0 20px color-mix(in srgb,var(--team) 70%,transparent),inset 0 0 12px color-mix(in srgb,var(--team) 20%,transparent)}}
+#operationM .op-draft-team-complete{animation:op-draft-team-seal .55s ease-out both}
+@keyframes op-draft-team-seal{0%,100%{filter:none}40%{filter:brightness(1.12);box-shadow:0 0 20px color-mix(in srgb,var(--team) 56%,transparent)}}
+#operationM .op-draft-all-complete{animation:op-draft-finale .8s ease-out both}
+@keyframes op-draft-finale{0%,100%{filter:none}25%{filter:brightness(1.12)}}
+#operationM .op-skip-draft{white-space:nowrap}
+@container(max-width:600px){#operationM .op-completed-slot{gap:3px;padding:3px}#operationM .op-completed-slot svg{width:12px;height:12px}}
+@media(prefers-reduced-motion:reduce){#operationM .op-rank-beam,#operationM .op-draft-layer{display:none!important}}
