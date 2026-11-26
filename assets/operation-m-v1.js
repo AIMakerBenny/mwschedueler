@@ -9,6 +9,8 @@ let configDraft=null,configSaving=false,workspaceReady=false,workspaceLoading=fa
 let arrived='',revealDraft=false,layoutFrame=0,queue=[],guided=false,choosingMode=false,rankLock=false,rankTimer=0;
 let lastView='',guidedHistory=[],lastMove=null;
 let rankPhaseTimers=[];
+let draftRun=null,draftRender=false;
+const draftLater=(run,ms,fn)=>{run.timers.push(setTimeout(()=>{if(draftRun===run&&root.classList.contains('active'))fn()},ms))};
 function clearRankMotion(){clearTimeout(rankTimer);rankTimer=0;rankPhaseTimers.forEach(clearTimeout);rankPhaseTimers=[];root.querySelectorAll('.op-rank-beam').forEach(x=>x.remove())}
 function rankAfter(ms,fn){rankPhaseTimers.push(setTimeout(fn,ms))}
 let deckPhase='pick',deckTimer=0,deckEpoch=0,fastDraw=false,skipMotion=false,drawSlot=-1;
@@ -213,27 +215,104 @@ async function saveConfig(){
 }
 function results(){
   if(!state.teams.length)return '<div class="op-teams">'+state.roles.slice(1).map((id,i)=>{const c=byId.get(id);return '<article class="op-team" data-team="'+i+'"><header>'+photo(c,c?.name||'감독')+'<div><small>TEAM '+String.fromCharCode(65+i)+'</small><strong>'+esc(c?.name||'감독 '+(i+1))+'</strong></div><b>0/5</b></header><div class="op-empty-team">배정 대기</div></article>'}).join('')+'</div><div class="op-result-cta">'+button('tab-tier','티어표에서 참가자 분류하기')+'</div>';
-  const stats=state.teams.map(t=>teamStats(t,state.tiers));
-  return '<div class="op-teams '+(revealDraft?'op-reveal':'')+'">'+state.teams.map((team,i)=>{
+  const stats=state.teams.map(t=>teamStats(t,state.tiers)),animating=!!draftRun;
+  return '<div class="op-teams '+(animating?'op-draft-animating':'')+'">'+state.teams.map((team,i)=>{
     const c=byId.get(state.roles[i+1]),s=stats[i];
-    return '<article class="op-team" data-team="'+i+'"><header>'+photo(c,c?.name||'감독')+'<div><small>TEAM '+String.fromCharCode(65+i)+'</small><strong>'+esc(c?.name||'감독 '+(i+1))+'</strong></div><b>'+s.score+'점</b></header><div class="op-team-players">'+team.map(n=>player(n,'result')).join('')+'</div><footer>'+TIERS.map(t=>'<span data-tier="'+t+'">'+t+' '+s.counts[t]+'</span>').join('')+'</footer></article>'
+    return '<article class="op-team" data-team="'+i+'"><header>'+photo(c,c?.name||'감독')+'<div><small>TEAM '+String.fromCharCode(65+i)+'</small><strong>'+esc(c?.name||'감독 '+(i+1))+'</strong></div><b data-op-team-score>'+ (animating?0:s.score)+'점</b>'+(animating?'<span class="op-deal-count" data-op-team-count>0 / 5</span>':'')+'</header><div class="op-team-players">'+team.map(n=>player(n,'result')).join('')+'</div><footer>'+TIERS.map(t=>'<span data-tier="'+t+'">'+t+' '+(animating?0:s.counts[t])+'</span>').join('')+'</footer></article>'
   }).join('')+'</div>';
+}
+function draftScale(){return root.offsetWidth?root.getBoundingClientRect().width/root.offsetWidth||1:1}
+function draftPoint(r){const o=root.getBoundingClientRect(),z=draftScale();return{x:(r.left+r.width/2-o.left)/z,y:(r.top+r.height/2-o.top)/z,w:r.width/z,h:r.height/z}}
+function draftCenter(){
+  const o=root.getBoundingClientRect(),z=draftScale(),top=Math.max(o.top,0),bottom=Math.min(o.bottom,innerHeight-35);
+  return{x:root.clientWidth/2,y:Math.max(95,(top+Math.max(top+150,bottom))/2/z-o.top/z)};
+}
+function draftLayer(run){
+  run.layer?.remove();const layer=document.createElement('div');layer.className='op-draft-layer';layer.setAttribute('aria-hidden','true');root.append(layer);run.layer=layer;return layer;
+}
+function draftCard(run,point,source=null){
+  const c=document.createElement('div');c.className='op-draft-token';c.style.cssText='left:'+point.x+'px;top:'+point.y+'px;width:'+point.w+'px;height:'+point.h+'px;';
+  if(source){const face=source.querySelector('.op-card-front')?.cloneNode(true);if(face)c.append(face)}
+  c.insertAdjacentHTML('beforeend',cardBack());run.layer.append(c);return c;
+}
+function draftAnimation(run,c,frames,options){const effect=c.animate(frames,options);run.animations.push(effect);return effect}
+function draftPhase(run,phase){run.phase=phase;root.querySelector('.op-shell')?.setAttribute('data-draft-phase',phase)}
+function finishDraft(show=true){
+  const run=draftRun;if(!run)return;
+  run.timers.forEach(clearTimeout);run.animations.forEach(a=>a.cancel());run.layer?.remove();draftRun=null;root.classList.remove('op-drafting');
+  if(show){tab='result';render()}
+}
+function startDraft(){
+  if(draftRun||rankLock||configDraft)return;sync();if(!available())return;
+  const oldCards=new Map([...root.querySelectorAll('.op-board .op-player,.op-team .op-player')].map(c=>[c.dataset.opPlayer,c]));
+  const teams=balancedDraft(state.tiers);
+  if(teams.length!==4||teams.some(t=>t.length!==5)||new Set(teams.flat()).size!==20)return;
+  state.teams=teams;lastMove=null;choosingMode=false;guided=false;notice='';save();
+  if(reducedMotion()||typeof root.animate!=='function'||document.hidden){tab='result';render();return}
+  const run={timers:[],animations:[],layer:null,phase:'collect',dealt:[[],[],[],[]]};draftRun=run;root.classList.add('op-drafting');draftPhase(run,'collect');
+  const draft=root.querySelector('[data-op-action="draft"]');if(draft)draft.disabled=true;
+  root.querySelector('.op-actions')?.insertAdjacentHTML('beforeend',button('skip-draft','연출 건너뛰기','class="op-skip-draft"'));
+  draftLayer(run);const center=draftCenter();
+  ROSTER.forEach((n,i)=>{
+    const source=oldCards.get(n),r=source?.getBoundingClientRect(),visible=r&&r.width&&r.height&&r.bottom>0&&r.top<innerHeight;
+    const point=visible?draftPoint(r):{x:center.x+(i%5-2)*36,y:center.y+75,w:80,h:104};
+    const token=draftCard(run,point,visible?source:null);token.dataset.tier=state.tiers[n];
+    if(visible)source.classList.add('op-draft-source');
+    token.classList.add('op-draft-collect-token');
+    const dx=center.x-point.x+(i%2?1:-1)*(i%5)*2,dy=center.y-point.y-i*.55;
+    draftAnimation(run,token,[{transform:'translate(-50%,-50%) rotate(0deg) scale(1)'},{transform:'translate(-50%,-50%) translate('+dx+'px,'+dy+'px) rotate('+(i%5-2)*3+'deg) scale(.72)'}],{duration:400,easing:'cubic-bezier(.3,.7,.3,1)',fill:'forwards'});
+  });
+  draftLater(run,400,()=>shuffleDraft(run));
+}
+function shuffleDraft(run){
+  tab='result';draftRender=true;render();draftRender=false;draftPhase(run,'shuffle');draftLayer(run);
+  const center=draftCenter(),width=Math.min(115,Math.max(65,root.clientWidth/8)),height=width*1.29;
+  for(let i=0;i<20;i++){
+    const c=draftCard(run,{...center,w:width,h:height});c.classList.add('op-draft-back-only');
+    const group=i%2?1:-1,stagger=i*5;
+    draftAnimation(run,c,[
+      {transform:'translate(-50%,-50%) translateY('+(-i*.5)+'px)'},
+      {offset:.32,transform:'translate(-50%,-50%) translateX('+(group*width*.82)+'px) rotate('+(-group*20)+'deg)'},
+      {offset:.65,transform:'translate(-50%,-50%) translate('+(-group*width*.64)+'px,'+(group*height*.18)+'px) rotate('+(group*15)+'deg)'},
+      {transform:'translate(-50%,-50%) translateY('+(-i*.5)+'px)'}
+    ],{duration:900,delay:stagger,easing:'ease-in-out',fill:'both'});
+  }
+  draftLater(run,1000,()=>{draftPhase(run,'highlight');root.querySelector('.op-teams')?.classList.add('op-draft-highlight');draftLater(run,300,()=>dealDraft(run))});
+}
+function dealDraft(run){
+  draftPhase(run,'deal');root.querySelector('.op-teams')?.classList.remove('op-draft-highlight');
+  const center=draftCenter(),stack=[...run.layer.children],targets=[...root.querySelectorAll('.op-team .op-player')],byName=new Map(targets.map(c=>[c.dataset.opPlayer,c]));
+  const order=[];for(let j=0;j<5;j++)for(let t=0;t<4;t++)order.push([t,state.teams[t][j]]);
+  order.forEach(([team,n],i)=>draftLater(run,i*90,()=>{
+    const target=byName.get(n),token=stack.pop();if(!target||!token)return;
+    const d=draftPoint(target.getBoundingClientRect()),w=token.offsetWidth||95,h=token.offsetHeight||120,dx=d.x-center.x,dy=d.y-center.y;
+    token.getAnimations().forEach(a=>a.cancel());token.classList.add('op-draft-deal-token');
+    draftAnimation(run,token,[{transform:'translate(-50%,-50%) scale(1)',opacity:1},{offset:.65,transform:'translate(-50%,-50%) translate('+dx*.82+'px,'+dy*.82+'px) scale(.85) rotateY(0deg)',opacity:1},{transform:'translate(-50%,-50%) translate('+dx+'px,'+dy+'px) scale('+d.w/w+','+d.h/h+') rotateY(85deg)',opacity:.1}],{duration:280,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'});
+    draftLater(run,280,()=>{
+      token.remove();target.classList.add('op-draft-dealt');run.dealt[team].push(n);
+      const panel=root.querySelector('.op-team[data-team="'+team+'"]'),stats=teamStats(run.dealt[team],state.tiers);
+      if(!panel)return;panel.querySelector('[data-op-team-score]').textContent=stats.score+'점';panel.querySelector('[data-op-team-count]').textContent=run.dealt[team].length+' / 5';
+      panel.querySelectorAll('footer [data-tier]').forEach(x=>x.textContent=x.dataset.tier+' '+stats.counts[x.dataset.tier]);
+      if(run.dealt[team].length===5)panel.classList.add('op-draft-team-complete');
+    });
+  }));
+  draftLater(run,2100,()=>{draftPhase(run,'complete');root.querySelector('.op-teams')?.classList.add('op-draft-all-complete');draftLater(run,900,()=>finishDraft(true))});
 }
 function render(){
   if(!root.classList.contains('active'))return;
   if(!workspaceReady){
     root.innerHTML='<div class="op-shell"><div class="op-result-empty">'+(workspaceError?'인물 설정을 불러오지 못했습니다. '+button('retry','다시 시도'):'참가자 정보를 불러오는 중…')+'</div></div>';return;
   }
-  if(rankLock)return;
+  if(rankLock||draftRun&&!draftRender)return;
   const view=tab+(choosingMode?':choice':guided?':guided':'');
   const entering=lastView!==view;
   const scrolls=lastView===view?Object.fromEntries([...root.querySelectorAll('.op-tier-row')].map(r=>[r.dataset.tier,r.querySelector('.op-player-grid')?.scrollTop||0])):{};
   lastView=view;
   sync();const assigned=ROSTER.filter(n=>TIERS.includes(state.tiers[n])).length;
-  const action=tab==='roster'||guided||choosingMode?'':button('draft',state.teams.length?'다시 자동 드래프트':'자동 드래프트','class="op-primary" '+(!available()?'disabled':''));
+  const action=tab==='roster'||guided||choosingMode?'':button('draft',state.teams.length?'다시 자동 드래프트':'자동 드래프트','class="op-primary" '+(!available()||draftRun?'disabled':''))+(draftRun?button('skip-draft','연출 건너뛰기','class="op-skip-draft"'):'');
   const scoreSpread=state.teams.length?Math.max(...state.teams.map(t=>teamStats(t,state.tiers).score))-Math.min(...state.teams.map(t=>teamStats(t,state.tiers).score)):null;
   const status=notice||(saveFailed?'브라우저 저장 불가':missing.length?'연락처 미연결 '+missing.length+'명 · 관리자 설정이 필요합니다.':'');
-  root.innerHTML='<div class="op-shell'+(entering?' op-view-enter':'')+'" data-view="'+tab+'"><div class="op-toolbar"><span class="op-page-label">오퍼 M</span><nav class="op-tabs" aria-label="오퍼 M 도구">'+[['roster','참가자'],['tier','티어표'],['result','가상 드래프트']].map(([id,label])=>button('tab-'+id,label,'aria-pressed="'+(tab===id)+'"')).join('')+'</nav><div class="op-actions">'+(tab==='tier'?'<span class="op-progress">'+assigned+' / 20</span>':tab==='result'&&scoreSpread!==null?'<span class="op-progress">점수 차이 <b>'+scoreSpread+'</b></span>':'')+action+(canConfigure()?button('open-config','인물 설정','class="op-settings" aria-label="관리자 인물 설정"'):'')+'</div></div>'+(status?'<div class="op-status" role="status">'+esc(status)+'</div>':'')+(tab==='roster'?roster():tab==='tier'?(choosingMode?modeChoice():guided?guidedBoard():tierBoard()):results())+adminConfig()+'</div>';
+  root.innerHTML='<div class="op-shell'+(entering?' op-view-enter':'')+'" data-view="'+tab+'"><div class="op-toolbar"><span class="op-page-label">오퍼 M</span><nav class="op-tabs" aria-label="오퍼 M 도구">'+[['roster','참가자'],['tier','티어표'],['result','가상 드래프트']].map(([id,label])=>button('tab-'+id,label,'aria-pressed="'+(tab===id)+'"')).join('')+'</nav><div class="op-actions">'+(tab==='tier'?'<span class="op-progress">'+assigned+' / 20</span>':tab==='result'&&!draftRun&&scoreSpread!==null?'<span class="op-progress">점수 차이 <b>'+scoreSpread+'</b></span>':'')+action+(canConfigure()?button('open-config','인물 설정','class="op-settings" aria-label="관리자 인물 설정"'):'')+'</div></div>'+(status?'<div class="op-status" role="status">'+esc(status)+'</div>':'')+(tab==='roster'?roster():tab==='tier'?(choosingMode?modeChoice():guided?guidedBoard():tierBoard()):results())+adminConfig()+'</div>';
   for(const r of root.querySelectorAll('.op-tier-row')){const g=r.querySelector('.op-player-grid');if(g&&scrolls[r.dataset.tier])g.scrollTop=scrolls[r.dataset.tier]}
   updateSelection();
   lastSignature=signature();
@@ -326,7 +405,7 @@ root.addEventListener('pointermove',e=>{
 });
 root.addEventListener('pointerout',e=>{if(hoverCard&&!hoverCard.contains(e.relatedTarget)){hoverCard.classList.remove('op-tilt');hoverCard.style.removeProperty('--op-rx');hoverCard.style.removeProperty('--op-ry');hoverCard=null}});
 root.addEventListener('click',e=>{
-  const b=e.target.closest('button');if(b?.hasAttribute('data-op-draw')&&root.contains(b)){drawCard(Number(b.dataset.opDraw));return}if(!b||!root.contains(b)){const target=e.target.closest('.op-tier-row');if(target&&selected&&!rankLock)move(selected,target.dataset.tier);else if(e.target.closest('.op-pool')&&selected&&!rankLock)move(selected,'');return;}
+  const b=e.target.closest('button');if(draftRun){const action=b?.dataset.opAction;if(action==='skip-draft'){finishDraft(true);return}if(!['tab-roster','tab-tier','tab-result'].includes(action))return;finishDraft(false)}if(b?.hasAttribute('data-op-draw')&&root.contains(b)){drawCard(Number(b.dataset.opDraw));return}if(!b||!root.contains(b)){const target=e.target.closest('.op-tier-row');if(target&&selected&&!rankLock)move(selected,target.dataset.tier);else if(e.target.closest('.op-pool')&&selected&&!rankLock)move(selected,'');return;}
   const n=b.dataset.opPlayer;
   if(n){if(b.dataset.opResult||tab!=='tier'||!current(n))return;selected=selected===n?'':n;notice='';updateSelection();return}
   if(b.hasAttribute('data-op-tier')){if(selected)move(selected,b.dataset.opTier);return}
@@ -362,7 +441,7 @@ root.addEventListener('click',e=>{
     case 'save-config':void saveConfig();break;
     case 'close-picker':picker='';query='';render();break;
     case 'reset':if(!confirm('20명의 티어와 가상 팀 결과를 초기화할까요?'))return;stopShuffle();state.tiers={};state.teams=[];lastMove=null;choosingMode=false;guided=false;selected='';notice='';save();render();break;
-    case 'draft':sync();if(!available())return;state.teams=balancedDraft(state.tiers);lastMove=null;choosingMode=false;tab='result';revealDraft=true;notice='';save();render();break;
+    case 'draft':startDraft();break;
   }
 });
 root.addEventListener('error',e=>{if(e.target instanceof HTMLImageElement)e.target.style.visibility='hidden'},true);
@@ -382,9 +461,10 @@ root.addEventListener('dragover',e=>{const r=e.target.closest('[data-op-drop]');
 root.addEventListener('drop',e=>{const r=e.target.closest('[data-op-drop]');if(!r||!dragName)return;e.preventDefault();const n=dragName,t=r.dataset.opDrop;clearDrag(false);move(n,t)});
 root.addEventListener('dragleave',e=>{const r=e.target.closest('[data-op-drop]');if(r&&!r.contains(e.relatedTarget))r.classList.remove('op-drop-active')});
 root.addEventListener('dragend',()=>clearDrag(!!dragName));
-window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{stopShuffle();clearDrag(false);clearRankMotion();rankLock=false;tab='roster';choosingMode=false;guided=false;selected='';picker='';configDraft=null}});
-window.addEventListener('mws:app-ready',()=>{workspaceReady=false;configDraft=null;picker='';if(root.classList.contains('active'))void enter()});
+window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{finishDraft(false);stopShuffle();clearDrag(false);clearRankMotion();rankLock=false;tab='roster';choosingMode=false;guided=false;selected='';picker='';configDraft=null}});
+window.addEventListener('mws:app-ready',()=>{finishDraft(false);workspaceReady=false;configDraft=null;picker='';if(root.classList.contains('active'))void enter()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&draftRun)finishDraft(true)});
 window.addEventListener('mawang:datachange',()=>window.mwsOperationM?.refresh());
-window.mwsOperationM={render,refresh(){if(!root.classList.contains('active')||!workspaceReady)return;sync();if(signature()!==lastSignature)render()}};
+window.mwsOperationM={render,refresh(){if(!root.classList.contains('active')||!workspaceReady)return;sync();if(signature()!==lastSignature){finishDraft(false);render()}}};
 if(root.classList.contains('active'))void enter();
 }
