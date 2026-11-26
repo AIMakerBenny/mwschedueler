@@ -21,7 +21,15 @@ for(const [w,h] of [[1366,768],[1715,894],[1920,1080],[2560,1440],[2560,1080],[3
  await b.evaluate("document.querySelector('[data-op-action=tab-tier]').click()");
  const empty=await b.evaluate(`(async()=>{await new Promise(requestAnimationFrame);const b=document.querySelector('.op-board').getBoundingClientRect(),p=document.querySelector('.op-pool'),cards=[...p.querySelectorAll('.op-player')];return{height:b.height,top:b.top,bottom:b.bottom,limit:document.querySelector('#mwsAccessTools').getBoundingClientRect().top,rows:new Set(cards.map(c=>Math.round(c.getBoundingClientRect().top))).size,portrait:cards[0].querySelector('.op-portrait').getBoundingClientRect().width,overflow:document.documentElement.scrollWidth>innerWidth+1}})()`);
  assert(!empty.overflow);if(w>=1366){assert.equal(empty.rows,2);assert(empty.height>=300,JSON.stringify(empty));assert(empty.bottom>=empty.limit-35&&empty.bottom<=empty.limit+2,JSON.stringify(empty));assert(empty.portrait>=70,JSON.stringify(empty))}
- console.log('OPERATION_M_EMPTY_BOARD',w,h,empty);
+ const drop=await b.evaluate(`(()=>[...document.querySelectorAll('.op-tier-row')].map(r=>{const g=r.querySelector('.op-player-grid').getBoundingClientRect(),e=r.querySelector('.op-empty').getBoundingClientRect(),m=r.querySelector('.op-empty-center').getBoundingClientRect(),h=r.querySelector('.op-tier-label').getBoundingClientRect();return{target:e.height,area:g.height,width:e.width,gridWidth:g.width,centerError:Math.abs((m.top+m.bottom-e.top-e.bottom)/2),rankHeight:h.height,crest:r.querySelector('.op-tier-label svg').getBoundingClientRect().width,background:getComputedStyle(r).backgroundImage}}))()`);
+ assert.equal(drop.length,5);for(const d of drop){assert(d.target>=Math.min(100,d.area)&&d.target>=d.area-4,JSON.stringify(d));assert(d.width>=d.gridWidth-4,JSON.stringify(d));assert(d.centerError<4,JSON.stringify(d));assert(d.crest>=30,JSON.stringify(d))}
+ assert.equal(new Set(drop.map(d=>d.background)).size,5);
+ // Select an actual unassigned card then click the middle of the full target.
+ await b.evaluate("document.querySelector('.op-pool .op-player').click();document.querySelector('.op-tier-row[data-tier=S] .op-empty').click()");
+ assert.equal(await b.evaluate("document.querySelectorAll('.op-tier-row[data-tier=S] .op-player').length"),1);
+ await b.evaluate("localStorage.removeItem('mws.operationM.simulation.v1')");
+ await b.navigate(url,w,h);
+ console.log('OPERATION_M_EMPTY_BOARD',w,h,empty,drop.map(d=>[d.target,d.area,d.centerError]));
  await b.evaluate("document.querySelector('[data-op-action=tab-roster]').click()");
  const nextBelow=await b.evaluate("document.querySelector('.op-roster-next').getBoundingClientRect().top>=document.querySelector('.op-roster-grid').getBoundingClientRect().bottom");assert(nextBelow);
  await b.evaluate("document.querySelector('[data-op-action=start-guided]').click()");

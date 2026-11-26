@@ -8,9 +8,16 @@ let state=read(),tab='roster',selected='',dragName='',picker='',query='',notice=
 let configDraft=null,configSaving=false,workspaceReady=false,workspaceLoading=false,workspaceError=false;
 let arrived='',revealDraft=false,layoutFrame=0,queue=[],guided=false,rankLock=false,rankTimer=0;
 const RANK_STYLE={S:'holo',A:'gold',B:'crystal',C:'steel',D:'silver'};
-const RANK_MARK={S:'✧',A:'◆',B:'✦',C:'▲',D:'•'};
-const rarity=(t)=>'<span class="op-rarity-art" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></span>';
-const crest=t=>'<span class="op-rank-crest" aria-hidden="true">'+RANK_MARK[t]+'</span>';
+const RANK_NAMES={S:'HOLOGRAPHIC',A:'GOLD',B:'CRYSTAL',C:'STEEL',D:'SILVER'};
+const RANK_ART={
+S:'<path d="M24 2 30 16 46 24 30 30 24 46 17 31 2 24 17 17Z" fill="currentColor" opacity=".22"/><path d="M24 3 30 16 45 24 30 30 24 45 17 31 3 24 17 17Z M24 3V45M3 24H45M17 17 30 30M30 16 17 31"/><path d="m6 6 7 2-5 5ZM42 6l-7 2 5 5ZM6 42l7-2-5-5ZM42 42l-7-2 5-5Z" fill="currentColor"/>',
+A:'<path d="M24 7 36 18 24 40 12 18Z" fill="currentColor" opacity=".25"/><path d="M24 7 36 18 24 40 12 18ZM12 18H36M24 7V40"/><path d="M8 11C0 27 10 39 20 42M40 11c8 16-2 28-12 31M5 20l6 5M7 30l8 3M43 20l-6 5M41 30l-8 3"/>',
+B:'<path d="M14 6H34L44 19 24 44 4 19Z" fill="currentColor" opacity=".24"/><path d="M14 6H34L44 19 24 44 4 19ZM4 19H44M14 6 24 44 34 6M14 6l10 13L34 6"/>',
+C:'<path d="M24 5 41 11V25C41 34 31 40 24 44 17 40 7 34 7 25V11Z" fill="currentColor" opacity=".22"/><path d="M24 5 41 11V25C41 34 31 40 24 44 17 40 7 34 7 25V11ZM24 12 34 16V25L24 35 14 25V16Z"/>',
+D:'<circle cx="24" cy="24" r="17" fill="currentColor" opacity=".14"/><circle cx="24" cy="24" r="17"/><path d="M24 14 33 24 24 34 15 24Z"/>'
+};
+const crest=t=>'<svg class="op-rank-crest" aria-hidden="true" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">'+(RANK_ART[t]||'')+'</svg>';
+const rarity=t=>'<span class="op-rarity-art" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></span>';
 const DEFAULT_ROLES=['대월향','우왁굳','천양','머독','고세구!']; // confirmed by the current Admin screenshot
 const CONFIG_KEY='operationMV1';
 const admin=()=>document.body.dataset.mwsMode==='admin'&&window.__mwsAppReadyV130===true;
@@ -68,8 +75,8 @@ function player(n,kind='tier'){
   return '<button type="button" class="op-player '+(selected===n?'op-selected ':'')+(!c?'op-unlinked':'')+(arrived===n&&kind==='tier'?' op-arrived':'')+'" '+(styled?'data-tier="'+tier+'" data-rarity="'+RANK_STYLE[tier]+'" ':'')+'data-op-player="'+esc(n)+'" draggable="'+(kind==='tier'&&!!c)+'" aria-label="'+esc(name+(tier?' '+tier+' 티어':' 미분류')+(!c?' 연락처 연결 필요':''))+'" '+(kind==='tier'?'aria-pressed="'+(selected===n)+'"':'data-op-result="1"')+'>'+photo(c,name)+(styled?rarity(tier)+'<span class="op-chip" data-tier="'+tier+'">'+crest(tier)+tier+'</span>':'')+'<span class="op-player-name">'+esc(name)+'</span>'+(!c?'<span class="op-link-mark">연결 필요</span>':'')+'</button>';
 }
 function row(t){
-  const members=ROSTER.filter(n=>(state.tiers[n]||'')===t);
-  return '<div class="op-tier-row" data-count="'+members.length+'" data-op-drop="'+t+'" data-tier="'+(t||'U')+'"><button type="button" data-op-tier="'+t+'" class="op-tier-label" aria-label="'+(t?t+' 티어로 이동':'미분류로 이동')+'"><strong>'+crest(t)+(t||'미분류')+'</strong><small>'+members.length+'명'+(t?' · '+SCORE[t]+'점':'')+'</small></button><div class="op-player-grid">'+members.map(n=>player(n)).join('')+(!members.length?'<div class="op-empty">여기에 참가자 배치</div>':'')+'</div></div>';
+  const members=ROSTER.filter(n=>state.tiers[n]===t);
+  return '<div class="op-tier-row" data-count="'+members.length+'" data-op-drop="'+t+'" data-tier="'+t+'"><button type="button" data-op-tier="'+t+'" class="op-tier-label" aria-label="'+t+' 티어로 이동">'+crest(t)+'<span class="op-rank-heading"><strong>'+t+'</strong><span>'+RANK_NAMES[t]+'</span></span><span class="op-rank-meta"><b>'+members.length+'명</b><small>'+SCORE[t]+'점</small></span></button><div class="op-player-grid">'+members.map(n=>player(n)).join('')+(!members.length?'<button type="button" class="op-empty" data-op-tier="'+t+'" aria-label="'+t+' 티어에 참가자 배치"><span class="op-slot-grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="op-empty-center">'+crest(t)+'<span>'+(selected?'선택한 참가자 배치':'참가자 배치')+'</span></span></button>':'')+'</div></div>';
 }
 function roster(){
   const host=byId.get(state.roles[0]);
@@ -162,6 +169,18 @@ function move(n,t){
   state.teams=[];selected='';notice='';arrived=n;save();render();
 }
 function showPicker(n){picker=n;query='';render();root.querySelector('[data-op-search]')?.focus()}
+// Only the hovered portrait moves; pointer position is never used for game state.
+const hoverFine=matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)');
+let hoverCard=null;
+root.addEventListener('pointermove',e=>{
+  if(!hoverFine.matches||dragName)return;
+  const card=e.target.closest('.op-player[data-rarity]');if(!card||!root.contains(card))return;
+  if(hoverCard&&hoverCard!==card){hoverCard.style.removeProperty('--op-rx');hoverCard.style.removeProperty('--op-ry');hoverCard.classList.remove('op-tilt')}
+  hoverCard=card;const r=card.getBoundingClientRect();if(!r.width||!r.height)return;
+  const x=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y=Math.max(0,Math.min(1,(e.clientY-r.top)/r.height));
+  card.style.setProperty('--op-rx',((.5-y)*9).toFixed(2)+'deg');card.style.setProperty('--op-ry',((x-.5)*9).toFixed(2)+'deg');card.style.setProperty('--op-light-x',(x*100).toFixed(1)+'%');card.style.setProperty('--op-light-y',(y*100).toFixed(1)+'%');card.classList.add('op-tilt');
+});
+root.addEventListener('pointerout',e=>{if(hoverCard&&!hoverCard.contains(e.relatedTarget)){hoverCard.classList.remove('op-tilt');hoverCard.style.removeProperty('--op-rx');hoverCard.style.removeProperty('--op-ry');hoverCard=null}});
 root.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b||!root.contains(b))return;
   const n=b.dataset.opPlayer;

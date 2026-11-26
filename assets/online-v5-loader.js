@@ -42,6 +42,15 @@
       safeFeatures=safeFeatures.replace(`if(${variable})${variable}.textContent=${value};`,`if(${variable}){if(window.mwsUiInteractionsV1)window.mwsUiInteractionsV1.metric(${variable},${value});else ${variable}.textContent=${value};}`);
     }
     safeFeatures=safeFeatures.replace("const grid=$('friendFinderGridV5');if(!grid)return;","const grid=$('friendFinderGridV5');if(!grid)return;const previousUiStates=window.mwsUiInteractionsV1?.snapshot(grid,'.friend-finder-card-v5[data-id]');");
+    // Include the existing batched LIVE metadata before the legacy contact filter removes cards.
+    const friendSearchAnchor="if(!q)return true;\n      try{return typeof contactMatches==='function'?contactMatches(c,q):String(c.name||'').toLowerCase().includes(q)}";
+    const friendSearchReplacement="if(!q)return true;\n      if(window.mwsFriendLiveMatchesV120?.(c,q))return true;\n      try{return typeof contactMatches==='function'?contactMatches(c,q):String(c.name||'').toLowerCase().includes(q)}";
+    const friendRenderStart=safeFeatures.indexOf('function renderFriendFinderV5(){');
+    const friendRenderEnd=safeFeatures.indexOf('async function syncFriendFinderV5(',friendRenderStart);
+    const friendRender=friendRenderStart>=0&&friendRenderEnd>friendRenderStart?safeFeatures.slice(friendRenderStart,friendRenderEnd):'';
+    if(friendRender.includes(friendSearchAnchor))safeFeatures=safeFeatures.slice(0,friendRenderStart)+friendRender.replace(friendSearchAnchor,friendSearchReplacement)+safeFeatures.slice(friendRenderEnd);
+    else console.warn('Friend Finder LIVE search patch target missing');
+    safeFeatures=safeFeatures.replace('이름, 태그 또는 초성 검색','이름, 태그, 방송 제목, 카테고리 검색');
     safeFeatures=safeFeatures.replace("grid.querySelectorAll('[data-profile]').forEach", "if(previousUiStates)window.mwsUiInteractionsV1?.stateChanges(grid,'.friend-finder-card-v5[data-id]',previousUiStates);grid.querySelectorAll('[data-profile]').forEach");
     // Expose the real section initializer for navigation and create it before
     // switching tabs, including when an earlier render has removed the section.
@@ -130,6 +139,6 @@
     }
     if(typeof sharedSearchOwner.mwsKoreanInitials==='function')window.mwsKoreanInitials=sharedSearchOwner.mwsKoreanInitials;
     if(typeof sharedSearchOwner.mwsTextMatches==='function')window.mwsTextMatches=sharedSearchOwner.mwsTextMatches;
-    const v54=document.createElement('script');v54.src=document.querySelector('meta[name="mws-static-runtime"]')?.content==='1'?'assets/cf-static-bootstrap-v1.js?v=7&stage37=1&editor-layout=7':'assets/cloud-v5.5.js';v54.onload=()=>window.dispatchEvent(new Event('mws:v55-features-ready'));v54.onerror=()=>{const e=document.getElementById('mwsLoginError');if(e)e.textContent='V5.5 cloud 로딩 실패';};document.body.appendChild(v54);
+    const v54=document.createElement('script');v54.src=document.querySelector('meta[name="mws-static-runtime"]')?.content==='1'?'assets/cf-static-bootstrap-v1.js?v=7&stage37=1&editor-layout=7&friend-search=3':'assets/cloud-v5.5.js';v54.onload=()=>window.dispatchEvent(new Event('mws:v55-features-ready'));v54.onerror=()=>{const e=document.getElementById('mwsLoginError');if(e)e.textContent='V5.5 cloud 로딩 실패';};document.body.appendChild(v54);
   })().catch(err=>{console.error('MAWANG V5 loader failed',err);const e=document.getElementById('mwsLoginError');if(e)e.textContent='업데이트 로딩 실패: '+(err?.message||String(err));});
 })();

@@ -5,6 +5,10 @@ on:
     paths:
       - 'assets/operation-m-*'
       - 'scripts/qa-operation-m-*'
+      - 'scripts/qa-friend-live-search-browser.mjs'
+      - 'assets/friend-finder-v120.js'
+      - 'assets/online-v5-loader.js'
+      - 'assets/cf-static-bootstrap-v1.js'
       - 'index.html'
       - '.github/workflows/qa-operation-m.yml'
 permissions:
@@ -24,3 +28,6 @@ jobs:
           node --check assets/operation-m-v1.js
           node --test scripts/qa-operation-m-model.test.mjs
           node scripts/qa-operation-m-browser.mjs
+      - name: Verify Friend Finder LIVE search
+        if: success() || failure()
+        run: node scripts/qa-friend-live-search-browser.mjs
