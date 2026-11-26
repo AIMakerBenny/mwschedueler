@@ -299,7 +299,7 @@ function searchableLive(entry,query){
   const category=liveCategory(entry),title=liveTitle(entry);
   const categoryKey=normalizeSearch(category);
   const aliases=[];
-  if(/월드오브워크레[이]?프?트|월드오브워크래프트|worldofwarcraft/.test(categoryKey)){
+  if(/^(월드오브워크레프트|월드오브워크래프트|worldofwarcraft)(포에버|forever)?$/.test(categoryKey)){
     aliases.push('와우','WOW','World of Warcraft','월드 오브 워크래프트','월드 오브 워크레프트');
     if(/포에버|forever/.test(categoryKey))aliases.push('와우 포에버','와포','WOW Forever');
   }
@@ -384,7 +384,7 @@ function decorate(root=friendRoot()){
   for(const {card,id} of cardRows(root)){
     card.parentElement?.classList.add('mws-friend-live-grid-v120');
     const entry=id?liveByUserId.get(id):null;const live=isLiveEntry(entry);const cat=liveCategory(entry),catId=liveCategoryId(entry),viewers=liveViewers(entry);
-    let match=true;if(selected){match=live&&(selected.startsWith('id:')?catId===selected.slice(3):normalizeSearch(cat)===normalizeSearch(selected.slice(5)))}
+    let match=true;if(selected){const selectedName=selected.startsWith('id:')?catalogItems.find(x=>String(x.id)===selected.slice(3))?.name:selected.slice(5);match=live&&(selected.startsWith('id:')&&catId?catId===selected.slice(3):Boolean(selectedName&&normalizeSearch(cat)===normalizeSearch(selectedName)))}
     card.classList.toggle('mws-category-hidden-v120',!match);
 
     let meta=card.querySelector('.mws-live-category-v120');if(!meta){meta=document.createElement('div');meta.className='mws-live-category-v120';const actions=[...card.querySelectorAll('button,a')].find(x=>String(x.textContent||'').trim()==='프로필')?.parentElement;actions?.parentElement?.insertBefore(meta,actions)||card.appendChild(meta)}
