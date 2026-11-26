@@ -69,5 +69,25 @@ for(const [w,h] of [[1366,768],[1715,894],[1920,1080],[2560,1440],[2560,1080],[3
  await b.evaluate("data.contacts[0].name='변경된 닉네임';window.mwsOperationM.refresh()");assert.equal(await b.evaluate("document.querySelector('[data-op-player=마왕0216] .op-player-name').textContent"),'변경된 닉네임');
  console.log('OPERATION_M_BROWSER_OK',w,h,result);
 }
+for(const [w,h] of [[1366,768],[1024,768],[2560,1080],[3840,2160],[390,844]]){
+ await b.navigate(url,w,h);
+ await b.evaluate("localStorage.removeItem('mws.operationM.simulation.v1')");
+ await b.navigate(url,w,h);
+ await b.setReducedMotion(true);
+ await b.evaluate("document.querySelector('[data-op-action=tab-tier]').click()");
+ // All 20 players in one rank: every card must be reachable without shrinking to tiny thumbnails.
+ await b.evaluate(`(async()=>{for(let i=0;i<20;i++){document.querySelector('.op-pool .op-player').click();document.querySelector('.op-tier-row[data-tier=S] .op-tier-label').click();await new Promise(requestAnimationFrame)}return true})()`);
+ const skew=await b.evaluate(`(()=>{const r=document.querySelector('.op-tier-row[data-tier=S]'),g=r.querySelector('.op-player-grid'),cards=[...g.querySelectorAll('.op-player')];g.scrollTop=g.scrollHeight;const a=g.getBoundingClientRect(),last=cards.at(-1).getBoundingClientRect();return {count:cards.length,portrait:cards[0].querySelector('.op-portrait').getBoundingClientRect().width,scrollHeight:g.scrollHeight,clientHeight:g.clientHeight,lastReachable:g.scrollHeight<=g.clientHeight+1||last.bottom<=a.bottom+2,overflow:document.documentElement.scrollWidth>innerWidth+1}})()`);
+ assert.equal(skew.count,20);assert(skew.portrait>=65,JSON.stringify(skew));assert(skew.lastReachable,JSON.stringify(skew));assert(!skew.overflow,JSON.stringify(skew));
+ await b.evaluate("document.querySelector('[data-op-action=undo-move]').click()");
+ assert.equal(await b.evaluate("document.querySelectorAll('.op-tier-row[data-tier=S] .op-player').length"),19);
+ assert.equal(await b.evaluate("document.querySelectorAll('.op-pool .op-player').length"),1);
+ await b.evaluate("document.querySelector('.op-pool .op-player').click();document.querySelector('.op-tier-row[data-tier=S] .op-tier-label').click()");
+ await b.evaluate("document.querySelector('[data-op-action=draft]').click()");
+ assert.equal(await b.evaluate("document.querySelectorAll('.op-team .op-player').length"),20);
+ assert.deepEqual(await b.evaluate("[...document.querySelectorAll('.op-team header b')].map(x=>x.textContent)"),['25점','25점','25점','25점']);
+ await b.setReducedMotion(false);
+ console.log('OPERATION_M_SKEWED_OK',w,h,skew);
+}
 assert(!requests.some(x=>x.startsWith('/api/')));console.log('OPERATION_M_NO_API_REQUESTS',requests.length);
 }finally{await b?.close();await new Promise(r=>server.close(r));rmSync(dir,{recursive:true,force:true})}
