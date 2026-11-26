@@ -4,8 +4,8 @@
 #operationM .op-shell{max-width:none;margin:0;padding:0 0 14px;display:grid;gap:8px;min-width:0}
 
 #operationM .op-actions,#operationM .op-tabs{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-#operationM button:not(.op-player):not(.op-tier-label):not(.op-guide-rank):not(.op-empty){border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:9px;padding:9px 13px;line-height:1.4;font-size:13px;min-width:0;min-height:0;box-shadow:none;cursor:pointer;transition:background .15s,transform .15s,border-color .15s}
-#operationM button:not(.op-player):not(.op-tier-label):not(.op-guide-rank):not(.op-empty):hover:not(:disabled){background:var(--input);border-color:var(--accent);transform:translateY(-1px)}
+#operationM button:not(.op-player):not(.op-tier-label):not(.op-guide-rank):not(.op-empty):not(.op-mode-card){border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:9px;padding:9px 13px;line-height:1.4;font-size:13px;min-width:0;min-height:0;box-shadow:none;cursor:pointer;transition:background .15s,transform .15s,border-color .15s}
+#operationM button:not(.op-player):not(.op-tier-label):not(.op-guide-rank):not(.op-empty):not(.op-mode-card):hover:not(:disabled){background:var(--input);border-color:var(--accent);transform:translateY(-1px)}
 #operationM .op-actions button.op-primary,#operationM .op-tabs button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
 #operationM button:disabled{opacity:.42;cursor:not-allowed;transform:none}
 #operationM button:focus-visible,#operationM select:focus-visible,#operationM input:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
@@ -39,16 +39,25 @@
 #operationM .op-roster{display:grid;gap:10px;min-width:0}
 #operationM .op-host{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
 #operationM .op-host .op-portrait{width:30px;flex:none}
-#operationM .op-coaches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;min-width:0}
-#operationM .op-coach{--team:#739bff;display:flex;align-items:center;gap:12px;padding:9px;border:1px solid color-mix(in srgb,var(--team) 50%,var(--border));border-radius:12px;min-width:0;background:linear-gradient(130deg,color-mix(in srgb,var(--team) 14%,var(--panel)),var(--panel));box-shadow:0 5px 16px #0002}
+#operationM .op-coaches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;min-width:0}
+#operationM .op-coach{--team:#739bff;position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr);gap:0;padding:4px;min-width:0;border:1px solid transparent;border-radius:12px;background:linear-gradient(145deg,#252c39,#121722) padding-box,linear-gradient(130deg,color-mix(in srgb,var(--team) 65%,white),#242a35 40%,var(--team) 77%,#d7e1f0) border-box;box-shadow:0 6px 17px #0005,inset 0 0 0 1px #ffffff12;transition:transform .22s ease,box-shadow .22s ease}
 #operationM .op-coach[data-team="1"]{--team:#ed8296}#operationM .op-coach[data-team="2"]{--team:#69caa4}#operationM .op-coach[data-team="3"]{--team:#e8bb65}
-#operationM .op-coach .op-portrait{width:clamp(76px,8.5vw,146px);max-width:58%;flex:none;border-radius:9px}
-#operationM .op-coach div{display:grid;gap:4px;min-width:0}
-#operationM .op-coach small{font-size:11px;color:var(--team);font-weight:650}
-#operationM .op-coach strong{font-size:clamp(13px,1.3vw,21px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+#operationM .op-coach .op-portrait{width:100%;height:clamp(92px,10.5cqw,218px);aspect-ratio:auto;border-radius:8px 8px 3px 3px;outline:1px solid color-mix(in srgb,var(--team) 55%,transparent)}
+#operationM .op-coach .op-portrait img{object-position:50% 33%}
+#operationM .op-coach-plate{position:relative;z-index:2;min-width:0;display:grid;justify-items:center;align-items:center;min-height:29px;padding:5px 10px;border-top:1px solid var(--team);background:linear-gradient(180deg,color-mix(in srgb,var(--team) 25%,#252e3d),#141923);border-radius:0 0 7px 7px}
+#operationM .op-coach strong{display:block;max-width:100%;font-size:clamp(13px,1.25cqw,21px);line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#f5f6fa;text-shadow:0 1px 3px #000}
+#operationM .op-coach-frame{position:absolute;inset:4px;z-index:3;pointer-events:none;overflow:hidden;border-radius:8px}
+#operationM .op-coach-frame i{position:absolute;width:14%;height:18%;border:0 solid var(--team);filter:drop-shadow(0 0 3px var(--team))}
+#operationM .op-coach-frame i:nth-child(1){left:0;top:0;border-top-width:2px;border-left-width:2px}
+#operationM .op-coach-frame i:nth-child(2){right:0;top:0;border-top-width:2px;border-right-width:2px}
+#operationM .op-coach-frame i:nth-child(3){left:0;bottom:0;border-bottom-width:2px;border-left-width:2px}
+#operationM .op-coach-frame i:nth-child(4){right:0;bottom:0;border-bottom-width:2px;border-right-width:2px}
+#operationM .op-coach-frame::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 25%,#ffffff42 47%,transparent 63%);transform:translateX(-125%)}
+@media(hover:hover) and (pointer:fine){#operationM .op-coach:hover{transform:translateY(-3px);box-shadow:0 9px 23px #0007,0 0 12px color-mix(in srgb,var(--team) 36%,transparent)}#operationM .op-coach:hover .op-coach-frame::after{animation:op-coach-shine .75s ease-out both}}
+@keyframes op-coach-shine{from{transform:translateX(-125%)}to{transform:translateX(125%)}}
 #operationM .op-roster-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:9px;min-width:0}
 #operationM .op-roster-grid .op-player{max-width:none;cursor:default;min-height:0;padding:5px}
-#operationM .op-roster-grid .op-player-name{font-size:12px}
+#operationM .op-roster-grid .op-player-name{font-size:clamp(11px,1.05cqw,16px)}
 #operationM .op-block-head button.op-primary,#operationM .op-config-footer button.op-primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
 #operationM .op-overlay{position:fixed;inset:0;z-index:5000;background:#000a;display:grid;place-items:center;padding:16px}
 #operationM .op-config{position:relative;width:min(920px,100%);max-height:calc(100dvh - 32px);overflow:auto;border:1px solid var(--border);border-radius:16px;padding:16px;display:grid;gap:12px;background:var(--panel);box-shadow:0 20px 70px #0008}
@@ -131,11 +140,11 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-guided-ranks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
 #operationM button.op-guide-rank{display:flex;flex-direction:column;min-height:76px;justify-content:center}
 #operationM button.op-guide-rank:hover{background:linear-gradient(145deg,color-mix(in srgb,var(--tier) 72%,white),var(--tier));border-color:var(--tier);box-shadow:0 0 23px color-mix(in srgb,var(--tier) 40%,transparent)}
-@container(max-width:1000px){#operationM .op-roster-grid{grid-template-columns:repeat(8,minmax(0,1fr))}#operationM .op-board{gap:7px}#operationM .op-tier-row{padding:6px;gap:6px}#operationM .op-tier-label{padding:7px;min-height:46px}#operationM .op-tier-label strong{font-size:26px}#operationM .op-tier-row .op-player-grid{gap:5px}}
+@container(max-width:1000px){#operationM .op-board{gap:7px}#operationM .op-tier-row{padding:6px;gap:6px}#operationM .op-tier-label{padding:7px;min-height:46px}#operationM .op-tier-label strong{font-size:26px}#operationM .op-tier-row .op-player-grid{gap:5px}}
 @container(max-width:800px){#operationM .op-teams{grid-template-columns:repeat(2,minmax(0,1fr))}#operationM .op-team-players .op-player{max-width:none}#operationM .op-tier-row .op-player-grid{min-height:76px;scrollbar-gutter:auto}#operationM .op-pool .op-player-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
-@media(max-width:760px){#operationM .op-coaches{grid-template-columns:repeat(2,minmax(0,1fr))}#operationM .op-roster-grid{grid-template-columns:repeat(5,minmax(0,1fr))}#operationM .op-config-roles,#operationM .op-config-players{grid-template-columns:repeat(2,minmax(0,1fr))}#operationM .op-guided{padding:6px;min-height:0}#operationM .op-guided-ranks{gap:5px}#operationM button.op-guide-rank{padding:6px;min-height:66px}#operationM .op-guide-rank strong{font-size:27px}}
+@media(max-width:760px){#operationM .op-config-roles,#operationM .op-config-players{grid-template-columns:repeat(2,minmax(0,1fr))}#operationM .op-guided{padding:6px;min-height:0}#operationM .op-guided-ranks{gap:5px}#operationM button.op-guide-rank{padding:6px;min-height:66px}#operationM .op-guide-rank strong{font-size:27px}}
 
-@media(max-width:430px){#operationM .op-roster-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}#operationM .op-coach{padding:6px;gap:6px}#operationM .op-coach .op-portrait{width:62px}#operationM .op-coach strong{font-size:13px}}
+
 
 /* Rarity is a material and shape system, not just a tier color. */
 #operationM [data-tier="S"]{--foil:linear-gradient(115deg,#c7a1ff 0%,#ffdc84 16%,#fff8d1 30%,#76e1ef 44%,#c5a5fc 61%,#ffd67a 82%,#ffe9b0 100%);--dark:#29203e;--glow:#ffd889}
@@ -401,3 +410,69 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
   #operationM .op-reveal-card:not(.op-face-down) .op-card-front{visibility:visible;transform:none}
   #operationM .op-reveal-card:not(.op-face-down) .op-card-back{visibility:hidden}
 }
+
+/* Roster: the actual available width determines card count, not the monitor. */
+@container(max-width:1100px){#operationM .op-roster-grid{gap:8px}}
+@container(max-width:960px){#operationM .op-roster-grid{grid-template-columns:repeat(8,minmax(0,1fr))}}
+@container(max-width:760px){#operationM .op-roster-grid{grid-template-columns:repeat(5,minmax(0,1fr))}#operationM .op-coaches{gap:9px;grid-template-columns:repeat(2,minmax(0,1fr))}#operationM .op-coach .op-portrait{height:clamp(100px,23cqw,160px)}}
+@container(max-width:480px){#operationM .op-roster-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}#operationM .op-coach .op-portrait{height:clamp(92px,25cqw,125px)}#operationM .op-coach-plate{padding:4px 6px}}
+@container(max-width:320px){#operationM .op-roster-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+#operationM .op-view-enter .op-coach{animation:op-coach-arrive .28s calc(var(--op-order,0)*45ms) ease-out both}
+#operationM .op-view-enter .op-roster-grid .op-card-front{animation:op-roster-arrive .26s ease-out both}
+#operationM .op-view-enter .op-roster-grid .op-player:nth-child(5n+2) .op-card-front{animation-delay:25ms}
+#operationM .op-view-enter .op-roster-grid .op-player:nth-child(5n+3) .op-card-front{animation-delay:50ms}
+#operationM .op-view-enter .op-roster-grid .op-player:nth-child(5n+4) .op-card-front{animation-delay:75ms}
+#operationM .op-view-enter .op-roster-grid .op-player:nth-child(5n+5) .op-card-front{animation-delay:100ms}
+@keyframes op-coach-arrive{from{opacity:.5}to{opacity:1}}
+@keyframes op-roster-arrive{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
+#operationM .op-tabs button{transition:background .18s ease,color .18s ease,border-color .18s ease,box-shadow .18s ease}
+#operationM .op-tabs button[aria-pressed="true"]{box-shadow:inset 0 1px 0 #ffffff40,0 2px 6px #0002}
+
+/* Tier mode chooser: equal-sized large controls with self-contained motion previews. */
+#operationM .op-mode-choice{width:min(100%,1080px);margin:clamp(12px,3cqw,42px) auto 12px;display:grid;gap:15px;min-width:0}
+#operationM .op-mode-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(12px,2cqw,25px);min-width:0}
+#operationM button.op-mode-card{position:relative;isolation:isolate;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:0;min-width:0;padding:0;overflow:hidden;text-align:center;color:var(--text);border:1px solid color-mix(in srgb,var(--accent) 30%,var(--border));border-radius:18px;background:linear-gradient(150deg,var(--panel2,var(--panel)),var(--panel));box-shadow:0 8px 22px #0004;cursor:pointer;transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s,border-color .22s,opacity .22s}
+#operationM .op-mode-card[data-mode="guided"]{--op-mode-accent:#c5a3ff;--op-mode-light:#7560be}
+#operationM .op-mode-card[data-mode="list"]{--op-mode-accent:#8edbdc;--op-mode-light:#3c8796}
+#operationM .op-mode-card::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse at 50% 35%,color-mix(in srgb,var(--op-mode-light) 34%,transparent),transparent 72%);pointer-events:none}
+#operationM .op-mode-card:focus-visible{outline:2px solid var(--op-mode-accent);outline-offset:4px}
+#operationM .op-mode-card:active{transform:scale(.98);border-color:var(--op-mode-accent)}
+#operationM .op-mode-preview{position:relative;display:grid;place-items:center;min-height:clamp(184px,25cqw,330px);overflow:hidden;perspective:750px;padding:14px}
+#operationM .op-mode-caption{display:grid;gap:6px;justify-items:center;padding:18px 10px 20px;border-top:1px solid color-mix(in srgb,var(--op-mode-accent) 18%,var(--border));background:linear-gradient(180deg,#0000,#0002)}
+#operationM .op-mode-caption strong{font-size:clamp(17px,2cqw,26px);line-height:1.25;letter-spacing:-.03em}
+#operationM .op-mode-caption>span{font-size:clamp(11px,1.1cqw,14px);line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+#operationM .op-mode-back{display:flex;justify-content:center}
+#operationM .op-preview-stack{position:relative;width:min(68%,190px);height:0;padding-bottom:min(55%,195px);isolation:isolate}
+#operationM .op-preview-card{position:absolute;display:grid;box-sizing:border-box;left:50%;top:50%;width:52%;aspect-ratio:3/4;border-radius:9px;box-shadow:0 6px 15px #0008}
+#operationM .op-preview-back{transform:translate(-50%,-50%) translateX(calc((var(--op-i) - 1)*38%)) rotate(calc((var(--op-i) - 1)*15deg));z-index:1}
+#operationM .op-preview-card .op-card-back{visibility:visible;transform:none}
+#operationM .op-preview-draw{padding:5px;gap:4px;grid-template-rows:minmax(0,1fr) 15%;background:linear-gradient(140deg,#383749,#191c27) padding-box,linear-gradient(145deg,#d9c4f9,#574770,#a2c5d6) border-box;border:2px solid transparent;transform:translate(-50%,-50%) translateY(-8%) rotate(5deg);z-index:2}
+#operationM .op-preview-portrait{border-radius:5px;display:block;background:radial-gradient(circle at 50% 33%,#a6b8d3 0 15%,transparent 16%),radial-gradient(ellipse at 50% 94%,#8399b8 0 39%,transparent 40%),linear-gradient(150deg,#31465e,#161e30)}
+#operationM .op-preview-plate{border:1px solid #a7a4c562;border-radius:3px;background:linear-gradient(#77738a,#313345)}
+#operationM .op-preview-board{position:relative;display:grid;grid-template-rows:repeat(5,minmax(0,1fr));width:min(90%,290px);height:clamp(150px,20cqw,250px);gap:5px;padding:8px;border:1px solid #8fb4c05e;background:#0c111a9c;border-radius:12px;box-shadow:0 8px 23px #0006}
+#operationM .op-preview-row{min-height:0;display:grid;grid-template-columns:25% repeat(3,minmax(0,1fr));align-items:stretch;gap:5px;padding:3px;border:1px solid color-mix(in srgb,var(--tier) 40%,transparent);border-radius:5px;background:color-mix(in srgb,var(--tier) 12%,#111824)}
+#operationM .op-preview-row>span{display:flex;align-items:center;justify-content:center;gap:3px;font-size:clamp(9px,1cqw,13px);font-weight:800;color:var(--tier)}
+#operationM .op-preview-row svg{width:clamp(10px,1.4cqw,20px);height:auto}
+#operationM .op-preview-row i{display:block;border:1px dashed color-mix(in srgb,var(--tier) 35%,transparent);border-radius:3px;background:#ffffff04}
+#operationM .op-preview-token{position:absolute;left:32%;top:10%;width:18%;height:15%;border-radius:4px;border:1px solid #c7c8d8;background:radial-gradient(circle at 50% 36%,#bdcde2 0 18%,transparent 20%),radial-gradient(ellipse at 50% 100%,#809cb9 0 37%,transparent 40%),linear-gradient(145deg,#44516c,#222a3f);box-shadow:0 3px 6px #0008;z-index:2;transform:translate(0,0)}
+#operationM .op-preview-token-two{left:53%;top:29%;border-color:#d4b569;background-color:#433625}
+@keyframes op-preview-draw{0%,100%{transform:translate(-50%,-50%) translateY(-8%) rotate(5deg)}45%,65%{transform:translate(-50%,-50%) translateY(-36%) translateX(42%) rotate(10deg) scale(1.08)}}
+@keyframes op-preview-fan{0%,100%{transform:translate(-50%,-50%) translateX(calc((var(--op-i) - 1)*38%)) rotate(calc((var(--op-i) - 1)*15deg))}45%,65%{transform:translate(-50%,-50%) translateX(calc((var(--op-i) - 1)*51%)) rotate(calc((var(--op-i) - 1)*22deg))}}
+@keyframes op-preview-place-one{0%,100%{transform:translate(0,0)}45%,75%{transform:translate(120%,135%);border-color:#bb96fa}}
+@keyframes op-preview-place-two{0%,100%{transform:translate(0,0)}45%,75%{transform:translate(-115%,255%);border-color:#aebdce}}
+#operationM .op-mode-card:focus-visible .op-preview-draw{animation:op-preview-draw 1.75s ease-in-out infinite}
+#operationM .op-mode-card:focus-visible .op-preview-back{animation:op-preview-fan 1.75s ease-in-out infinite}
+#operationM .op-mode-card:focus-visible .op-preview-token-one{animation:op-preview-place-one 1.75s ease-in-out infinite}
+#operationM .op-mode-card:focus-visible .op-preview-token-two{animation:op-preview-place-two 1.75s .15s ease-in-out infinite}
+@media(hover:hover) and (pointer:fine){
+ #operationM .op-mode-card:hover{transform:translateY(-4px) scale(1.015);border-color:var(--op-mode-accent);box-shadow:0 14px 32px #0006,0 0 18px color-mix(in srgb,var(--op-mode-accent) 20%,transparent)}
+ #operationM .op-mode-options:has(.op-mode-card:hover) .op-mode-card:not(:hover){opacity:.8}
+ #operationM .op-mode-card:hover .op-preview-draw{animation:op-preview-draw 1.75s ease-in-out infinite}
+ #operationM .op-mode-card:hover .op-preview-back{animation:op-preview-fan 1.75s ease-in-out infinite}
+ #operationM .op-mode-card:hover .op-preview-token-one{animation:op-preview-place-one 1.75s ease-in-out infinite}
+ #operationM .op-mode-card:hover .op-preview-token-two{animation:op-preview-place-two 1.75s .15s ease-in-out infinite}
+}
+#operationM .op-view-enter .op-mode-choice,#operationM .op-view-enter .op-tier-workspace,#operationM .op-view-enter .op-guided{animation:op-view-arrive .18s ease-out both}
+@keyframes op-view-arrive{from{opacity:.72}to{opacity:1}}
+@container(max-width:600px){#operationM .op-mode-choice{margin:10px auto;gap:10px}#operationM .op-mode-options{gap:12px;grid-template-columns:minmax(0,1fr)}#operationM .op-mode-preview{min-height:172px;padding:8px}#operationM .op-preview-board{height:150px}#operationM .op-preview-stack{width:145px;padding-bottom:135px}#operationM .op-mode-caption{padding:12px 8px 14px}}
+@media(prefers-reduced-motion:reduce){#operationM .op-mode-card,#operationM .op-coach{transform:none!important}#operationM .op-mode-options .op-mode-card{opacity:1!important}}
