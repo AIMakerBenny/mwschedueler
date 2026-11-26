@@ -11,7 +11,8 @@ const html=readFileSync(path.join(root,'index.html'),'utf8');
 assert.equal((html.match(/data-tab="operationM"/g)||[]).length,1);
 assert.equal((html.match(/id="operationM"/g)||[]).length,1);
 const contacts=[...ROSTER,...ROLE_NAMES].map((n,i)=>({id:'p'+i,name:n==='리냐_LIN…'?'리냐_LINA':n,image:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect width="100" height="100" fill="blue"/%3E%3C/svg%3E'}));
-const fixture='<!doctype html><html><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;--panel:#151822;--panel2:#282b38;--input:#242735;--border:#434653;--text:#eee;--muted:#aaa;--accent:#6855e8;background:#10111a;color:var(--text);font:14px system-ui}*{box-sizing:border-box}button{font:inherit}</style><link rel="stylesheet" href="/assets/operation-m-v1.css"><style>.main{padding:16px 22px;min-width:0}body{display:grid;grid-template-columns:clamp(160px,13vw,240px) minmax(0,1fr)} .qa-sidebar{background:#181922;min-height:100vh}.topbar{height:42px;margin-bottom:10px}#mwsAccessTools{position:fixed;bottom:10px;right:10px;height:28px;width:220px} @media(max-width:760px){body{display:block}.qa-sidebar{display:none}.main{padding:8px}}</style><aside class="qa-sidebar"></aside><main class="main"><div class="topbar"><h1 id="pageTitle">오퍼 M</h1></div><section id="operationM" class="section active"></section></main><div id="mwsAccessTools"></div><script>let data={contacts:'+JSON.stringify(contacts)+',miniGames:{}};let saves=0;document.body.dataset.mwsMode="public";window.mwsV55EgressReport=()=>({loadedParts:["miniGames"],manifest:{parts:{miniGames:1}}});window.mwsV55SaveNow=async()=>{saves++;return true};window.saveData=()=>{};</script><script type="module" src="/assets/operation-m-v1.js"></script></html>';
+const motionScript=html.match(/<script id="mws-motion-preference">[\s\S]*?<\/script>/)?.[0];assert(motionScript,'production motion preference missing');
+const fixture='<!doctype html><html><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;--panel:#151822;--panel2:#282b38;--input:#242735;--border:#434653;--text:#eee;--muted:#aaa;--accent:#6855e8;background:#10111a;color:var(--text);font:14px system-ui}*{box-sizing:border-box}button{font:inherit}</style><link rel="stylesheet" href="/assets/operation-m-v1.css"><style>.main{padding:16px 22px;min-width:0}body{display:grid;grid-template-columns:clamp(160px,13vw,240px) minmax(0,1fr)} .qa-sidebar{background:#181922;min-height:100vh}.topbar{height:42px;margin-bottom:10px}#mwsAccessTools{position:fixed;bottom:10px;right:10px;height:28px;width:220px} @media(max-width:760px){body{display:block}.qa-sidebar{display:none}.main{padding:8px}}</style>'+motionScript+'<select id="mwsScreenMotion" hidden><option value="full">full</option><option value="reduced">reduced</option><option value="system">system</option></select><aside class="qa-sidebar"></aside><main class="main"><div class="topbar"><h1 id="pageTitle">오퍼 M</h1></div><section id="operationM" class="section active"></section></main><div id="mwsAccessTools"></div><script>let data={contacts:'+JSON.stringify(contacts)+',miniGames:{}};let saves=0;document.body.dataset.mwsMode="public";window.mwsV55EgressReport=()=>({loadedParts:["miniGames"],manifest:{parts:{miniGames:1}}});window.mwsV55SaveNow=async()=>{saves++;return true};window.saveData=()=>{};</script><script type="module" src="/assets/operation-m-v1.js"></script></html>';
 let requests=[];const server=createServer((req,res)=>{const route=new URL(req.url,'http://localhost').pathname;requests.push(route);if(route==='/fixture'){res.setHeader('content-type','text/html; charset=utf-8');res.end(fixture);return}if(!/^\/assets\/operation-m-[a-z0-9-]+\.(js|css)$/.test(route)){res.writeHead(404).end();return}res.setHeader('content-type',route.endsWith('.css')?'text/css':'application/javascript');res.end(readFileSync(path.join(root,'.'+route)))});
 const dir=mkdtempSync(path.join(os.tmpdir(),'opm-'));let b;
 const captures=process.env.MWS_OPERATION_M_CAPTURE;if(captures)mkdirSync(captures,{recursive:true});
@@ -35,7 +36,7 @@ for(const [w,h] of [[1366,768],[1726,892],[1715,894],[1920,1080],[2560,1440],[25
  const movedNode=await b.evaluate(`(()=>{const card=document.querySelector('.op-pool .op-player.op-selected'),img=card.querySelector('img'),other=document.querySelectorAll('.op-pool .op-player')[1];document.querySelector('.op-tier-row[data-tier=S] .op-empty').click();return{same:card===document.querySelector('.op-tier-row[data-tier=S] .op-player'),sameImage:img===card.querySelector('img'),otherStillConnected:other.isConnected,rank:card.dataset.rarity}})()`);assert.deepEqual(movedNode,{same:true,sameImage:true,otherStillConnected:true,rank:'holo'});
  assert.equal(await b.evaluate("document.querySelectorAll('.op-tier-row[data-tier=S] .op-player').length"),1);
  const dragReturn=await b.evaluate(`(async()=>{const card=document.querySelector('.op-pool .op-player'),before=localStorage.getItem('mws.operationM.simulation.v1'),dt=new DataTransfer();card.dispatchEvent(new DragEvent('dragstart',{bubbles:true,cancelable:true,dataTransfer:dt}));await new Promise(requestAnimationFrame);const raised=card.classList.contains('op-dragging');card.dispatchEvent(new DragEvent('dragend',{bubbles:true,dataTransfer:dt}));return {raised,restored:!card.classList.contains('op-dragging'),same:before===localStorage.getItem('mws.operationM.simulation.v1')}})()`);assert.deepEqual(dragReturn,{raised:true,restored:true,same:true});
- const partialModeSwitch=await b.evaluate(`(()=>{const key='mws.operationM.simulation.v1',before=localStorage.getItem(key);document.querySelector('[data-op-action=choose-mode]').click();document.querySelector('[data-op-action=start-guided]').click();document.querySelector('[data-op-action=skip-guided]').click();const n=document.querySelector('[data-op-current]').dataset.opCurrent;document.querySelector('[data-op-action=choose-mode]').click();document.querySelector('[data-op-action=start-list]').click();return{preserved:before===localStorage.getItem(key),remaining:document.querySelectorAll('.op-pool .op-player').length,assigned:document.querySelectorAll('.op-board .op-player').length,newCard:!JSON.parse(before).tiers[n]}})()`);assert.deepEqual(partialModeSwitch,{preserved:true,remaining:19,assigned:1,newCard:true});
+ const partialModeSwitch=await b.evaluate(`(()=>{const key='mws.operationM.simulation.v1',before=localStorage.getItem(key);document.querySelector('[data-op-action=choose-mode]').click();document.querySelector('[data-op-action=start-guided]').click();document.querySelector('[data-op-action=skip-guided]').click();document.querySelector('[data-op-action=skip-guided]').click();const n=document.querySelector('[data-op-current]').dataset.opCurrent;document.querySelector('[data-op-action=choose-mode]').click();document.querySelector('[data-op-action=start-list]').click();return{preserved:before===localStorage.getItem(key),remaining:document.querySelectorAll('.op-pool .op-player').length,assigned:document.querySelectorAll('.op-board .op-player').length,newCard:!JSON.parse(before).tiers[n]}})()`);assert.deepEqual(partialModeSwitch,{preserved:true,remaining:19,assigned:1,newCard:true});
  await b.evaluate("localStorage.removeItem('mws.operationM.simulation.v1')");
  await b.navigate(url,w,h);
  console.log('OPERATION_M_EMPTY_BOARD',w,h,empty,drop.map(d=>[d.target,d.area,d.centerError]));
@@ -62,15 +63,53 @@ for(const [w,h] of [[1366,768],[1726,892],[1715,894],[1920,1080],[2560,1440],[25
  assert.equal(await b.evaluate("document.querySelector('[data-op-current]').dataset.opCurrent"),first);
  assert.equal(await b.evaluate("Object.keys(JSON.parse(localStorage.getItem('mws.operationM.simulation.v1')).tiers).length"),0);
  // Pause must leave exactly one stack and no exposed participant after the current rank is assigned.
- await b.evaluate("document.querySelector('[data-op-action=toggle-pause]').click();document.querySelector('[data-op-action=skip-guided]').click();document.querySelector('[data-op-assign=S]').click()");
+ await b.evaluate("document.querySelector('[data-op-action=toggle-pause]').click();document.querySelector('[data-op-assign=S]').click();document.querySelector('[data-op-action=skip-guided]').click()");
  await b.evaluate("(async()=>{await new Promise(r=>setTimeout(r,60));return true})()");
  assert.deepEqual(await b.evaluate("({faces:document.querySelectorAll('[data-op-current]').length,stack:document.querySelectorAll('[data-op-draw]').length,phase:!!document.querySelector('.op-deck-phase-pick')})"),{faces:0,stack:1,phase:true});
  await b.evaluate("document.querySelector('[data-op-action=undo-guided]').click();document.querySelector('[data-op-action=toggle-pause]').click()");
  assert.equal(await b.evaluate("document.querySelector('[data-op-current]').dataset.opCurrent"),first);
  console.log('OPERATION_M_CONTINUOUS_MOTION_OK',w,h,{shuffle,draw,moving,flip,geometry,leaving,next});
- // Remaining participants: automatic advancement even with animations disabled.
- const guided=await b.evaluate(`(async()=>{const order=[];for(let i=0;i<20;i++){const cards=document.querySelectorAll('[data-op-current]');if(cards.length!==1||!document.querySelector('.op-deck-phase-reveal'))throw Error('not a single open card '+i);order.push(cards[0].dataset.opCurrent);document.querySelector('[data-op-assign="'+['S','A','B','C','D'][i%5]+'"]').click();await new Promise(r=>setTimeout(r,25));if(i<19&&document.querySelector('.op-guided-stage')!==window.qaStage)throw Error('stage replaced')}return{order,remaining:document.querySelectorAll('[data-op-current]').length,board:document.querySelectorAll('.op-board .op-player').length}})()`);
- assert.equal(new Set(guided.order).size,20);assert.equal(guided.remaining,0);assert.equal(guided.board,20);
+ // Exercise every tier with motion enabled at every viewport; all twenty at the reported viewport.
+ const order=[],timings=[],fullCount=w===1726?20:5;
+ for(let i=0;i<20;i++){
+   const tier=['S','A','B','C','D'][i%5],last=i===19;
+   const observed=await b.evaluate(`(async()=>{
+     const tier=${JSON.stringify(tier)},last=${last},full=${i<fullCount},q=s=>document.querySelector(s),stage=q('.op-guided-stage'),card=q('[data-op-current]'),old=card?.dataset.opCurrent;
+     if(!old||!q('.op-deck-phase-reveal')||stage!==window.qaStage||document.querySelectorAll('[data-op-current]').length!==1)throw Error('missing single open card');
+     const before=window.mwsOperationM.motionReport().events.length,start=performance.now();
+     q('[data-op-assign='+tier+']').click();
+     if(![...document.querySelectorAll('[data-op-assign]')].every(x=>x.disabled))throw Error('input unlocked during confirm');
+     if(!full){q('[data-op-action=skip-guided]').click();if(!last)q('[data-op-action=skip-guided]').click()}
+     let observedDraw=null,observedFlip=null,seenMaterial=false,seenFlight=false;
+     while(performance.now()-start<12000){
+       if(q('.op-rank-confirm')===card)seenMaterial=true;
+       if(q('.op-rank-flight')===card)seenFlight=true;
+       if(q('.op-deck-phase-draw')&&observedDraw===null)observedDraw=performance.now()-start;
+       if(q('.op-deck-phase-flip')&&observedFlip===null)observedFlip=performance.now()-start;
+       if(last?q('.op-board'):q('.op-deck-phase-reveal')&&q('[data-op-current]')?.dataset.opCurrent!==old){
+         return{old,elapsed:performance.now()-start,observedDraw,observedFlip,seenMaterial,seenFlight,events:window.mwsOperationM.motionReport().events.slice(before),same:last||stage===q('.op-guided-stage'),open:last||getComputedStyle(q('[data-op-current] .op-card-front')).visibility==='visible',enabled:last||[...document.querySelectorAll('[data-op-assign]')].every(x=>!x.disabled)};
+       }
+       if(![...document.querySelectorAll('[data-op-assign]')].every(x=>x.disabled))throw Error('input unlocked before next card');
+       await new Promise(r=>setTimeout(r,15));
+     }throw Error('transition timeout '+tier)
+   })()`);
+   order.push(observed.old);assert(observed.same&&observed.open&&observed.enabled,JSON.stringify(observed));
+   if(i<fullCount){
+     const hold={S:900,A:740,B:640,C:540,D:440}[tier],min=240+hold+480+(last?0:640+700);
+     assert(observed.elapsed>=min-55&&observed.elapsed<min+2000,JSON.stringify({w,h,tier,min,observed}));
+     assert(observed.seenMaterial&&observed.seenFlight,JSON.stringify(observed));
+     assert.deepEqual(observed.events.map(e=>e.phase),last?['confirm','material','flight','land']:['confirm','material','flight','land','draw','flip','reveal']);
+     assert(observed.events.every(e=>e.mode==='full'),JSON.stringify(observed));
+     const gaps=observed.events.slice(1).map((e,j)=>Math.round(e.at-observed.events[j].at));
+     assert(gaps[0]>=235&&gaps[1]>=hold-5&&gaps[2]>=450,JSON.stringify({gaps,tier}));
+     if(!last){assert(gaps[4]>=610&&gaps[5]>=670,JSON.stringify(gaps));assert(observed.observedDraw!==null&&observed.observedFlip!==null,JSON.stringify(observed))}
+     timings.push({tier,ms:Math.round(observed.elapsed),gaps});
+   }else{assert(observed.events.some(e=>e.phase==='skip-confirm'),JSON.stringify(observed))}
+ }
+ assert.equal(new Set(order).size,20);
+ assert.equal(await b.evaluate("document.querySelectorAll('[data-op-current]').length"),0);
+ assert.equal(await b.evaluate("document.querySelectorAll('.op-board .op-player').length"),20);
+ console.log('OPERATION_M_TIMED_ALL_RANKS',w,h,JSON.stringify(timings));
  const board=await b.evaluate(`(()=>{const p=document.querySelector('.op-pool'),r=document.querySelector('.op-board'),card=r.querySelector('.op-player .op-portrait');return{pool:p.getBoundingClientRect().height,width:r.getBoundingClientRect().width,root:document.querySelector('#operationM').getBoundingClientRect().width,portrait:card.getBoundingClientRect().width,tier:getComputedStyle(r.querySelector('.op-player')).borderColor,header:getComputedStyle(document.querySelector('.topbar')).display}})()`);
  assert(board.pool<85);assert(board.width>=board.root-2);assert.equal(board.header,'none');if(w>=1366)assert(board.portrait>75,JSON.stringify(board));
  const rarity=await b.evaluate("[...new Set([...document.querySelectorAll('.op-board .op-player')].map(x=>x.dataset.rarity))].sort()");assert.deepEqual(rarity,['crystal','gold','holo','silver','steel']);
@@ -124,5 +163,16 @@ for(const [w,h] of [[1366,768],[1024,768],[2560,1080],[3840,2160],[390,844]]){
  await b.setReducedMotion(false);
  console.log('OPERATION_M_SKEWED_OK',w,h,skew);
 }
+// Reproduce OS-reduced + application-full, explicit reduced, and one-shot skip.
+for(const [system,mode,expected] of [[true,'full','full'],[true,'system','reduced'],[false,'reduced','reduced']]){
+ await b.navigate(url,1726,892);await b.evaluate("localStorage.removeItem('mws.operationM.simulation.v1');localStorage.removeItem('mws-screen-motion-v1')");await b.setReducedMotion(system);await b.navigate(url,1726,892);
+ await b.evaluate(`(()=>{const el=document.getElementById('mwsScreenMotion');el.value=${JSON.stringify(mode)};el.dispatchEvent(new Event('change'));document.querySelector('[data-op-action=tab-tier]').click();document.querySelector('[data-op-action=choose-mode]').click();document.querySelector('[data-op-action=start-guided]').click()})()`);
+ const first=await b.evaluate(`(async()=>{for(let i=0;i<400&&!document.querySelector('.op-deck-phase-reveal');i++)await new Promise(r=>setTimeout(r,15));const r=window.mwsOperationM.motionReport(),card=document.querySelector('[data-op-current]');return {mode:r.mode,settings:r.settings,events:r.events,visible:!!card&&getComputedStyle(card.querySelector('.op-card-front')).visibility==='visible',enabled:[...document.querySelectorAll('[data-op-assign]')].every(x=>!x.disabled)}})()`);
+ assert.equal(first.mode,expected);assert.equal(first.settings.app,expected==='reduced');assert.equal(first.settings.system,system);assert(first.visible&&first.enabled);assert.deepEqual(first.events.map(e=>e.phase),['shuffle','draw','flip','reveal']);assert(first.events.at(-1).at-first.events[0].at>=2990,JSON.stringify(first));
+ const measured=await b.evaluate(`(async()=>{const start=performance.now(),old=document.querySelector('[data-op-current]').dataset.opCurrent,before=window.mwsOperationM.motionReport().events.length;document.querySelector('[data-op-assign=D]').click();await new Promise(r=>setTimeout(r,100));const still=document.querySelector('[data-op-current]').dataset.opCurrent===old&&document.querySelector('.op-deck-phase-confirm')!==null;for(let i=0;i<400&&!document.querySelector('.op-deck-phase-reveal');i++)await new Promise(r=>setTimeout(r,15));return {still,elapsed:Math.round(performance.now()-start),next:document.querySelector('[data-op-current]').dataset.opCurrent!==old,events:window.mwsOperationM.motionReport().events.slice(before)}})()`);
+ assert(measured.still&&measured.next&&measured.elapsed>=2445&&measured.elapsed<4500,JSON.stringify(measured));assert.deepEqual(measured.events.map(x=>x.phase),['confirm','material','flight','land','draw','flip','reveal']);assert(measured.events.every(e=>e.mode===expected));
+ console.log('OPERATION_M_MOTION_PREFERENCE_OK',JSON.stringify({system,mode,expected,firstMs:Math.round(first.events.at(-1).at-first.events[0].at),transitionMs:measured.elapsed}));
+}
+await b.setReducedMotion(false);
 assert(!requests.some(x=>x.startsWith('/api/')));console.log('OPERATION_M_NO_API_REQUESTS',requests.length);
 }finally{await b?.close();await new Promise(r=>server.close(r));rmSync(dir,{recursive:true,force:true})}
