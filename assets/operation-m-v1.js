@@ -122,11 +122,11 @@ function modePreview(mode){
   return '<span class="op-mode-preview op-mode-preview-list" aria-hidden="true"><span class="op-preview-board">'+TIERS.map(t=>'<span class="op-preview-row" data-tier="'+t+'"><span>'+crest(t)+t+'</span><i></i><i></i><i></i></span>').join('')+'<span class="op-preview-token op-preview-token-one"></span><span class="op-preview-token op-preview-token-two"></span></span></span>';
 }
 function modeChoice(){
-  return '<section class="op-mode-choice" aria-label="티어 분류 방식 선택"><div class="op-mode-options">'+[['guided','한 장씩 분류','카드를 한 장씩 공개하고 티어를 결정합니다.','start-guided'],['list','전체 목록 분류','원하는 참가자를 자유롭게 티어에 배치합니다.','start-list']].map(([mode,title,description,action])=>'<button type="button" class="op-mode-card" data-mode="'+mode+'" data-op-action="'+action+'">'+modePreview(mode)+'<span class="op-mode-caption"><strong>'+title+'</strong><span>'+description+'</span></span></button>').join('')+'</div><div class="op-mode-back">'+button('tab-roster','참가자 목록')+'</div></section>';
+  return '<section class="op-mode-choice" aria-label="티어 분류 방식 선택"><div class="op-mode-options">'+[['guided','한 장씩 분류','카드를 한 장씩 공개하고 티어를 결정합니다.','start-guided'],['list','전체 목록 분류','원하는 참가자를 자유롭게 티어에 배치합니다.','start-list']].map(([mode,title,description,action])=>'<button type="button" class="op-mode-card" data-mode="'+mode+'" data-op-action="'+action+'">'+modePreview(mode)+'<span class="op-mode-caption"><strong>'+title+'</strong><span>'+description+'</span></span></button>').join('')+'</div></section>';
 }
-function chooseMode(){
+function chooseMode(focus=false){
   stopShuffle();tab='tier';guided=false;choosingMode=true;selected='';notice='';render();
-  root.querySelector('.op-mode-card')?.focus({preventScroll:true});
+  if(focus)root.querySelector('.op-mode-card')?.focus({preventScroll:true});
 }
 function adminConfig(){
   if(!configDraft||!canConfigure())return '';
@@ -526,7 +526,7 @@ function render(){
 }
 function measureLayout(){
   if(!root.classList.contains('active'))return;
-  const area=root.querySelector('.op-teams,.op-board,.op-guided');if(!area)return;
+  const area=root.querySelector('.op-teams,.op-board,.op-guided,.op-mode-choice');if(!area)return;
   const rootRect=root.getBoundingClientRect(),scale=root.offsetWidth?rootRect.width/root.offsetWidth||1:1;
   const access=document.getElementById('mwsAccessTools'),accessRect=access?.getBoundingClientRect(),viewport=window.visualViewport;
   const viewportBottom=viewport?Math.min(innerHeight,viewport.offsetTop+viewport.height):innerHeight;
@@ -540,6 +540,7 @@ function measureLayout(){
   const areaTop=rootTop+Math.max(0,(layoutTop(area)-layoutTop(root))*scale);
   const available=Math.max(180,(bottom-areaTop)/scale);
   set('--op-available',available);
+  if(area.classList.contains('op-mode-choice'))return;
   if(area.classList.contains('op-single-stage')){
     const stage=area.querySelector('.op-guided-stage'),center=area.querySelector('.op-single-center'),style=getComputedStyle(area);
     const chrome=[...area.children].filter(el=>el!==stage).reduce((sum,el)=>sum+el.offsetHeight,0)+(parseFloat(style.rowGap)||0)*3+(parseFloat(style.paddingTop)||0)+(parseFloat(style.paddingBottom)||0);
@@ -667,7 +668,7 @@ root.addEventListener('click',e=>{
   if(rankLock&&b.dataset.opAction==='toggle-pause'){paused=!paused;b.textContent=paused?'계속 진행':'일시정지';b.setAttribute('aria-pressed',String(paused));return}
   if(rankLock){if(!['choose-mode','exit-guided','tab-roster','tab-tier','tab-result'].includes(b.dataset.opAction))return;clearRankMotion();rankLock=false;deckPhase='pick';}
   switch(b.dataset.opAction){
-    case 'choose-mode':chooseMode();break;
+    case 'choose-mode':chooseMode(e.detail===0);break;
     case 'start-guided':lastMove=null;startGuided();break;
     case 'shuffle-guided':if(guided&&deckPhase==='pick')shuffleDeck();break;
     case 'toggle-pause':if(guided){paused=!paused;refreshGuided();if(!paused&&deckPhase==='pick')drawCard(0)}break;
@@ -678,7 +679,7 @@ root.addEventListener('click',e=>{
     case 'undo-guided':{if(!['pick','reveal'].includes(deckPhase))break;const n=guidedHistory.pop();if(n){stopShuffle();delete state.tiers[n];state.teams=[];queue=[n,...queue.filter(x=>x!==n)];guided=true;deckPhase='reveal';save();root.querySelector('.op-single-center')?.replaceChildren(guidedCard(n));refreshGuided()}break;}
     case 'retry':void enter();break;
     case 'tab-roster':stopShuffle();choosingMode=false;guided=false;tab='roster';selected='';notice='';render();break;
-    case 'tab-tier':stopShuffle();choosingMode=false;guided=false;tab='tier';selected='';notice='';render();break;
+    case 'tab-tier':chooseMode(e.detail===0);break;
     case 'tab-result':stopShuffle();choosingMode=false;guided=false;tab='result';selected='';notice='';render();break;
     case 'open-config':if(canConfigure()){configDraft={links:{...state.links},roles:[...state.roles]};notice='';render();root.querySelector('.op-config-head button')?.focus()}break;
     case 'close-config':if(!configSaving){configDraft=null;picker='';notice='';render()}break;
