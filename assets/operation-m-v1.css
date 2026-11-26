@@ -9,7 +9,7 @@
 #operationM .op-actions,#operationM .op-tabs,#operationM .op-bottom{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 #operationM button:not(.op-player):not(.op-tier-label){border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:9px;padding:9px 13px;line-height:1.4;font-size:13px;min-width:0;min-height:0;box-shadow:none;cursor:pointer;transition:background .15s,transform .15s,border-color .15s}
 #operationM button:not(.op-player):not(.op-tier-label):hover:not(:disabled){background:var(--input);border-color:var(--accent);transform:translateY(-1px)}
-#operationM button.op-primary,#operationM .op-tabs button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+#operationM .op-actions button.op-primary,#operationM .op-tabs button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
 #operationM button:disabled{opacity:.42;cursor:not-allowed;transform:none}
 #operationM button:focus-visible,#operationM select:focus-visible,#operationM input:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 #operationM .op-tabs{padding:4px;border:1px solid var(--border);border-radius:12px;background:var(--panel);width:max-content;max-width:100%}
