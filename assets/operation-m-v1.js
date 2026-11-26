@@ -7,6 +7,7 @@ const read=()=>{try{return normalizeState(JSON.parse(localStorage.getItem(KEY)||
 let state=read(),tab='roster',selected='',dragName='',picker='',query='',notice='',lastSignature='',saveFailed=false;
 let configDraft=null,configSaving=false,workspaceReady=false,workspaceLoading=false,workspaceError=false;
 let arrived='',revealDraft=false,layoutFrame=0,queue=[],guided=false,rankLock=false,rankTimer=0;
+let lastView='',guidedHistory=[];
 const RANK_STYLE={S:'holo',A:'gold',B:'crystal',C:'steel',D:'silver'};
 const RANK_NAMES={S:'HOLOGRAPHIC',A:'GOLD',B:'CRYSTAL',C:'STEEL',D:'SILVER'};
 const RANK_ART={
@@ -98,13 +99,13 @@ function pickerHtml(){
 function startGuided(){
   queue=ROSTER.filter(n=>current(n)&&!state.tiers[n]);
   for(let i=queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[queue[i],queue[j]]=[queue[j],queue[i]]}
-  tab='tier';guided=queue.length>0;selected='';notice='';render();
+  tab='tier';guided=queue.length>0;guidedHistory=[];selected='';notice='';render();
 }
 function guidedBoard(){
   queue=queue.filter(n=>current(n)&&!state.tiers[n]);
   if(!queue.length){guided=false;return tierBoard()}
   const n=queue[0],name=display(n),done=ROSTER.filter(x=>state.tiers[x]).length;
-  return '<div class="op-guided"><div class="op-guided-top"><span>참가자 '+(done+1)+' / 20</span><div class="op-guided-track"><i style="width:'+(done*5)+'%"></i></div>'+button('exit-guided','전체 티어표')+'</div><div class="op-guided-stage"><article class="op-reveal-card" data-op-current="'+esc(n)+'">'+photo(current(n),name)+'<strong>'+esc(name)+'</strong></article></div><div class="op-guided-ranks">'+TIERS.map(t=>'<button type="button" class="op-guide-rank" data-op-assign="'+t+'" data-tier="'+t+'"><strong>'+crest(t)+t+'</strong><small>'+ROSTER.filter(x=>state.tiers[x]===t).length+'명</small></button>').join('')+'</div></div>';
+  return '<div class="op-guided"><div class="op-guided-top"><span class="op-guided-count">'+(done+1)+' / 20</span><div class="op-guided-track" role="progressbar" aria-label="분류 진행률" aria-valuenow="'+done+'" aria-valuemin="0" aria-valuemax="20"><i style="width:'+(done*5)+'%"></i></div>'+button('undo-guided','이전',guidedHistory.length?'':'disabled')+button('exit-guided','전체 티어표')+'</div><div class="op-guided-stage"><div class="op-stage-halo" aria-hidden="true"></div><article class="op-reveal-card" data-op-current="'+esc(n)+'">'+photo(current(n),name)+'<strong>'+esc(name)+'</strong></article></div><div class="op-guided-ranks">'+TIERS.map((t,i)=>'<button type="button" class="op-guide-rank" data-op-assign="'+t+'" data-tier="'+t+'" aria-keyshortcuts="'+(i+1)+'"><span class="op-keyhint">'+(i+1)+'</span><strong>'+crest(t)+t+'</strong><small>'+ROSTER.filter(x=>state.tiers[x]===t).length+'명</small></button>').join('')+'</div></div>';
 }
 function tierBoard(){
   const unassigned=ROSTER.filter(n=>!state.tiers[n]);
@@ -139,11 +140,16 @@ function render(){
     root.innerHTML='<div class="op-shell"><div class="op-result-empty">'+(workspaceError?'인물 설정을 불러오지 못했습니다. '+button('retry','다시 시도'):'참가자 정보를 불러오는 중…')+'</div></div>';return;
   }
   if(rankLock)return;
+  const view=tab+(guided?':guided':'');
+  const scrolls=lastView===view?Object.fromEntries([...root.querySelectorAll('.op-tier-row')].map(r=>[r.dataset.tier,r.querySelector('.op-player-grid')?.scrollTop||0])):{};
+  lastView=view;
   sync();const assigned=ROSTER.filter(n=>TIERS.includes(state.tiers[n])).length;
   const action=tab==='roster'||guided?'':button('draft',state.teams.length?'다시 자동 드래프트':'자동 드래프트','class="op-primary" '+(!available()?'disabled':''));
   const scoreSpread=state.teams.length?Math.max(...state.teams.map(t=>teamStats(t,state.tiers).score))-Math.min(...state.teams.map(t=>teamStats(t,state.tiers).score)):null;
   const status=notice||(saveFailed?'브라우저 저장 불가':missing.length?'연락처 미연결 '+missing.length+'명 · 관리자 설정이 필요합니다.':selected?display(selected)+' 선택 · 티어를 누르세요.':'');
   root.innerHTML='<div class="op-shell" data-view="'+tab+'"><div class="op-toolbar"><span class="op-page-label">오퍼 M</span><nav class="op-tabs" aria-label="오퍼 M 도구">'+[['roster','참가자'],['tier','티어표'],['result','가상 드래프트']].map(([id,label])=>button('tab-'+id,label,'aria-pressed="'+(tab===id)+'"')).join('')+'</nav><div class="op-actions">'+(tab==='tier'?'<span class="op-progress">'+assigned+' / 20</span>':tab==='result'&&scoreSpread!==null?'<span class="op-progress">점수 차이 <b>'+scoreSpread+'</b></span>':'')+action+(canConfigure()?button('open-config','인물 설정','class="op-settings" aria-label="관리자 인물 설정"'):'')+'</div></div>'+(status?'<div class="op-status" role="status">'+esc(status)+'</div>':'')+(tab==='roster'?roster():tab==='tier'?(guided?guidedBoard():tierBoard()):results())+adminConfig()+'</div>';
+  for(const r of root.querySelectorAll('.op-tier-row')){const g=r.querySelector('.op-player-grid');if(g&&scrolls[r.dataset.tier])g.scrollTop=scrolls[r.dataset.tier]}
+  updateSelection();
   lastSignature=signature();
   arrived='';revealDraft=false;
   measureLayout();
@@ -158,11 +164,22 @@ function measureLayout(){
   const available=Math.max(180,(bottom-Math.max(0,rect.top))/(scale||1));
   root.style.setProperty('--op-available',Math.floor(available)+'px');
   root.style.setProperty('--op-workspace-height',Math.max(240,Math.floor((bottom-Math.max(0,rootRect.top))/(scale||1)))+'px');
+  if(area.classList.contains('op-guided')){
+    const top=area.querySelector('.op-guided-top').getBoundingClientRect().height/(scale||1),ranks=area.querySelector('.op-guided-ranks').getBoundingClientRect().height/(scale||1);
+    root.style.setProperty('--op-guided-card',Math.max(132,Math.min(560,available-top-ranks-116))+'px');
+  }
 }
 function scheduleMeasure(){if(layoutFrame)cancelAnimationFrame(layoutFrame);layoutFrame=requestAnimationFrame(measureLayout)}
 window.addEventListener('resize',scheduleMeasure);
 if(typeof ResizeObserver==='function'){let lastWidth=-1;new ResizeObserver(()=>{if(root.clientWidth!==lastWidth){lastWidth=root.clientWidth;scheduleMeasure()}}).observe(root)}
 function signature(){return JSON.stringify(ROSTER.map(n=>{const c=current(n);return[c?.id,c?.name,c?.image]}).concat(state.roles.map(id=>{const c=byId.get(id);return[c?.id,c?.name,c?.image]})))}
+function updateSelection(){
+  root.querySelectorAll('.op-player[aria-pressed]').forEach(b=>{const on=b.dataset.opPlayer===selected;b.classList.toggle('op-selected',on);b.setAttribute('aria-pressed',String(on))});
+  const board=root.querySelector('.op-board');if(board)board.classList.toggle('op-awaiting-drop',!!selected);
+  root.querySelectorAll('.op-empty-center>span').forEach(b=>b.textContent=selected?'선택한 참가자 배치':'참가자 배치');
+  const back=root.querySelector('.op-pool [data-op-tier=""]');if(back)back.disabled=!selected;
+  const progress=root.querySelector('.op-progress');if(progress&&tab==='tier'&&!guided){progress.textContent=selected?display(selected)+' · 티어 선택':ROSTER.filter(n=>TIERS.includes(state.tiers[n])).length+' / 20'}
+}
 function move(n,t){
   if(!ROSTER.includes(n)||!current(n)||(t&&!TIERS.includes(t)))return;
   if(t)state.tiers[n]=t;else delete state.tiers[n];
@@ -182,9 +199,9 @@ root.addEventListener('pointermove',e=>{
 });
 root.addEventListener('pointerout',e=>{if(hoverCard&&!hoverCard.contains(e.relatedTarget)){hoverCard.classList.remove('op-tilt');hoverCard.style.removeProperty('--op-rx');hoverCard.style.removeProperty('--op-ry');hoverCard=null}});
 root.addEventListener('click',e=>{
-  const b=e.target.closest('button');if(!b||!root.contains(b))return;
+  const b=e.target.closest('button');if(!b||!root.contains(b)){const target=e.target.closest('.op-tier-row');if(target&&selected&&!rankLock)move(selected,target.dataset.tier);return;}
   const n=b.dataset.opPlayer;
-  if(n){if(b.dataset.opResult||tab!=='tier'||!current(n))return;selected=selected===n?'':n;notice='';render();[...root.querySelectorAll('[data-op-player]')].find(x=>x.dataset.opPlayer===n)?.focus({preventScroll:true});return}
+  if(n){if(b.dataset.opResult||tab!=='tier'||!current(n))return;selected=selected===n?'':n;notice='';updateSelection();return}
   if(b.hasAttribute('data-op-tier')){if(selected)move(selected,b.dataset.opTier);return}
   if(b.dataset.opConfig&&configDraft&&canConfigure()&&!configSaving){showPicker(b.dataset.opConfig);return}
   if(b.dataset.opLink&&picker&&configDraft&&canConfigure()&&!configSaving){
@@ -196,11 +213,12 @@ root.addEventListener('click',e=>{
     if(role)configDraft.roles[idx]=id;else configDraft.links[picker]=id;
     picker='';query='';notice='';render();return;
   }
-  if(b.dataset.opAssign&&guided&&queue.length&&TIERS.includes(b.dataset.opAssign)){if(e.detail>1||rankLock)return;const n=queue.shift(),t=b.dataset.opAssign;if(!current(n)||state.tiers[n]){render();return}state.tiers[n]=t;state.teams=[];save();rankLock=true;const card=root.querySelector('.op-reveal-card');if(card){card.dataset.tier=t;card.dataset.rarity=RANK_STYLE[t];card.classList.add('op-rank-confirm');card.insertAdjacentHTML('beforeend',rarity(t)+'<span class="op-confirm-rank">'+crest(t)+t+'</span>')}root.querySelectorAll('[data-op-assign]').forEach(x=>x.disabled=true);const finish=()=>{rankLock=false;rankTimer=0;if(!queue.length)guided=false;render()};rankTimer=setTimeout(finish,matchMedia('(prefers-reduced-motion: reduce)').matches?0:{S:650,A:500,B:400,C:300,D:240}[t]);return}
+  if(b.dataset.opAssign&&guided&&queue.length&&TIERS.includes(b.dataset.opAssign)){if(e.detail>1||rankLock)return;const n=queue.shift(),t=b.dataset.opAssign;if(!current(n)||state.tiers[n]){render();return}state.tiers[n]=t;state.teams=[];guidedHistory.push(n);save();rankLock=true;const card=root.querySelector('.op-reveal-card');if(card){card.dataset.tier=t;card.dataset.rarity=RANK_STYLE[t];card.classList.add('op-rank-confirm');card.insertAdjacentHTML('beforeend',rarity(t)+'<span class="op-confirm-rank">'+crest(t)+t+'</span>')}root.querySelectorAll('[data-op-assign]').forEach(x=>x.disabled=true);const finish=()=>{rankLock=false;rankTimer=0;if(!queue.length)guided=false;render()};rankTimer=setTimeout(finish,matchMedia('(prefers-reduced-motion: reduce)').matches?0:{S:650,A:500,B:400,C:300,D:240}[t]);return}
   if(rankLock){clearTimeout(rankTimer);rankTimer=0;rankLock=false;}
   switch(b.dataset.opAction){
     case 'start-guided':startGuided();break;
     case 'exit-guided':guided=false;render();break;
+    case 'undo-guided':{const n=guidedHistory.pop();if(n){delete state.tiers[n];state.teams=[];queue.unshift(n);guided=true;save();render()}break;}
     case 'retry':void enter();break;
     case 'tab-roster':guided=false;tab='roster';selected='';notice='';render();break;
     case 'tab-tier':guided=false;tab='tier';selected='';notice='';render();break;
@@ -214,7 +232,8 @@ root.addEventListener('click',e=>{
   }
 });
 root.addEventListener('error',e=>{if(e.target instanceof HTMLImageElement)e.target.style.visibility='hidden'},true);
-root.addEventListener('keydown',e=>{if(e.key==='Escape'&&picker){picker='';query='';render()}else if(e.key==='Escape'&&configDraft&&!configSaving){configDraft=null;notice='';render()}});
+root.addEventListener('keydown',e=>{if(e.key==='Escape'&&picker){picker='';query='';render()}else if(e.key==='Escape'&&configDraft&&!configSaving){configDraft=null;notice='';render()}else if(e.key==='Escape'&&selected){selected='';updateSelection()}});
+window.addEventListener('keydown',e=>{if(!root.classList.contains('active')||!guided||rankLock||configDraft||e.repeat||e.ctrlKey||e.altKey||e.metaKey||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||'')||e.target?.isContentEditable)return;const i=Number(e.key)-1;if(/^[1-5]$/.test(e.key)&&TIERS[i]){e.preventDefault();root.querySelector('[data-op-assign="'+TIERS[i]+'"]')?.click()}});
 root.addEventListener('input',e=>{
   if(!e.target.hasAttribute('data-op-search'))return;
   query=e.target.value;const box=root.querySelector('.op-picker-results'),temp=document.createElement('div');temp.innerHTML=pickerHtml();box.replaceChildren(...temp.querySelector('.op-picker-results').childNodes);
