@@ -8,6 +8,10 @@ let state=read(),tab='roster',selected='',dragName='',picker='',query='',notice=
 let configDraft=null,configSaving=false,workspaceReady=false,workspaceLoading=false,workspaceError=false;
 let arrived='',revealDraft=false,layoutFrame=0,queue=[],guided=false,choosingMode=false,rankLock=false,rankTimer=0;
 let lastView='',guidedHistory=[],lastMove=null;
+const reducedMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+let dragCard=null,dragOrigin=null;
+const boardCards=()=>[...root.querySelectorAll('.op-tier-workspace .op-player')];
+const findBoardCard=n=>boardCards().find(c=>c.dataset.opPlayer===n);
 const RANK_STYLE={S:'holo',A:'gold',B:'crystal',C:'steel',D:'silver'};
 const RANK_ART={
 S:'<path d="M24 2 30 16 46 24 30 30 24 46 17 31 2 24 17 17Z" fill="currentColor" opacity=".22"/><path d="M24 3 30 16 45 24 30 30 24 45 17 31 3 24 17 17Z M24 3V45M3 24H45M17 17 30 30M30 16 17 31"/><path d="m6 6 7 2-5 5ZM42 6l-7 2 5 5ZM6 42l7-2-5-5ZM42 42l-7-2 5-5Z" fill="currentColor"/>',
@@ -79,10 +83,11 @@ function player(n,kind='tier'){
   const styled=(kind==='tier'||kind==='result')&&tier;
   return '<button type="button" class="op-player op-card '+(selected===n?'op-selected ':'')+(!c?'op-unlinked':'')+(arrived===n&&kind==='tier'?' op-arrived':'')+'" '+(styled?'data-tier="'+tier+'" data-rarity="'+RANK_STYLE[tier]+'" ':'data-rarity="neutral" ')+'data-op-player="'+esc(n)+'" draggable="'+(kind==='tier'&&!!c)+'" aria-label="'+esc(name+(tier?' '+tier+' 티어':' 미분류')+(!c?' 연락처 연결 필요':''))+'" '+(kind==='tier'?'aria-pressed="'+(selected===n)+'"':'data-op-result="1"')+'>'+cardFace(c,name,styled?tier:'')+'</button>';
 }
+function emptySlot(t){return '<button type="button" class="op-empty" data-op-tier="'+t+'" aria-label="'+t+' 티어에 참가자 배치"><span class="op-slot-grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="op-empty-center">'+crest(t)+'</span></button>';}
 function row(t){
   const members=ROSTER.filter(n=>state.tiers[n]===t);
   const count=members.length;
-  return '<div class="op-tier-row" data-count="'+members.length+'" data-op-drop="'+t+'" data-tier="'+t+'"><button type="button" data-op-tier="'+t+'" class="op-tier-label" aria-label="'+t+' 티어로 이동">'+crest(t)+'<span class="op-rank-heading"><strong>'+t+'</strong></span><span class="op-rank-meta"><b>'+members.length+'명</b><small>'+SCORE[t]+'점</small></span></button><div class="op-player-grid" '+(count?'tabindex="0" aria-label="'+t+' 티어 참가자 '+count+'명"':'')+'>'+members.map(n=>player(n)).join('')+(!members.length?'<button type="button" class="op-empty" data-op-tier="'+t+'" aria-label="'+t+' 티어에 참가자 배치"><span class="op-slot-grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="op-empty-center">'+crest(t)+'<span>'+(selected?'선택한 참가자 배치':'참가자 배치')+'</span></span></button>':'')+'</div></div>';
+  return '<div class="op-tier-row" data-count="'+members.length+'" data-op-drop="'+t+'" data-tier="'+t+'"><button type="button" data-op-tier="'+t+'" class="op-tier-label" aria-label="'+t+' 티어로 이동">'+crest(t)+'<span class="op-rank-heading"><strong>'+t+'</strong></span><span class="op-rank-meta"><b>'+members.length+'명</b><small>'+SCORE[t]+'점</small></span></button><div class="op-player-grid" '+(count?'tabindex="0" aria-label="'+t+' 티어 참가자 '+count+'명"':'')+'>'+members.map(n=>player(n)).join('')+(!members.length?emptySlot(t):'')+'</div></div>';
 }
 function roster(){
   const host=byId.get(state.roles[0]);
@@ -194,17 +199,54 @@ function signature(){return JSON.stringify(ROSTER.map(n=>{const c=current(n);ret
 function updateSelection(){
   root.querySelectorAll('.op-player[aria-pressed]').forEach(b=>{const on=b.dataset.opPlayer===selected;b.classList.toggle('op-selected',on);b.setAttribute('aria-pressed',String(on))});
   const board=root.querySelector('.op-board');if(board)board.classList.toggle('op-awaiting-drop',!!selected);
-  root.querySelectorAll('.op-empty-center>span').forEach(b=>b.textContent=selected?'선택한 참가자 배치':'참가자 배치');
+  root.querySelector('.op-pool')?.classList.toggle('op-awaiting-drop',!!selected);
   const back=root.querySelector('.op-pool [data-op-tier=""]');if(back)back.disabled=!selected;
   const progress=root.querySelector('.op-progress');if(progress&&tab==='tier'&&!guided){progress.textContent=selected?display(selected)+' · 티어 선택':ROSTER.filter(n=>TIERS.includes(state.tiers[n])).length+' / 20'}
 }
+function refreshBoard(n,from,to){
+  const pool=root.querySelector('.op-pool'),board=root.querySelector('.op-board'),card=findBoardCard(n);
+  if(!pool||!board||!card){arrived=n;render();return}
+  const cards=boardCards(),animate=!reducedMotion()&&typeof card.animate==='function';
+  cards.forEach(c=>{c.getAnimations?.().filter(a=>a.id==='op-board-flip').forEach(a=>a.cancel());c.classList.remove('op-tilt','op-dragging','op-arrived')});
+  const before=animate?new Map(cards.map(c=>[c,c.getBoundingClientRect()])):null;
+  const getRegion=t=>t?[...board.querySelectorAll('.op-tier-row')].find(r=>r.dataset.tier===t):pool;
+  const source=getRegion(from),target=getRegion(to);
+  if(!source||!target){arrived=n;render();return}
+  let grid=target.querySelector('.op-player-grid');
+  if(!grid){grid=document.createElement('div');grid.className='op-player-grid';target.append(grid)}
+  grid.querySelector('.op-empty')?.remove();
+  const next=[...grid.querySelectorAll('.op-player')].find(c=>ROSTER.indexOf(c.dataset.opPlayer)>ROSTER.indexOf(n));
+  grid.insertBefore(card,next||null);
+  card.dataset.rarity=to?RANK_STYLE[to]:'neutral';
+  if(to)card.dataset.tier=to;else delete card.dataset.tier;
+  card.setAttribute('aria-label',display(n)+(to?' '+to+' 티어':' 미분류'));
+  card.querySelector('.op-chip')?.remove();
+  if(to)card.querySelector('.op-card-front')?.insertAdjacentHTML('beforeend',cardBadge(to));
+  for(const t of new Set([from,to])){
+    const region=getRegion(t),g=region.querySelector('.op-player-grid'),count=g?.querySelectorAll('.op-player').length||0;
+    region.dataset.count=String(count);
+    if(t){region.querySelector('.op-rank-meta b').textContent=count+'명';if(count){g.tabIndex=0;g.setAttribute('aria-label',t+' 티어 참가자 '+count+'명')}else{g.removeAttribute('tabindex');g.removeAttribute('aria-label');g.innerHTML=emptySlot(t)}}
+    else{region.classList.toggle('op-pool-empty',!count);region.querySelector('h2 small').textContent=String(count);if(!count)g?.remove()}
+  }
+  const actions=pool.querySelector('.op-pool-actions'),undo=actions.querySelector('[data-op-action="undo-move"]');
+  if(lastMove&&!undo)actions.querySelector('[data-op-action="reset"]').insertAdjacentHTML('beforebegin',button('undo-move','되돌리기'));
+  else if(!lastMove)undo?.remove();
+  const draft=root.querySelector('[data-op-action="draft"]');if(draft){draft.disabled=!available();draft.textContent=state.teams.length?'다시 자동 드래프트':'자동 드래프트'}
+  root.querySelectorAll('.op-drop-active').forEach(x=>x.classList.remove('op-drop-active'));
+  updateSelection();measureLayout();
+  const movedGrid=card.closest('.op-player-grid');
+  if(movedGrid&&movedGrid.scrollHeight>movedGrid.clientHeight){const r=card.getBoundingClientRect(),g=movedGrid.getBoundingClientRect();if(r.bottom>g.bottom)movedGrid.scrollTop+=r.bottom-g.bottom+8;else if(r.top<g.top)movedGrid.scrollTop-=g.top-r.top+8}
+  card.focus({preventScroll:true});
+  if(before)for(const c of cards){const old=before.get(c),now=c.getBoundingClientRect();if(!old||!now.width||!now.height)continue;const scale=root.offsetWidth?root.getBoundingClientRect().width/root.offsetWidth:1,dx=(old.left-now.left)/(scale||1),dy=(old.top-now.top)/(scale||1),sx=old.width/now.width,sy=old.height/now.height;if(Math.abs(dx)+Math.abs(dy)<1&&Math.abs(sx-1)+Math.abs(sy-1)<.02)continue;const effect=c.animate([{transformOrigin:'top left',transform:'translate('+dx+'px,'+dy+'px) scale('+sx+','+sy+')'},{transformOrigin:'top left',transform:'none'}],{duration:c===card?300:220,easing:'cubic-bezier(.2,.75,.2,1)'});effect.id='op-board-flip'}
+  if(animate){card.classList.add('op-board-confirm');card.querySelector('.op-card-front')?.addEventListener('animationend',()=>card.classList.remove('op-board-confirm'),{once:true});}
+}
 function move(n,t){
-  if(!ROSTER.includes(n)||!current(n)||(t&&!TIERS.includes(t)))return;
+  if(!ROSTER.includes(n)||!current(n)||(t&&!TIERS.includes(t))||guided||choosingMode||configDraft)return;
   const from=state.tiers[n]||'';
   if(from===t){selected='';updateSelection();return}
   lastMove={n,from,to:t};
   if(t)state.tiers[n]=t;else delete state.tiers[n];
-  state.teams=[];selected='';notice='';arrived=n;save();render();
+  state.teams=[];selected='';notice='';save();refreshBoard(n,from,t);
 }
 function showPicker(n){picker=n;query='';render();root.querySelector('[data-op-search]')?.focus()}
 // Only the hovered portrait moves; pointer position is never used for game state.
@@ -220,7 +262,7 @@ root.addEventListener('pointermove',e=>{
 });
 root.addEventListener('pointerout',e=>{if(hoverCard&&!hoverCard.contains(e.relatedTarget)){hoverCard.classList.remove('op-tilt');hoverCard.style.removeProperty('--op-rx');hoverCard.style.removeProperty('--op-ry');hoverCard=null}});
 root.addEventListener('click',e=>{
-  const b=e.target.closest('button');if(!b||!root.contains(b)){const target=e.target.closest('.op-tier-row');if(target&&selected&&!rankLock)move(selected,target.dataset.tier);return;}
+  const b=e.target.closest('button');if(!b||!root.contains(b)){const target=e.target.closest('.op-tier-row');if(target&&selected&&!rankLock)move(selected,target.dataset.tier);else if(e.target.closest('.op-pool')&&selected&&!rankLock)move(selected,'');return;}
   const n=b.dataset.opPlayer;
   if(n){if(b.dataset.opResult||tab!=='tier'||!current(n))return;selected=selected===n?'':n;notice='';updateSelection();return}
   if(b.hasAttribute('data-op-tier')){if(selected)move(selected,b.dataset.opTier);return}
@@ -240,7 +282,7 @@ root.addEventListener('click',e=>{
     case 'choose-mode':chooseMode();break;
     case 'start-guided':lastMove=null;startGuided();break;
     case 'start-list':choosingMode=false;guided=false;tab='tier';selected='';notice='';render();break;
-    case 'undo-move':{const m=lastMove;lastMove=null;if(m&&current(m.n)&&(state.tiers[m.n]||'')===m.to){if(m.from)state.tiers[m.n]=m.from;else delete state.tiers[m.n];state.teams=[];selected='';arrived=m.n;save();render()}break;}
+    case 'undo-move':{const m=lastMove;lastMove=null;if(m&&current(m.n)&&(state.tiers[m.n]||'')===m.to){if(m.from)state.tiers[m.n]=m.from;else delete state.tiers[m.n];state.teams=[];selected='';save();refreshBoard(m.n,m.to,m.from)}break;}
     case 'exit-guided':choosingMode=false;guided=false;render();break;
     case 'undo-guided':{const n=guidedHistory.pop();if(n){delete state.tiers[n];state.teams=[];queue.unshift(n);guided=true;save();render()}break;}
     case 'retry':void enter();break;
@@ -256,17 +298,22 @@ root.addEventListener('click',e=>{
   }
 });
 root.addEventListener('error',e=>{if(e.target instanceof HTMLImageElement)e.target.style.visibility='hidden'},true);
-root.addEventListener('keydown',e=>{if(e.key==='Escape'&&picker){picker='';query='';render()}else if(e.key==='Escape'&&configDraft&&!configSaving){configDraft=null;notice='';render()}else if(e.key==='Escape'&&selected){selected='';updateSelection()}});
+root.addEventListener('keydown',e=>{if(e.key==='Escape'&&dragName){clearDrag(true)}else if(e.key==='Escape'&&picker){picker='';query='';render()}else if(e.key==='Escape'&&configDraft&&!configSaving){configDraft=null;notice='';render()}else if(e.key==='Escape'&&selected){selected='';updateSelection()}});
 window.addEventListener('keydown',e=>{if(!root.classList.contains('active')||!guided||rankLock||configDraft||e.repeat||e.ctrlKey||e.altKey||e.metaKey||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||'')||e.target?.isContentEditable)return;const i=Number(e.key)-1;if(/^[1-5]$/.test(e.key)&&TIERS[i]){e.preventDefault();root.querySelector('[data-op-assign="'+TIERS[i]+'"]')?.click()}});
 root.addEventListener('input',e=>{
   if(!e.target.hasAttribute('data-op-search'))return;
   query=e.target.value;const box=root.querySelector('.op-picker-results'),temp=document.createElement('div');temp.innerHTML=pickerHtml();box.replaceChildren(...temp.querySelector('.op-picker-results').childNodes);
 });
-root.addEventListener('dragstart',e=>{const b=e.target.closest('[data-op-player]');if(!b||!current(b.dataset.opPlayer)||b.dataset.opResult||guided||configDraft)return;dragName=b.dataset.opPlayer;e.dataTransfer.setData('text/plain',dragName);e.dataTransfer.effectAllowed='move';b.classList.add('op-dragging')});
+function clearDrag(cancelled=false){
+  const c=dragCard;dragName='';dragCard=null;dragOrigin=null;
+  root.querySelectorAll('.op-drop-active,.op-dragging,.op-drag-source').forEach(x=>x.classList.remove('op-drop-active','op-dragging','op-drag-source'));
+  if(cancelled&&c?.isConnected&&!reducedMotion()&&c.animate)c.animate([{transform:'translateY(-5px) scale(1.035)',opacity:.5},{transform:'none',opacity:1}],{duration:190,easing:'ease-out'});
+}
+root.addEventListener('dragstart',e=>{const b=e.target.closest('[data-op-player]');if(!b||!current(b.dataset.opPlayer)||b.dataset.opResult||guided||choosingMode||configDraft||tab!=='tier'){e.preventDefault();return}dragName=b.dataset.opPlayer;dragCard=b;dragOrigin=b.closest('[data-op-drop]');e.dataTransfer.setData('text/plain',dragName);e.dataTransfer.effectAllowed='move';b.classList.remove('op-tilt');requestAnimationFrame(()=>{if(dragCard===b){b.classList.add('op-dragging');dragOrigin?.classList.add('op-drag-source')}})});
 root.addEventListener('dragover',e=>{const r=e.target.closest('[data-op-drop]');if(!r||!dragName)return;e.preventDefault();e.dataTransfer.dropEffect='move';root.querySelectorAll('.op-drop-active').forEach(x=>{if(x!==r)x.classList.remove('op-drop-active')});r.classList.add('op-drop-active')});
-root.addEventListener('drop',e=>{const r=e.target.closest('[data-op-drop]');if(!r||!dragName)return;e.preventDefault();const n=dragName;dragName='';move(n,r.dataset.opDrop)});
+root.addEventListener('drop',e=>{const r=e.target.closest('[data-op-drop]');if(!r||!dragName)return;e.preventDefault();const n=dragName,t=r.dataset.opDrop;clearDrag(false);move(n,t)});
 root.addEventListener('dragleave',e=>{const r=e.target.closest('[data-op-drop]');if(r&&!r.contains(e.relatedTarget))r.classList.remove('op-drop-active')});
-root.addEventListener('dragend',()=>{dragName='';root.querySelectorAll('.op-drop-active,.op-dragging').forEach(x=>x.classList.remove('op-drop-active','op-dragging'))});
+root.addEventListener('dragend',()=>clearDrag(!!dragName));
 window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{clearTimeout(rankTimer);rankTimer=0;rankLock=false;tab='roster';choosingMode=false;guided=false;selected='';picker='';configDraft=null}});
 window.addEventListener('mws:app-ready',()=>{workspaceReady=false;configDraft=null;picker='';if(root.classList.contains('active'))void enter()});
 window.addEventListener('mawang:datachange',()=>window.mwsOperationM?.refresh());
