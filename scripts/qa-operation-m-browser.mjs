@@ -25,7 +25,9 @@ for(const [w,h] of [[1366,768],[1715,894],[1920,1080],[2560,1440],[2560,1080],[3
  assert.equal(drop.length,5);for(const d of drop){assert(d.target>=Math.min(100,d.area)&&d.target>=d.area-4,JSON.stringify(d));assert(d.width>=d.gridWidth-4,JSON.stringify(d));assert(d.centerError<4,JSON.stringify(d));assert(d.crest>=30,JSON.stringify(d))}
  assert.equal(new Set(drop.map(d=>d.background)).size,5);
  // Select an actual unassigned card then click the middle of the full target.
- await b.evaluate("document.querySelector('.op-pool .op-player').click();document.querySelector('.op-tier-row[data-tier=S] .op-empty').click()");
+ const stable=await b.evaluate(`(()=>{const p=document.querySelector('.op-pool .op-player'),img=p.querySelector('img'),r=document.querySelector('.op-tier-row');p.click();return {same:p===document.querySelector('.op-pool .op-player'),sameImage:img===p.querySelector('img'),selected:p.getAttribute('aria-pressed'),targets:document.querySelector('.op-board').classList.contains('op-awaiting-drop')}})()`);
+ assert.deepEqual(stable,{same:true,sameImage:true,selected:'true',targets:true});
+ await b.evaluate("document.querySelector('.op-tier-row[data-tier=S] .op-empty').click()");
  assert.equal(await b.evaluate("document.querySelectorAll('.op-tier-row[data-tier=S] .op-player').length"),1);
  await b.evaluate("localStorage.removeItem('mws.operationM.simulation.v1')");
  await b.navigate(url,w,h);
@@ -34,6 +36,16 @@ for(const [w,h] of [[1366,768],[1715,894],[1920,1080],[2560,1440],[2560,1080],[3
  const nextBelow=await b.evaluate("document.querySelector('.op-roster-next').getBoundingClientRect().top>=document.querySelector('.op-roster-grid').getBoundingClientRect().bottom");assert(nextBelow);
  await b.evaluate("document.querySelector('[data-op-action=start-guided]').click()");
  assert.equal(await b.evaluate("document.querySelectorAll('[data-op-current]').length"),1);
+ const geometry=await b.evaluate(`(async()=>{await new Promise(r=>setTimeout(r,450));const card=document.querySelector('.op-reveal-card').getBoundingClientRect(),ranks=document.querySelector('.op-guided-ranks').getBoundingClientRect(),limit=document.querySelector('#mwsAccessTools').getBoundingClientRect().top;return{card:card.width,cardBottom:card.bottom,ranksTop:ranks.top,ranksBottom:ranks.bottom,limit}})()`);
+ assert(geometry.card>=130&&geometry.cardBottom<geometry.ranksTop,JSON.stringify(geometry));if(w>=1366)assert(geometry.ranksBottom<=geometry.limit+2,JSON.stringify(geometry));
+ // A real key event can classify; undo restores the same participant and original progress.
+ const first=await b.evaluate("document.querySelector('[data-op-current]').dataset.opCurrent");
+ await b.keyPress('1');await b.evaluate("(async()=>{await new Promise(r=>setTimeout(r,700));return true})()");
+ assert.notEqual(await b.evaluate("document.querySelector('[data-op-current]').dataset.opCurrent"),first);
+ await b.evaluate("document.querySelector('[data-op-action=undo-guided]').click()");
+ assert.equal(await b.evaluate("document.querySelector('[data-op-current]').dataset.opCurrent"),first);
+ assert.equal(await b.evaluate("Object.keys(JSON.parse(localStorage.getItem('mws.operationM.simulation.v1')).tiers).length"),0);
+ console.log('OPERATION_M_GUIDED_GEOMETRY',w,h,geometry);
  const guided=await b.evaluate(`(async()=>{const order=[];for(let i=0;i<20;i++){const cards=document.querySelectorAll('[data-op-current]');if(cards.length!==1)throw Error('not a single card');order.push(cards[0].dataset.opCurrent);document.querySelector('[data-op-assign="'+['S','A','B','C','D'][i%5]+'"]').click();if(!document.querySelector('.op-rank-confirm[data-rarity]'))throw Error('missing rarity reveal');await new Promise(r=>setTimeout(r,[680,530,430,330,270][i%5]));}return {order,remaining:document.querySelectorAll('[data-op-current]').length,board:document.querySelectorAll('.op-board .op-player').length}})()`);
  assert.equal(new Set(guided.order).size,20);assert.equal(guided.remaining,0);assert.equal(guided.board,20);
  const board=await b.evaluate(`(()=>{const p=document.querySelector('.op-pool'),r=document.querySelector('.op-board'),card=r.querySelector('.op-player .op-portrait');return{pool:p.getBoundingClientRect().height,width:r.getBoundingClientRect().width,root:document.querySelector('#operationM').getBoundingClientRect().width,portrait:card.getBoundingClientRect().width,tier:getComputedStyle(r.querySelector('.op-player')).borderColor,header:getComputedStyle(document.querySelector('.topbar')).display}})()`);
