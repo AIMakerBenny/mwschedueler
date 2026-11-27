@@ -1161,6 +1161,14 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-agent-switch:is(:hover,.is-current,:focus-visible)::after{opacity:1}
 #operationM .op-agent-switch.is-current small{color:var(--squad)}
 #operationM .op-detail-step .op-detail-position{min-width:48px;text-align:center;font-variant-numeric:tabular-nums;color:#dce8f1}
+@container(min-width:1600px){
+ #operationM .op-squad-detail-body{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(160px,.8fr) minmax(0,1.2fr)}
+ #operationM .op-command-banner{min-height:180px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+ #operationM .op-command-banner .op-commander-art{grid-column:1;grid-row:1}
+ #operationM .op-banner-title{grid-column:2;grid-row:1;align-self:center}
+ #operationM .op-team-agent-grid{grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:minmax(0,1fr)}
+ #operationM .op-team-agent-grid>.op-agent-tile:nth-child(n){grid-column:auto}
+}
 @container(max-width:799px){
  #operationM .op-team-agent-grid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:auto;gap:8px}
  #operationM .op-team-agent-grid>.op-agent-tile:nth-child(4){grid-column:span 2}
@@ -1169,3 +1177,32 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
  #operationM .op-agent-tile-plaque{min-height:29px;padding:6px 8px}
 }
 @media(prefers-reduced-motion:reduce){#operationM .op-agent-tile *,#operationM .op-agent-switch::after,#operationM .op-dossier-command .op-armor-frame{transition:none!important}}
+
+/* Shared tactical modal and image configuration components. */
+#operationM .op-reset-dialog{--squad:#e5a26f;position:fixed;inset:0;margin:auto;width:min(480px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:6px;border:1px solid #8297a6;color:#edf3f8;background:linear-gradient(145deg,#344450,#121c24 68%);box-shadow:inset 0 1px #ffffff38,inset 0 -3px #0009,0 20px 65px #000c;overflow:auto}
+#operationM .op-reset-dialog::backdrop{background:#080e15bd;backdrop-filter:blur(2px)}
+#operationM .op-reset-dialog[open]{animation:op-modal-in .18s cubic-bezier(.2,.8,.2,1) both}
+@keyframes op-modal-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+#operationM .op-reset-body{position:relative;display:grid;gap:14px;padding:15px;z-index:1}
+#operationM .op-reset-body header{display:flex;align-items:center;gap:10px;padding:0 0 12px;border-bottom:1px solid #657783}
+#operationM .op-reset-body .op-command-emblem{width:32px;height:32px;color:var(--squad)}
+#operationM .op-reset-body h2{margin:0;font-size:20px}
+#operationM .op-reset-body p{margin:0;line-height:1.65;color:#c8d7e0;font-size:14px;overflow-wrap:anywhere}
+#operationM .op-reset-body footer{display:flex;justify-content:flex-end;gap:8px;padding-top:10px;border-top:1px solid #465764}
+#operationM .op-reset-body button{min-height:38px;min-width:90px;border-radius:3px!important;color:#eef5fa!important;background:linear-gradient(165deg,#384854,#19242e)!important;border:1px solid #728796!important}
+#operationM .op-reset-body button.op-reset-confirm{background:linear-gradient(160deg,#98532f,#582b20)!important;border-color:#e5a26f!important}
+#operationM .op-reset-body button:hover{filter:brightness(1.15)}
+#operationM .op-art-config-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#operationM .op-art-config-team{min-width:0;display:grid;gap:5px;padding:7px;border:1px solid #576975;border-top:2px solid var(--squad);background:radial-gradient(ellipse at 50% 0,color-mix(in srgb,var(--squad) 16%,#293844),#151f28 70%)}
+#operationM .op-art-config-team header,#operationM .op-art-config-slot{display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:7px;min-width:0}
+#operationM .op-art-config-team header{padding-bottom:6px;border-bottom:1px solid #536673;color:var(--squad)}
+#operationM .op-art-config-team header>span:last-child,#operationM .op-art-config-slot>span:last-of-type{min-width:0;display:grid;gap:3px}
+#operationM .op-art-config-team header small,#operationM .op-art-config-slot small{font-size:11px;color:#b4c4ce;overflow-wrap:anywhere}
+#operationM .op-art-config-team strong,#operationM .op-art-config-slot strong{font-size:12px;overflow-wrap:anywhere;line-height:1.3}
+#operationM .op-art-config-slot{position:relative;padding:4px;background:linear-gradient(160deg,#2b3a46,#18232c);border:1px solid #4b5e6b;cursor:pointer}
+#operationM .op-art-config-slot:has(input:disabled){opacity:.55;cursor:wait}
+#operationM .op-art-config-slot:hover,#operationM .op-art-config-slot:focus-within{border-color:var(--squad);box-shadow:inset 2px 0 var(--squad)}
+#operationM .op-art-config-slot input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:inherit}
+@media(max-width:760px){#operationM .op-art-config-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:380px){#operationM .op-art-config-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){#operationM .op-reset-dialog[open]{animation:none}}

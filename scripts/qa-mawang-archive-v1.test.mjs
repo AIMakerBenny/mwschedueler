@@ -229,7 +229,7 @@ test('workspace header keeps only page-relevant actions and links to the exact M
   assert.match(archive,/\.mws-archive-wiki/);
   assert.match(archive,/\.ma-header-filters/);
   assert.match(html,/assets\/mawang-archive-finish-v1\.css\?v=1/);
-  assert.match(html,/assets\/mawang-archive-v1\.js\?v=20/);
+  assert.match(html,/assets\/mawang-archive-v1\.js\?v=21&startup=1/);
   const finish=read('assets/mawang-archive-finish-v1.css'),archiveRuntime=read('assets/mawang-archive-v1.js');
   for(const marker of ['.ma-character-card:hover','.ma-stage-art::after','.ma-page-arrow','ma-portrait-focus','prefers-reduced-motion'])assert(finish.includes(marker));
   assert(!archiveRuntime.includes('등록된 프로필 사진'));
@@ -260,9 +260,12 @@ test('media cache worker accepts only exact, public, versioned image responses',
   const worker=vm.runInNewContext(code+'\n;({cacheKey,canStore})',ctx);
   const token='a'.repeat(32),path='/media/contact/test?v=2&h='+token+'&r=2';
   assert.equal(worker.cacheKey(path).version,'2-'+token);
-  for(const p of ['/api/manifest','/api/mawang-profile','/media/contact/test?v=2','/media/workspace/test?v=2&h='+token,'/media/mawang-profile/mi','https://evil.test'+path])assert.equal(worker.cacheKey(p),null,p);
+  const workspace='/media/workspace/test?v=2&h='+token;
+  assert.equal(worker.cacheKey(workspace).version,'2-'+token);
+  for(const p of ['/api/manifest','/api/mawang-profile','/media/contact/test?v=2','/media/workspace/test?v=2',workspace+'&r=2',workspace+'&h='+token,workspace+'&v=2','/media/workspace/test?v=2&h=invalid','/media/mawang-profile/mi','https://evil.test'+path,'https://evil.test'+workspace])assert.equal(worker.cacheKey(p),null,p);
   const key=worker.cacheKey(path),response=(version,policy='public, immutable')=>new Response('x',{headers:{'content-type':'image/png','cache-control':policy,'x-mws-cache-version':version}});
   assert(worker.canStore(response('2-'+token),key));assert(!worker.canStore(response('1-'+token),key));assert(!worker.canStore(response('2-'+token,'no-store'),key));
+  const workspaceKey=worker.cacheKey(workspace);assert(worker.canStore(response('2-'+token),workspaceKey));assert(!worker.canStore(response('1-'+token),workspaceKey));assert(!worker.canStore(response('2-'+token,'private'),workspaceKey));assert(!worker.canStore(response('2-'+token,'no-store'),workspaceKey));
   assert.equal(worker.cacheKey('/media/mawang-profile/mi?rev=123-abcd').version,'123-abcd');
   assert(worker.cacheKey('/assets/mawang-archive-portraits/yoo.jpg?rev=archive-v11').static);
   assert.equal(worker.cacheKey('/assets/mawang-archive-portraits/yoo.jpg'),null);
