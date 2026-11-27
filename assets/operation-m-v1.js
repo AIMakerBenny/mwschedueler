@@ -615,18 +615,24 @@ function render(){
 // A minimum readable card wins over forced fitting on small screens.
 function fitRoster(area,width,height,set){
   const gap=width>=1050?10:8,coachCols=width>760?4:2;
-  const coach=Math.max(58,Math.min((width-(coachCols-1)*gap)/coachCols*.44,height*.20, width*.10+28));
-  const coachRows=Math.ceil(4/coachCols);
-  const fixed=area.querySelector('.op-roster-next')?.offsetHeight||44;
-  const budget=Math.max(120,height-coachRows*(coach+12)-(coachRows-1)*gap-fixed-76);
+  const coach=Math.max(58,Math.min((width-(coachCols-1)*gap)/coachCols*.44,height*.20,width*.10+28));
+  // Apply the actual coach geometry before calculating the remaining roster height.
+  set('--op-coach-size',coach);set('--op-roster-gap',gap);
+  const grid=area.querySelector('.op-roster-grid'),style=getComputedStyle(area),children=[...area.children];
+  const chrome=children.filter(el=>el!==grid).reduce((sum,el)=>sum+el.offsetHeight,0)+(parseFloat(style.rowGap)||0)*Math.max(0,children.length-1);
+  const budget=Math.max(120,height-chrome-5);
   const choices=width>=740?[5,7,8,10]:width>=480?[4,5]:[3,4];
   const candidates=choices.map(cols=>{const rows=Math.ceil(20/cols),wide=(width-(cols-1)*gap)/cols,tall=(budget-(rows-1)*gap)/rows;return {cols,card:Math.min(wide,(tall-13)/1.16)}});
-  const best=candidates.reduce((a,b)=>b.card>a.card?b:a);
-  const min=width>=740?86:76;
-  const card=Math.max(min,Math.min(best.card,(width-(best.cols-1)*gap)/best.cols));
-  area.dataset.rosterColumns=String(best.cols);
-  set('--op-roster-card',card);set('--op-coach-size',coach);set('--op-roster-gap',gap);
-  root.style.setProperty('--op-roster-columns',String(best.cols));
+  const best=candidates.reduce((a,b)=>b.card>a.card?b:a),min=width>=740?86:76;
+  let card=Math.max(min,Math.min(best.card,(width-(best.cols-1)*gap)/best.cols));
+  set('--op-roster-card',card);
+  // One bounded correction based on real rendered nameplate/footer heights.
+  // Never squeeze mobile portraits just to eliminate natural scrolling.
+  if(width>=800&&area.offsetHeight>height-3){
+    const rows=Math.ceil(20/best.cols),excess=area.offsetHeight-height+4;
+    card=Math.max(min,card-Math.ceil(excess/rows)-1);set('--op-roster-card',card);
+  }
+  area.dataset.rosterColumns=String(best.cols);root.style.setProperty('--op-roster-columns',String(best.cols));
 }
 function fitDraft(area,width,height,set){
   const gap=width>=1100?12:8,pad=8;
