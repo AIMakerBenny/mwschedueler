@@ -33,6 +33,16 @@ for(const [w,h] of [[1366,768],[1766,831],[1913,901],[1920,1080],[2560,1440],[25
  assert.equal(await b.evaluate("document.querySelectorAll('.op-agent-row').length"),20);
  console.log('OPERATION_M_CONFIRMED_COMMAND_OK',w,h,JSON.stringify({command,detail,upload}));
 }
+// The command-only job makes visual artifacts available without waiting for the long simulation suite.
+if(process.env.MWS_COMMAND_ONLY==='1'){
+ await b.navigate(url,1913,901);
+ for(const [sidebar,zoom] of [[true,.85],[true,1],[true,1.15],[false,.85],[false,1],[false,1.15]]){
+  const layout=await b.evaluate(`(async()=>{const q=s=>document.querySelector(s);document.body.style.gridTemplateColumns=${sidebar?"'160px minmax(0,1fr)'":"'0 minmax(0,1fr)'"};q('.qa-sidebar').style.display=${sidebar?"'block'":"'none'"};q('.main').style.zoom=${zoom};window.dispatchEvent(new Event('resize'));await new Promise(r=>setTimeout(r,150));const p=q('.op-command-overview'),r=p.getBoundingClientRect(),limit=q('#mwsAccessTools').getBoundingClientRect().top,footer=q('.op-command-footer').getBoundingClientRect(),cards=[...p.querySelectorAll('.op-squad-card')];return {fit:p.classList.contains('op-command-fit'),bottom:footer.bottom,limit,all:cards.every(c=>{const x=c.getBoundingClientRect();return x.bottom<=footer.top&&x.right<=r.right+2&&c.querySelectorAll('.op-agent-row').length===5}),rows:cards.map(c=>Math.round(c.getBoundingClientRect().height)),overflow:document.documentElement.scrollWidth>innerWidth+1}})()`);
+  assert(layout.fit&&layout.all&&!layout.overflow&&layout.bottom<=layout.limit+3,JSON.stringify({sidebar,zoom,layout}));
+  console.log('OPERATION_M_COMMAND_RESIZE_OK',JSON.stringify({sidebar,zoom,layout}));await capture('command-sidebar-'+sidebar+'-zoom-'+zoom,1913,901);
+ }
+ assert(!requests.some(x=>x.startsWith('/api/')));console.log('OPERATION_M_COMMAND_VISUAL_OK');
+}else{
 for(const [w,h] of [[1366,768],[1726,892],[1715,894],[1920,1080],[2560,1440],[2560,1080],[3440,1440],[3840,2160],[390,844]]){
  await b.navigate(url,w,h);await b.evaluate("document.querySelector('[data-op-action=tab-draft]').click()");await b.evaluate("localStorage.removeItem('mws.operationM.simulation.v1')");await b.navigate(url,w,h);await b.evaluate("document.querySelector('[data-op-action=tab-draft]').click()");
  const init=await b.evaluate(`(async()=>{const r=document.querySelector('#operationM');await Promise.all([...r.querySelectorAll('.op-roster img')].map(i=>i.decode()));return {coaches:r.querySelectorAll('.op-coach').length,count:r.querySelectorAll('.op-roster-grid .op-player').length,images:r.querySelectorAll('.op-roster-grid img').length,settings:r.querySelectorAll('[data-op-action=open-config]').length,overflow:document.documentElement.scrollWidth>innerWidth+1}})()`);assert.deepEqual(init,{coaches:4,count:20,images:20,settings:0,overflow:false});
@@ -228,4 +238,5 @@ const controls=await b.evaluate(`(async()=>{
 assert.deepEqual(controls,{stable:true,notPaused:true,members:1,canShuffle:true,reshuffle:true,reset:true,reveal:true});
 console.log('OPERATION_M_GUIDED_CONTROLS_OK',JSON.stringify(controls));
 assert(!requests.some(x=>x.startsWith('/api/')));console.log('OPERATION_M_NO_API_REQUESTS',requests.length);
+}
 }finally{await b?.close();await new Promise(r=>server.close(r));rmSync(dir,{recursive:true,force:true})}

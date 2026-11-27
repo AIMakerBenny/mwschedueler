@@ -1,0 +1,32 @@
+name: Operation M command visual QA
+on:
+  pull_request:
+    branches: ['cloudflare-production']
+    paths:
+      - 'assets/operation-m-*'
+      - 'scripts/qa-operation-m-browser.mjs'
+      - '.github/workflows/qa-operation-m-command-visual.yml'
+permissions:
+  contents: read
+env:
+  MWS_QA_OFFLINE: '1'
+  MWS_OPERATION_M_CAPTURE: 'operation-m-command-visuals'
+  MWS_COMMAND_ONLY: '1'
+jobs:
+  command-visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check command layout
+        run: node scripts/qa-operation-m-browser.mjs
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: operation-m-command-visuals
+          path: operation-m-command-visuals/
+          if-no-files-found: warn
