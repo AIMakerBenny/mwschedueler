@@ -60,7 +60,7 @@
 #operationM .op-roster-grid .op-player-name{font-size:clamp(11px,1.05cqw,16px)}
 #operationM .op-block-head button.op-primary,#operationM .op-config-footer button.op-primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
 #operationM .op-overlay{position:fixed;inset:0;z-index:5000;background:#000a;display:grid;place-items:center;padding:16px}
-#operationM .op-config{--squad:#9ab5c7;position:fixed;inset:0;margin:auto;width:min(1020px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - 24px);height:auto;padding:5px;overflow:hidden;display:none;border:1px solid var(--op-metal-edge);border-radius:3px;color:#edf3f8;background:var(--op-metal-housing);box-shadow:var(--op-modal-shadow)}
+#operationM dialog.op-config{--squad:#9ab5c7;position:fixed;inset:0;margin:auto;width:min(1020px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - 24px);height:auto;padding:5px;overflow:hidden;display:none;border:1px solid var(--op-metal-edge);border-radius:3px;color:#edf3f8;background:var(--op-metal-housing);box-shadow:var(--op-modal-shadow)}
 #operationM .op-config[open]{display:block;animation:op-modal-in var(--op-motion-fast) var(--op-ease) both}
 #operationM .op-config::backdrop{background:#080e15bd;backdrop-filter:blur(2px)}
 #operationM .op-config-head,#operationM .op-config-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
