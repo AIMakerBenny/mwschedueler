@@ -96,8 +96,10 @@ const TEAM_MARKS={
 };
 function teamMark(t){return '<svg class="op-team-mark" aria-hidden="true" viewBox="0 0 124 100" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="'+TEAM_MARKS[t.id]+'"/><path d="M4 10V4H22M102 4h18v16M120 80v16h-18M22 96H4V80" opacity=".6"/></svg>'}
 function tacFrame(){return '<svg class="op-armor-frame" aria-hidden="true" viewBox="0 0 800 320" preserveAspectRatio="none" fill="none"><path class="op-armor-outline" d="M17 2H783L798 17V303L783 318H17L2 303V17Z"/><path class="op-armor-inner" d="M23 8H777L792 23V297L777 312H23L8 297V23Z"/><path class="op-armor-corners" d="M3 57V18L18 3H83M717 317H782L797 302V263M717 3H782L797 18V57M3 263V302L18 317H83"/><path class="op-armor-sheen" d="M115 317H685M115 3H685"/><path class="op-armor-stripes" d="M741 312l12-12m0 12 12-12m0 12 12-12M23 20 35 8m0 12L47 8m0 12L59 8"/></svg>'}
+// Confirmed roster uses the contact's own profile, not dedicated artwork or simulated draft assignments.
+function confirmedProfile(n){return matchContact(n,contacts)|| (agentName(n)!==n?matchContact(agentName(n),contacts):null)}
 function tacticalMember(t,n,i){
-  return '<button type="button" class="op-agent-row" data-op-agent="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 요원 정보">'+tacticalPortrait(n)+'<span class="op-agent-row-name"><strong>'+esc(agentName(n))+'</strong><small>#'+squadCode(t)+(i+1)+'</small></span><span class="op-tac-arrow" aria-hidden="true">›</span></button>';
+  return '<button type="button" class="op-agent-row" data-op-agent="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 요원 정보">'+photo(confirmedProfile(n),agentName(n))+'<span class="op-agent-row-name"><strong>'+esc(agentName(n))+'</strong><small>#'+squadCode(t)+(i+1)+'</small></span><span class="op-tac-arrow" aria-hidden="true">›</span></button>';
 }
 function commanderArt(t){
   return '<div class="op-commander-art"><span class="op-tac-reticle" aria-hidden="true"></span><img src="'+commanderUrl(t)+'" alt="" decoding="async" width="512" height="512"></div>';
@@ -908,7 +910,7 @@ function scheduleMeasure(){if(layoutFrame)cancelAnimationFrame(layoutFrame);layo
 window.addEventListener('resize',scheduleMeasure);
 window.visualViewport?.addEventListener('resize',scheduleMeasure);
 if(typeof ResizeObserver==='function'){let lastWidth=-1;const observer=new ResizeObserver(()=>{const width=root.getBoundingClientRect().width;if(root.classList.contains('active')&&Math.abs(width-lastWidth)>.5){lastWidth=width;scheduleMeasure()}});observer.observe(root);const main=root.closest('.main');if(main)observer.observe(main)}
-function signature(){return JSON.stringify(ROSTER.map(n=>{const c=current(n);return[c?.id,c?.name,c?.image]}).concat(state.roles.map(id=>{const c=byId.get(id);return[c?.id,c?.name,c?.image]}),ROSTER.map(n=>agentArt(n))))}
+function signature(){return JSON.stringify(ROSTER.map(n=>{const c=current(n);return[c?.id,c?.name,c?.image]}).concat(state.roles.map(id=>{const c=byId.get(id);return[c?.id,c?.name,c?.image]}),ROSTER.map(n=>agentArt(n)),ROSTER.map(n=>{const c=confirmedProfile(n);return[c?.id,c?.name,c?.image,c?.avatar,c?.profileImage]})))}
 function updateSelection(){
   root.querySelectorAll('.op-player[aria-pressed]').forEach(b=>{const on=b.dataset.opPlayer===selected,was=b.classList.contains('op-selected');b.classList.toggle('op-selected',on);b.setAttribute('aria-pressed',String(on));if(on!==was&&!reducedMotion()){b.querySelector('.op-card-front')?.animate?.(on?[{filter:'brightness(1.25)',transform:'scale(.97)'},{filter:'none',transform:'none'}]:[{opacity:.82},{opacity:1}],{duration:180,easing:'ease-out'})}});
   const board=root.querySelector('.op-board');if(board)board.classList.toggle('op-awaiting-drop',!!selected);
