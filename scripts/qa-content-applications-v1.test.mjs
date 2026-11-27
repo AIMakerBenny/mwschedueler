@@ -47,7 +47,8 @@ test('production entry and cloud contract share the campaign core key without ch
  assert(html.indexOf('id="dashboardApplicationSupport"')>html.indexOf('class="dashboard-kpi-grid-local"'));assert(html.indexOf('id="dashboardApplicationSupport"')<html.indexOf('class="dashboard-view-controls"'));
  for(const p of ['assets/cloud-v1.1.js','assets/cloud-runtime-v130.js','src/cf-v111-auth.js']){const keys=read(p).match(/const CORE_KEYS\s*=\s*(\[[^\]\n]+\])/)[1];assert(keys.includes("'contentApplications'"));assert(keys.includes("'achievementCards'"));assert(keys.includes("'contentGroups'"))}
  const server=read('src/cf-v111-auth.js');assert(server.includes('source.contentApplications=previousCore.contentApplications'));assert(server.includes("key==='contentApplications'?normalizeCampaigns(src[key]):src[key]"));
- const ui=read('assets/content-applications-v2.js');assert(ui.includes('data.contentApplications=normalizeCampaigns(rows)'));assert(ui.includes('window.mwsV55SaveNow()'));assert(ui.includes('document.body.dataset.mwsMode===\'admin\''));assert(!ui.includes('method:\'POST\''));
+ const ui=read('assets/content-applications-v2.js');assert(ui.includes('data.contentApplications=normalizeCampaigns(rows)'));assert(ui.includes('window.mwsV55SaveNow()'));assert(ui.includes('document.body.dataset.mwsMode===\'admin\''));// The read-side batch endpoint uses POST for bounded ID lists; workspace writes still use the save contract.
+ const directPosts=[...ui.matchAll(/fetch\(\s*(['"])([^'"]+)\1\s*,\s*\{\s*method:\s*['"]POST['"]/g)].map(m=>m[2]);assert.deepEqual(directPosts,['/api/soop/application-batch']);assert(!/fetch\(\s*['"]\/api\/(?:save|parts\/|workspace)/.test(ui));
 });
 
 test('final six hours is urgent, and expiry never remains urgent',()=>{
