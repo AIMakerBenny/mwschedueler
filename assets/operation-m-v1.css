@@ -1119,3 +1119,12 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
  #operationM .op-squad-title>small::after{display:none}
  #operationM .op-shell button.op-agent-switch{grid-template-columns:28px minmax(0,1fr);min-height:44px}
 }
+
+/* Keep the 300px tier chamber usable even at the short desktop viewport:
+   save vertical space in the pool chrome rather than shrinking the portraits or drop targets. */
+@container(min-width:801px){
+ #operationM .op-tier-workspace .op-pool{padding:6px 10px;gap:6px}
+ #operationM .op-tier-workspace .op-pool .op-block-head{padding:0 8px}
+ #operationM .op-tier-workspace .op-pool.op-pool-empty{padding:3px 10px;gap:0}
+ #operationM .op-tier-workspace{gap:7px}
+}
