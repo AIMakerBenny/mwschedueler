@@ -33,6 +33,7 @@ function deckWait(ms,epoch,fn){deckTimers.push(setTimeout(()=>{if(liveDeck(epoch
 function deckAnimate(node,frames,opts){const a=node.animate(frames,opts);deckEffects.push(a);return a}
 
 const reducedMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+const interfaceMotionReduced=()=>reducedMotion()||window.mwsMotionReduced?.()===true;
 let dragCard=null,dragOrigin=null;
 const boardCards=()=>[...root.querySelectorAll('.op-tier-workspace .op-player')];
 const findBoardCard=n=>boardCards().find(c=>c.dataset.opPlayer===n);
@@ -78,7 +79,7 @@ function commanderPortrait(c,name){
 }
 function tacticalPortrait(n,large=false,preview=undefined){
   const src=preview===undefined?agentArt(n):preview;
-  return '<span class="op-agent-portrait'+(large?' op-agent-large':'')+'"><svg class="op-agent-silhouette" aria-hidden="true" viewBox="0 0 100 100" fill="currentColor"><circle cx="50" cy="34" r="18"/><path d="M14 88c0-23 16-37 36-37s36 14 36 37z"/></svg>'+(src?'<img src="'+esc(src)+'" alt="" decoding="async" loading="lazy">':'')+'</span>';
+  return '<span class="op-agent-portrait'+(large?' op-agent-large':'')+'"><svg class="op-agent-silhouette" aria-hidden="true" viewBox="0 0 100 100" fill="currentColor"><circle cx="50" cy="34" r="18"/><path d="M14 88c0-23 16-37 36-37s36 14 36 37z"/></svg>'+(src?'<img src="'+esc(src)+'" alt="" decoding="async" loading="'+(large?'eager':'lazy')+'">':'')+'</span>';
 }
 function squadStyle(t){return ' style="--squad:'+t.color+'"'}
 // Shared, single-piece tactical geometry. These are decorative, not military status data.
@@ -122,6 +123,51 @@ function commandView(){
   const t=SQUADS.find(x=>x.id===activeSquad);
   return t?commandSquad(t):commandOverview();
 }
+// Keep the armor, team data, nav and all five switch nodes mounted during agent changes.
+// A change of team, permission, or data refresh still uses the complete view renderer.
+function patchAgentDetail(t,n){
+  const view=root.querySelector('.op-agent-detail'),i=t.members.indexOf(n);
+  if(!view||i<0||!view.querySelector('.op-dossier-portrait .op-armor-frame'))return false;
+  const draft=document.createElement('template');draft.innerHTML=commandAgent(t,n);
+  const next=draft.content;
+  const pairs=['.op-portrait-instrument .op-agent-portrait','.op-portrait-instrument .op-instrument-label','.op-portrait-instrument .op-instrument-caption','.op-agent-identity h2','.op-agent-identity .op-tac-kicker','.op-detail-position'];
+  if(pairs.some(sel=>!view.querySelector(sel)||!next.querySelector(sel)))return false;
+  const oldUpload=view.querySelector('.op-art-upload'),newUpload=next.querySelector('.op-art-upload');
+  // Update existing content nodes except the artwork itself, which has independent load state.
+  for(const sel of pairs){
+    const a=view.querySelector(sel),b=next.querySelector(sel);
+    if(sel.endsWith('.op-agent-portrait')){a.replaceWith(b)}else a.textContent=b.textContent;
+  }
+  if(oldUpload&&newUpload){oldUpload.replaceWith(newUpload)}
+  else if(oldUpload)oldUpload.remove();
+  else if(newUpload)view.querySelector('.op-dossier-portrait').append(newUpload);
+  view.querySelector('.op-art-notice')?.remove();
+  for(const step of ['prev','next']){
+    const b=view.querySelector('[data-op-step="'+step+'"]');
+    b.dataset.opAgent=t.members[(i+(step==='prev'?4:1))%5];
+  }
+  for(const b of view.querySelectorAll('.op-agent-switch')){
+    const current=b.dataset.opAgent===n;b.classList.toggle('is-current',current);b.setAttribute('aria-pressed',String(current));
+  }
+  measureLayout();scheduleMeasure();
+  return true;
+}
+const commandTransitions=new Set();
+function stopCommandTransitions(){for(const a of commandTransitions)a.cancel();commandTransitions.clear()}
+function animateCommandForeground(sameAgent,squad,agent){
+  stopCommandTransitions();
+  if(interfaceMotionReduced())return;
+  // Only changed foreground elements animate; armor geometry stays fully visible.
+  const selectors=sameAgent?['.op-portrait-instrument .op-agent-portrait','.op-agent-identity h2','.op-agent-identity .op-tac-kicker']:
+    agent?['.op-portrait-instrument .op-agent-portrait','.op-agent-identity h2','.op-dossier-command .op-command-nameplate']:
+    squad?['.op-command-banner .op-commander-art img','.op-banner-title','.op-agent-tile .op-agent-portrait']:
+    ['.op-squad-hero .op-commander-art img','.op-squad-title'];
+  for(const selector of selectors)for(const node of root.querySelectorAll(selector)){
+    if(!node.animate)continue;
+    const a=node.animate([{opacity:.55,translate:'0 5px'},{opacity:1,translate:'0 0'}],{duration:220,easing:'cubic-bezier(.2,.8,.2,1)'});
+    commandTransitions.add(a);const clear=()=>commandTransitions.delete(a);a.onfinish=clear;a.oncancel=clear;
+  }
+}
 function goCommand(squad='',agent='',origin=null){
   if(tab==='command'&&activeSquad===squad&&activeAgent===agent)return;
   const previousAgent=tab==='command'?activeAgent:'',sameAgentView=!!(previousAgent&&agent&&activeSquad===squad);
@@ -129,7 +175,9 @@ function goCommand(squad='',agent='',origin=null){
   const keepAgentSwitch=origin?.closest('.op-agent-switch-grid')&&sameAgentView;
   const step=origin?.dataset.opStep;
   const main=root.closest('.main'),scroll=main?.scrollTop||0;
-  finishDraft(false);stopShuffle();clearRankMotion();rankLock=false;guided=false;choosingMode=false;selected='';tab='command';activeSquad=squad;activeAgent=agent;artNotice='';render();
+  finishDraft(false);stopShuffle();clearRankMotion();stopCommandTransitions();rankLock=false;guided=false;choosingMode=false;selected='';tab='command';activeSquad=squad;activeAgent=agent;artNotice='';
+  const patched=sameAgentView&&squadFor(agent)&&patchAgentDetail(squadFor(agent),agent);
+  if(!patched)render();
   const heading=root.querySelector('.op-command-workspace h2');
   let focus=null;
   if(step&&sameAgentView)focus=root.querySelector('[data-op-step="'+step+'"]');
@@ -138,11 +186,7 @@ function goCommand(squad='',agent='',origin=null){
   if(focus)focus.focus({preventScroll:true});
   else if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true})}
   if(main)main.scrollTop=sameAgentView||keepTeamSwitch?scroll:0;
-  // A single coordinated foreground transition; the armor frame is visible immediately.
-  if(!reducedMotion()&&typeof root.animate==='function'){
-    const layer=root.querySelector(agent?'.op-agent-dossier':squad?'.op-squad-detail-body':'.op-command-grid');
-    if(layer)layer.animate([{opacity:.86},{opacity:1}],{duration:180,easing:'ease-out'});
-  }
+  animateCommandForeground(!!patched,squad,agent);
 }
 async function prepareAgentImage(file){
   if(!/^image\/(png|jpeg|webp|avif)$/.test(file.type)||file.size>12*1024*1024)throw Error('PNG, JPG, WebP, AVIF 이미지 12MB 이하만 등록할 수 있습니다.');
@@ -754,7 +798,7 @@ function render(){
   const scoreSpread=state.teams.length?Math.max(...state.teams.map(t=>teamStats(t,state.tiers).score))-Math.min(...state.teams.map(t=>teamStats(t,state.tiers).score)):null;
   const status=tab==='command'?'':notice||(saveFailed?'브라우저 저장 불가':missing.length?'연락처 미연결 '+missing.length+'명 · 관리자 설정이 필요합니다.':'');
   const previousTab=root.querySelector('.op-tabs [aria-pressed="true"]')?.getBoundingClientRect();
-  clearHover();
+  clearHover();stopCommandTransitions();
   root.innerHTML='<div class="op-shell'+(entering?' op-view-enter':'')+'" data-view="'+tab+'"><div class="op-toolbar"><span class="op-page-label">'+(tacEmblem()+'<strong>오퍼 M</strong>')+'</span><nav class="op-command-tabs" aria-label="오퍼 M">'+button('tab-command','작전 현황','aria-pressed="'+(tab==='command')+'"')+button('tab-draft','기존 드래프트','aria-pressed="'+(tab!=='command')+'"')+'</nav>'+(tab==='command'?'':'<nav class="op-tabs" aria-label="기존 드래프트 도구">'+[['roster','참가자'],['tier','티어표'],['result','가상 드래프트']].map(([id,label])=>button('tab-'+id,label,'aria-pressed="'+(tab===id)+'"')).join('')+'</nav>')+'<div class="op-actions">'+(tab==='tier'&&!guided?'<span class="op-progress">'+assigned+' / 20</span>':tab==='result'&&!draftRun&&scoreSpread!==null?'<span class="op-progress">점수 차이 <b>'+scoreSpread+'</b></span>':'')+action+(canConfigure()&&!guided&&!draftRun&&!rankLock?button('open-config','인물 설정','class="op-settings" aria-label="관리자 인물 설정"'):'')+'</div></div>'+(status?'<div class="op-status" role="status">'+esc(status)+'</div>':'')+(tab==='command'?commandView():tab==='roster'?roster():tab==='tier'?(choosingMode?modeChoice():guided?guidedBoard():tierBoard()):results())+'</div>';
   for(const r of root.querySelectorAll('.op-tier-row')){const g=r.querySelector('.op-player-grid');if(g&&scrolls[r.dataset.tier])g.scrollTop=scrolls[r.dataset.tier]}
   updateSelection();
@@ -927,7 +971,7 @@ function clearHover(){
 }
 function pulseCount(el){if(!reducedMotion())el?.animate?.([{transform:'translateY(2px)',opacity:.65},{transform:'translateY(-2px)',opacity:1},{transform:'none'}],{duration:200,easing:'ease-out'})}
 function animateTab(previous){
-  if(!previous||reducedMotion())return;
+  if(!previous||interfaceMotionReduced())return;
   const tabs=root.querySelector('.op-tabs'),active=tabs?.querySelector('[aria-pressed="true"]');if(!active)return;
   const next=active.getBoundingClientRect(),parent=tabs.getBoundingClientRect(),scale=draftScale();
   if(Math.abs(previous.left-next.left)+Math.abs(previous.top-next.top)<2)return;
@@ -935,7 +979,7 @@ function animateTab(previous){
   const anim=indicator.animate?.([{transform:'translate('+((previous.left-next.left)/scale)+'px,'+((previous.top-next.top)/scale)+'px) scaleX('+previous.width/next.width+')',opacity:1},{transform:'none',opacity:1},{opacity:0}],{duration:240,easing:'cubic-bezier(.2,.75,.2,1)'});if(anim)anim.onfinish=()=>indicator.remove();else indicator.remove();
 }
 root.addEventListener('pointermove',e=>{
-  if(!hoverFine.matches||dragName||draftRun||rankLock)return;
+  if(!hoverFine.matches||interfaceMotionReduced()||dragName||draftRun||rankLock||configDraft){clearHover();return}
   const card=e.target.closest('.op-player[data-rarity]');if(!card||!root.contains(card)){clearHover();return}
   if(hoverCard!==card){clearHover();hoverCard=card;hoverRect=card.getBoundingClientRect()}
   hoverPoint={x:e.clientX,y:e.clientY};if(hoverFrame)return;
@@ -948,6 +992,7 @@ root.addEventListener('pointerout',e=>{if(hoverCard&&!hoverCard.contains(e.relat
 root.addEventListener('pointerleave',clearHover);
 root.addEventListener('scroll',clearHover,true);
 window.addEventListener('resize',clearHover);
+window.addEventListener('mws-motion-change',()=>{if(interfaceMotionReduced()){clearHover();stopCommandTransitions()}});
 root.addEventListener('click',e=>{
   const b=e.target.closest('button');if(handleConfigClick(e,b))return;if(b?.dataset.opAgent){const t=squadFor(b.dataset.opAgent);if(t&&!artBusy)goCommand(t.id,b.dataset.opAgent,b);return}if(b?.dataset.opSquad){if(!artBusy)goCommand(b.dataset.opSquad,'',b);return}if(b?.dataset.opCompleted){showTierMembers(b.dataset.opCompleted);return}if(b?.dataset.opAction==='close-tier-members'||e.target.classList.contains('op-tier-members')){root.querySelector('.op-tier-members')?.remove();root.querySelector('[data-op-completed="'+expandedTier+'"]')?.focus({preventScroll:true});expandedTier='';return}if(draftRun){const action=b?.dataset.opAction;if(action==='skip-draft'){finishDraft(true);return}if(!['tab-command','tab-draft','tab-roster','tab-tier','tab-result'].includes(action))return;finishDraft(false)}if(b?.hasAttribute('data-op-draw')&&root.contains(b)){drawCard(Number(b.dataset.opDraw));return}if(!b||!root.contains(b)){const target=e.target.closest('.op-tier-row');if(target&&selected&&!rankLock)move(selected,target.dataset.tier);else if(e.target.closest('.op-pool')&&selected&&!rankLock)move(selected,'');return;}
   if(guided&&['shuffle','draw','flip'].includes(deckPhase)&&!['choose-mode','exit-guided','tab-command','tab-draft','tab-roster','tab-tier','tab-result','toggle-pause','skip-guided','reset'].includes(b.dataset.opAction))return;
@@ -1013,10 +1058,10 @@ root.addEventListener('dragover',e=>{const r=e.target.closest('[data-op-drop]');
 root.addEventListener('drop',e=>{const r=e.target.closest('[data-op-drop]');if(!r||!dragName)return;e.preventDefault();const n=dragName,t=r.dataset.opDrop;clearDrag(false);move(n,t)});
 root.addEventListener('dragleave',e=>{const r=e.target.closest('[data-op-drop]');if(r&&!r.contains(e.relatedTarget))r.classList.remove('op-drop-active')});
 root.addEventListener('dragend',()=>clearDrag(!!dragName));
-window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{clearHover();finishDraft(false);stopShuffle();clearDrag(false);clearRankMotion();rankLock=false;tab='command';activeAgent='';activeSquad='';choosingMode=false;guided=false;selected='';clearConfig()}});
+window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{clearHover();stopCommandTransitions();finishDraft(false);stopShuffle();clearDrag(false);clearRankMotion();rankLock=false;tab='command';activeAgent='';activeSquad='';choosingMode=false;guided=false;selected='';clearConfig()}});
 window.addEventListener('mws:app-ready',()=>{if(configDraft&&canConfigure()&&root.classList.contains('active'))return;if(guided&&workspaceReady&&root.classList.contains('active'))return;finishDraft(false);stopShuffle();clearRankMotion();rankLock=false;guided=false;choosingMode=false;tab='command';activeAgent='';activeSquad='';workspaceReady=false;clearConfig();if(root.classList.contains('active'))void enter()});
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){clearHover();if(draftRun)finishDraft(true);return}
+  if(document.hidden){clearHover();stopCommandTransitions();if(draftRun)finishDraft(true);return}
   if(guided&&!paused&&deckPhase==='pick'&&!rankLock)drawCard(0);
 });
 window.addEventListener('beforeunload',e=>{if(configDraft&&configDirty()&&!configPending){e.preventDefault();e.returnValue=''}});
