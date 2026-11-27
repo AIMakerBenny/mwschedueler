@@ -15,7 +15,7 @@ test('legacy follows active minigames and directly precedes import/export',()=>{
   for(const id of ids)assert.ok(!tabs.includes(id));
   for(const id of ['gameMajoku','gameLadder','gameF1Racing','gameMultiDraw'])assert.ok(tabs.includes(id));
   assert.ok(!sidebar.includes('wardogs-content-divider-v116'));
-  assert.ok(tabs.indexOf('bsandong')>=0&&tabs.indexOf('wardogs')===tabs.indexOf('bsandong')+1&&tabs.indexOf('wardogs')<tabs.indexOf('gameLadder'));
+  const contentStart=tabs.indexOf('bsandong');assert.ok(contentStart>=0);assert.deepEqual(tabs.slice(contentStart,contentStart+3),['bsandong','operationM','wardogs']);assert.ok(tabs.indexOf('wardogs')<tabs.indexOf('gameLadder'));
   assert.match(sidebar,/data-mws-nav-group="mawangContent"/);
 });
 test('two legacy buttons resolve to original sections, back button and stylesheet are installed',()=>{

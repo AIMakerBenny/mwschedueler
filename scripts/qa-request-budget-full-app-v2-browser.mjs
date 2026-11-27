@@ -106,6 +106,14 @@ const server=createServer(async(req,res)=>{
   res.end(method==='HEAD'?undefined:bytes);
  }catch(e){errors.push(String(e));res.writeHead(500).end('fixture error')}
 });
+// The timeline browser suites use exactly the same local Worker/asset fixture.
+if(process.env.MWS_QA_SERVE_ONLY==='1'){
+ assert.equal(typeof process.send,'function','Serve-only requires a parent IPC channel');
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ process.send({type:'mws-qa-ready',base:base+':'+server.address().port+'/'});
+ await new Promise(r=>process.once('disconnect',r));
+ server.closeAllConnections();await new Promise(r=>server.close(r));db.close();process.exit(0);
+}
 const dir=mkdtempSync(path.join(tmpdir(),'mws-full-request-'));let browser;
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(fn,label,attempts=160){for(let i=0;i<attempts;i++){if(await fn())return;await pause(100)}throw Error(label)}
@@ -152,7 +160,7 @@ try{
    await browser.evaluate("window.setTab('operationM')");
    await until(()=>browser.evaluate("!!document.querySelector('.op-command-overview')"),'Operation M overview ready');
    await pause(350);
-   const overview=await inspect('.op-command-overview');assert(overview.logo&&overview.geometry&&!overview.overflow&&overview.version.length===2&&overview.version.every(x=>x.includes('v=17')),JSON.stringify({w,h,overview}));if(w>=1366)assert(overview.fit,JSON.stringify({w,h,overview}));await capture('overview',w,h);
+   const overview=await inspect('.op-command-overview');assert(overview.logo&&overview.geometry&&!overview.overflow&&overview.version.length===2&&overview.version.every(x=>x.includes('v=18')),JSON.stringify({w,h,overview}));if(w>=1366)assert(overview.fit,JSON.stringify({w,h,overview}));await capture('overview',w,h);
    await browser.evaluate("document.querySelector('[data-op-squad=mudok]').click()");await pause(150);const team=await inspect('.op-squad-detail');assert(!team.overflow,JSON.stringify({w,h,team}));if(w>=1366)assert(team.fit,JSON.stringify({w,h,team}));await capture('team',w,h);
    await browser.evaluate("document.querySelector('.op-agent-tile').click()");await pause(150);const agent=await inspect('.op-agent-detail');assert(agent.commander&&agent.members&&!agent.overflow,JSON.stringify({w,h,agent}));if(w>=1366)assert(agent.fit,JSON.stringify({w,h,agent}));await capture('agent',w,h);
    await browser.evaluate("document.querySelector('[data-op-action=tab-draft]').click()");await pause(300);const roster=await inspect('.op-roster');assert(roster.logo&&!roster.overflow,JSON.stringify({w,h,roster}));if(w>=1366)assert(roster.fit,JSON.stringify({w,h,roster}));await capture('roster',w,h);
