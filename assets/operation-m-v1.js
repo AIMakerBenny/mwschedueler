@@ -158,7 +158,7 @@ async function prepareAgentImage(file){
 }
 async function saveAgentImage(n,file){
   if(!canConfigure()||artBusy||configSaving||!squadFor(n)||!file)return;
-  if(configDraft){await stageConfigImage(n,file);return}
+  if(configDraft){if(!configPending)await stageConfigImage(n,file);return}
   artBusy=true;artNotice='';render();
   let d,prior,next;
   try{
@@ -247,7 +247,8 @@ function chooseMode(focus=false){
   stopShuffle();tab='tier';guided=false;choosingMode=true;selected='';notice='';render();
   if(focus)root.querySelector('.op-mode-card')?.focus({preventScroll:true});
 }
-function configLinksChanged(){return !!configDraft&&JSON.stringify(configDraft)!==JSON.stringify(configBaseline?.links)}
+function sameConfig(a,b){return !!a&&!!b&&ROSTER.every(n=>(a.links[n]||'')===(b.links[n]||''))&&a.roles.every((id,i)=>id===b.roles[i])}
+function configLinksChanged(){return !!configDraft&&!sameConfig(configDraft,configBaseline?.links)}
 function configDirty(){return configLinksChanged()||Object.keys(configArt).length>0||configPending}
 function clearConfig(){
   const dialog=root.querySelector('.op-config');
@@ -277,21 +278,22 @@ async function stageConfigImage(n,file){
   try{
     const image=await prepareAgentImage(file);
     if(!configDraft||!canConfigure())throw Error('관리자 연결을 확인하세요.');
-    configArt[n]=image;configNotice='이미지 준비 완료 · 설정 저장을 누르면 적용됩니다.';
+    if(image===configBaseline.art[n]){delete configArt[n];configNotice='기존 이미지와 동일합니다.'}else{configArt[n]=image;configNotice='이미지 준비 완료 · 설정 저장을 누르면 적용됩니다.'}
   }catch(err){configNotice=err.message||'이미지 준비 실패';}
   finally{artBusy=false;renderConfig({upload:n})}
 }
 function adminConfig(){
-  const busy=configSaving||artBusy,disabled=busy?'disabled':'';
+  const busy=configSaving||artBusy,disabled=busy?'disabled':'',editDisabled=busy||configPending?'disabled':'';
   const slot=(label,id,key)=>{
     const c=byId.get(id),changed=key.startsWith('role:')?id!==configBaseline.links.roles[Number(key.slice(5))]:id!==configBaseline.links.links[key];
-    return '<button class="op-admin-slot'+(changed?' is-edited':'')+'" type="button" data-op-config="'+esc(key)+'" '+disabled+'>'+(key.startsWith('role:')?commanderPortrait(c,c?.name||label):photo(c,c?.name||label))+'<span><small>'+esc(label)+'</small><strong>'+esc(c?.name||'연락처 선택')+'</strong></span></button>';
+    return '<button class="op-admin-slot'+(changed?' is-edited':'')+'" type="button" data-op-config="'+esc(key)+'" '+editDisabled+'>'+(key.startsWith('role:')?commanderPortrait(c,c?.name||label):photo(c,c?.name||label))+'<span><small>'+esc(label)+'</small><strong>'+esc(c?.name||'연락처 선택')+'</strong></span></button>';
   };
   const changedCount=Object.keys(configArt).length;
-  const validLinks=[...ROSTER.map(n=>configDraft.links[n]),...configDraft.roles].every(id=>id&&byId.has(id));
+  const ids=[...ROSTER.map(n=>configDraft.links[n]),...configDraft.roles];
+  const validLinks=ids.every(id=>id&&byId.has(id))&&new Set(ids).size===25;
   return tacFrame()+'<div class="op-config-main" '+(picker||configDiscard?'inert':'')+'><header class="op-config-head"><h2 class="op-config-title">'+tacEmblem()+'인물 설정</h2>'+button('close-config','닫기',disabled)+'</header><div class="op-config-scroll"><section class="op-config-section"><div class="op-config-section-head"><h3>기존 드래프트 인물 연결</h3><span>'+(validLinks?'연결 확인':'미연결 항목 확인')+'</span></div><h4>주최자 및 감독</h4><div class="op-config-roles">'+configDraft.roles.map((id,i)=>slot(i?'감독 '+i:'주최자',id,'role:'+i)).join('')+'</div><h4>참가자 20명</h4><div class="op-config-players">'+ROSTER.map(n=>slot(n,configDraft.links[n],n)).join('')+'</div></section><section class="op-config-section"><div class="op-config-section-head"><h3>확정 팀 · 오퍼 M 전용 이미지</h3><span>'+(changedCount?changedCount+'장 변경 준비':'연락처와 별도 관리')+'</span></div><div class="op-art-config-grid">'+SQUADS.map(t=>'<section class="op-art-config-team"'+squadStyle(t)+'><header>'+commanderPortrait(null,t.name)+'<span><strong>'+esc(t.name)+' 팀</strong><small>코치 · '+esc(t.coach)+'</small></span></header>'+t.members.map(n=>{
     const staged=Object.hasOwn(configArt,n),src=staged?configArt[n]:agentArt(n);
-    return '<div class="op-art-config-entry'+(staged?' is-edited':'')+'"><label class="op-art-config-slot">'+tacticalPortrait(n,false,src)+'<span><strong>'+esc(agentName(n))+'</strong><small>'+(staged?'저장 대기':src?'이미지 변경':'이미지 등록')+'</small></span><input type="file" aria-label="'+esc(agentName(n))+' 이미지 등록 또는 변경" accept="image/png,image/jpeg,image/webp,image/avif" data-op-agent-upload="'+esc(n)+'" '+disabled+'></label>'+(staged&&!configPending?button('undo-art','취소','data-op-art-undo="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 이미지 변경 취소" '+disabled):'')+'</div>';
+    return '<div class="op-art-config-entry'+(staged?' is-edited':'')+'"><label class="op-art-config-slot">'+tacticalPortrait(n,false,src)+'<span><strong>'+esc(agentName(n))+'</strong><small>'+(staged?'저장 대기':src?'이미지 변경':'이미지 등록')+'</small></span><input type="file" aria-label="'+esc(agentName(n))+' 이미지 등록 또는 변경" accept="image/png,image/jpeg,image/webp,image/avif" data-op-agent-upload="'+esc(n)+'" '+editDisabled+'></label>'+(staged&&!configPending?button('undo-art','취소','data-op-art-undo="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 이미지 변경 취소" '+disabled):'')+'</div>';
   }).join('')+'</section>').join('')+'</div></section></div><footer class="op-config-footer"><span role="status" aria-live="polite">'+esc(busy?(configSaving?'온라인 저장 중…':'이미지 준비 중…'):configNotice||(configDirty()?'저장되지 않은 변경사항이 있습니다.':'변경사항 없음'))+'</span>'+button('save-config',configSaving?'저장 중':configPending?'저장 다시 시도':'설정 저장','class="op-primary" '+(busy||!configDirty()?'disabled':''))+'</footer></div>'+pickerHtml()+(configDiscard?'<div class="op-config-submodal"><section class="op-config-confirm op-layer-panel" role="group" aria-labelledby="op-config-discard-title">'+tacFrame()+'<h3 id="op-config-discard-title">'+(configPending?'온라인 저장 미확인':'저장하지 않은 변경사항')+'</h3><p>'+(configPending?'이미 전송한 저장 요청은 취소할 수 없습니다. 닫으면 공용 저장 복구 기능에서 계속 관리됩니다.':'저장하지 않은 연락처 연결 및 이미지 변경을 취소할까요?')+'</p><div>'+button('keep-config','계속 편집')+button('discard-config',configPending?'닫기':'변경사항 버리기','class="op-danger"')+'</div></section></div>':'');
 }
 function renderConfig(target={}){
@@ -339,7 +341,7 @@ function handleConfigClick(e,b){
     if(role)configDraft.roles[idx]=id;else configDraft.links[picker]=id;
     configNotice='';closePicker();return true;
   }
-  if(b.dataset.opConfig){showPicker(b.dataset.opConfig);return true}
+  if(b.dataset.opConfig&&!configPending){showPicker(b.dataset.opConfig);return true}
   if(action==='undo-art'&&b.dataset.opArtUndo&&!configPending){const n=b.dataset.opArtUndo;delete configArt[n];configNotice='';renderConfig({upload:n});return true}
   if(action==='close-config')closeConfig();
   if(action==='save-config')void saveConfig();
@@ -576,11 +578,11 @@ function tierBoard(){
 async function saveConfig(){
   if(!canConfigure()||!configDraft||configSaving||artBusy||!configDirty())return;
   const linksChanged=configLinksChanged(),ids=[...ROSTER.map(n=>configDraft.links[n]),...configDraft.roles];
-  if(linksChanged&&(ids.some(id=>!id||!byId.has(id))||new Set(ids).size!==25)){
+  if(!configPending&&linksChanged&&(ids.some(id=>!id||!byId.has(id))||new Set(ids).size!==25)){
     configNotice='주최자, 감독 및 참가자 25명을 중복 없이 연결하세요.';renderConfig();return;
   }
   if(!configPending){
-    if(linksChanged&&JSON.stringify(readConfig())!==JSON.stringify(configBaseline.links)){
+    if(linksChanged&&!sameConfig(readConfig(),configBaseline.links)){
       configNotice='다른 변경사항이 발견되었습니다. 창을 닫고 최신 설정을 확인한 뒤 다시 편집하세요.';renderConfig();return;
     }
     if(Object.keys(configArt).some(n=>agentArt(n)!==configBaseline.art[n])){
@@ -591,8 +593,8 @@ async function saveConfig(){
   let saved=false;
   try{
     const d=getData();
-    if(linksChanged)d.miniGames[CONFIG_KEY]={links:{...configDraft.links},roles:[...configDraft.roles]};
-    if(Object.keys(configArt).length){
+    if(!configPending&&linksChanged)d.miniGames[CONFIG_KEY]={links:{...configDraft.links},roles:[...configDraft.roles]};
+    if(!configPending&&Object.keys(configArt).length){
       const prior=d.miniGames[ART_KEY],players=(Array.isArray(prior?.players)?prior.players:[]).filter(p=>p&&squadFor(p.id)&&!Object.hasOwn(configArt,p.id));
       d.miniGames[ART_KEY]={...prior,players:[...players,...Object.entries(configArt).map(([id,image])=>({id,image}))]};
     }
