@@ -1066,3 +1066,26 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
  #operationM .op-dossier-squad{grid-template-rows:auto repeat(5,minmax(35px,auto))}
 }
 @media(prefers-reduced-motion:reduce){#operationM .op-command-workspace *{transition:none!important}}
+
+/* Final visual pass: match the reference's larger commander silhouettes and legible insignia. */
+@container(min-width:800px){
+ #operationM .op-squad-card{grid-template-columns:minmax(0,1.62fr) minmax(0,1fr)}
+ #operationM .op-squad-hero{grid-template-columns:minmax(0,1.22fr) minmax(0,.9fr)}
+ #operationM .op-squad-title{padding-top:clamp(13px,calc(var(--tac-font)*1.5),35px)}
+ #operationM .op-squad-link strong{font-size:clamp(17px,min(calc(var(--tac-font)*2.48),2.03cqw),46px)}
+ #operationM .op-squad-link .op-command-emblem{width:clamp(24px,calc(var(--tac-font)*2.8),58px);height:clamp(24px,calc(var(--tac-font)*2.8),58px)}
+ #operationM .op-squad-coach{font-size:clamp(11px,calc(var(--tac-font)*1.16),24px);margin-top:clamp(7px,calc(var(--tac-font)*.95),19px)}
+ #operationM .op-squad-roster .op-agent-row-name strong{font-size:clamp(12px,calc(var(--tac-font)*1.42),30px)}
+ #operationM .op-squad-roster .op-agent-row-name small{font-size:clamp(9px,calc(var(--tac-font)*.92),20px)}
+ #operationM .op-squad-roster button.op-agent-row{grid-template-columns:minmax(20px,clamp(24px,calc(var(--tac-font)*3.05),62px)) minmax(0,1fr) auto}
+ #operationM .op-armor-outline{stroke-width:clamp(1.3px,calc(var(--tac-font)*.13),2.7px)}
+ #operationM .op-armor-corners{stroke-width:clamp(2.5px,calc(var(--tac-font)*.29),5px)}
+}
+@container(min-width:800px) and (max-width:1250px){
+ #operationM .op-squad-link{gap:4px}
+ #operationM .op-squad-link .op-command-emblem{width:23px;height:23px}
+ #operationM .op-squad-link .op-tac-slash{display:none}
+ #operationM .op-squad-roster button.op-agent-row{grid-template-columns:25px minmax(0,1fr) auto;padding:2px 4px!important}
+}
+#operationM .op-squad-hero .op-commander-art img{image-rendering:auto}
+#operationM .op-squad-link:focus-visible,#operationM .op-agent-row:focus-visible{outline-offset:-3px;outline-color:var(--squad)}
