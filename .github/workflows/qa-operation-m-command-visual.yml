@@ -32,3 +32,26 @@ jobs:
           name: operation-m-command-visuals
           path: operation-m-command-visuals/
           if-no-files-found: warn
+
+  full-app-visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      MWS_QA_OPERATION_M: '1'
+      MWS_OPERATION_M_CAPTURE: 'operation-m-full-app-visuals'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install Korean rendering fonts
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends fonts-noto-cjk
+      - name: Check actual app layout offline
+        run: node scripts/qa-request-budget-full-app-v2-browser.mjs
+      - name: Upload integrated app screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: operation-m-full-app-visuals
+          path: operation-m-full-app-visuals/
+          if-no-files-found: warn
