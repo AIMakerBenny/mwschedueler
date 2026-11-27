@@ -69,7 +69,7 @@ let activeSquad='',activeAgent='',artBusy=false,artNotice='';
 function agentArt(n){
   const p=getData()?.miniGames?.[ART_KEY]?.players;
   const src=String(Array.isArray(p)?p.find(x=>x?.id===n)?.image||'':'');
-  return /^(?:\/media\/workspace\/[A-Za-z0-9_-]+(?:\?v=\d+)?$|data:image\/(?:webp|png|jpeg|avif);base64,[A-Za-z0-9+/=]+$)/.test(src)?src:'';
+  return /^(?:\/media\/workspace\/[A-Za-z0-9_-]+(?:\?v=\d+(?:&h=[a-f0-9]{32})?)?$|data:image\/(?:webp|png|jpeg|avif);base64,[A-Za-z0-9+/=]+$)/.test(src)?src:'';
 }
 function commanderPortrait(c,name){
   const t=SQUADS.find(t=>t.name===String(name).replace(/!$/,''));
