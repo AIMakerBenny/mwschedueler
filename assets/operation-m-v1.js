@@ -56,15 +56,15 @@ const CONFIG_KEY='operationMV1';
 // Confirmed lineup is independent of the legacy simulation and contact settings.
 const ART_KEY='operationMArtV1';
 const SQUADS=Object.freeze([
-  {id:'mudok',name:'머독',coach:'에스카',color:'#e96f75',members:['마왕0216','김웰로','다키','베베리','물초코']},
-  {id:'gosegu',name:'고세구',coach:'쪼이',color:'#6bcde6',members:['뽀린걸','깡담비','박재박','거대별','햇비']},
-  {id:'cheonyang',name:'천양',coach:'dg98',color:'#e6ba69',members:['리냐_LIN…','난워니','유키라','최또','스위데']},
-  {id:'wakgood',name:'우왁굳',coach:'감블러',color:'#a995f4',members:['카푸','고여름_','양지팡','카린야','카노미☆']}
+  {id:'mudok',name:'머독',coach:'에스카',color:'#f0444d',members:['마왕0216','김웰로','다키','베베리','물초코']},
+  {id:'gosegu',name:'고세구',coach:'쪼이',color:'#268df8',members:['뽀린걸','깡담비','박재박','거대별','햇비']},
+  {id:'cheonyang',name:'천양',coach:'dg98',color:'#ffb326',members:['리냐_LIN…','난워니','유키라','최또','스위데']},
+  {id:'wakgood',name:'우왁굳',coach:'감블러',color:'#b454f2',members:['카푸','고여름_','양지팡','카린야','카노미☆']}
 ].map(t=>Object.freeze({...t,members:Object.freeze(t.members)})));
 const SHORT_NAMES=Object.freeze({'마왕0216':'마왕','리냐_LIN…':'리냐','고여름_':'고여름','카노미☆':'카노'});
 const agentName=n=>SHORT_NAMES[n]||n;
 const squadFor=n=>SQUADS.find(t=>t.members.includes(n));
-const commanderUrl=t=>'/assets/operation-m-commander-'+t.id+'.avif';
+const commanderUrl=t=>'/assets/operation-m-commander-'+t.id+'.avif?v=16';
 let activeSquad='',activeAgent='',artBusy=false,artNotice='';
 function agentArt(n){
   const p=getData()?.miniGames?.[ART_KEY]?.players;
@@ -73,24 +73,37 @@ function agentArt(n){
 }
 function commanderPortrait(c,name){
   const t=SQUADS.find(t=>t.name===String(name).replace(/!$/,''));
-  return t?'<span class="op-portrait op-commander-only"><img src="'+commanderUrl(t)+'" alt="" decoding="async" width="384" height="384"></span>':photo(c,name);
+  return t?'<span class="op-portrait op-commander-only"><img src="'+commanderUrl(t)+'" alt="" decoding="async" width="512" height="512"></span>':photo(c,name);
 }
 function tacticalPortrait(n,large=false){
   const src=agentArt(n);
   return '<span class="op-agent-portrait'+(large?' op-agent-large':'')+'"><svg class="op-agent-silhouette" aria-hidden="true" viewBox="0 0 100 100" fill="currentColor"><circle cx="50" cy="34" r="18"/><path d="M14 88c0-23 16-37 36-37s36 14 36 37z"/></svg>'+(src?'<img src="'+esc(src)+'" alt="" decoding="async" loading="lazy">':'')+'</span>';
 }
 function squadStyle(t){return ' style="--squad:'+t.color+'"'}
+// Shared, single-piece tactical geometry. These are decorative, not military status data.
+const squadCode=t=>['A','B','C','D'][SQUADS.indexOf(t)];
+function tacEmblem(){
+  return '<svg class="op-command-emblem" aria-hidden="true" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M18 43V21l14 10 14-10v22M24 42V31l8 6 8-6v11" stroke-width="4"/><path d="M9 17C-1 40 15 55 32 58 49 55 65 40 55 17M8 26l8 5M10 36l9 4M16 45l10 3M56 26l-8 5M54 36l-9 4M48 45l-10 3M14 13l3 6M50 13l-3 6"/><path d="m32 3 2 5 5 1-4 3 1 5-4-3-4 3 1-5-4-3 5-1z" fill="currentColor" stroke="none"/><path d="m19 6 1 3 4 1-3 2 1 3-3-2-3 2 1-3-3-2 4-1zM45 6l1 3 4 1-3 2 1 3-3-2-3 2 1-3-3-2 4-1z" fill="currentColor" stroke="none"/></svg>';
+}
+const TEAM_MARKS={
+ mudok:'M11 74 22 47 13 22 43 34 57 14 77 30 102 26 92 45 112 54 91 61 75 89 49 75 30 91 34 68 11 74ZM22 47l29 4 22-10 19 4M49 75l17-15 25 1M57 14l-6 37 15 9M30 91l19-16',
+ gosegu:'M12 38 48 18 93 21 114 45 86 41 100 59 74 58 62 88 48 62 23 55 12 38ZM48 18l16 23 29-20M12 38l52 3 22 0M23 55l41-14 10 17M48 62l16-21',
+ cheonyang:'M22 90 12 55 25 30 50 16 69 24 89 18 109 45 95 72 73 91 51 82 22 90ZM25 30l25 12 19-18M89 18 76 43 109 45M50 42l26 1 12 21-24 19-25-19 11-22M12 55l27 9 12 18M95 72l-7-8',
+ wakgood:'M12 18 48 33 65 20 90 32 112 13 101 58 82 80 64 94 44 80 24 58 12 18ZM24 58l24-25 16 61M101 58 90 32 64 94M48 33l16 24 26-25M44 80l20-23 18 23'
+};
+function teamMark(t){return '<svg class="op-team-mark" aria-hidden="true" viewBox="0 0 124 100" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="'+TEAM_MARKS[t.id]+'"/><path d="M4 10V4H22M102 4h18v16M120 80v16h-18M22 96H4V80" opacity=".6"/></svg>'}
+function tacFrame(){return '<svg class="op-armor-frame" aria-hidden="true" viewBox="0 0 800 320" preserveAspectRatio="none" fill="none"><path class="op-armor-outline" d="M17 2H783L798 17V303L783 318H17L2 303V17Z"/><path class="op-armor-inner" d="M23 8H777L792 23V297L777 312H23L8 297V23Z"/><path class="op-armor-corners" d="M3 57V18L18 3H83M717 317H782L797 302V263M717 3H782L797 18V57M3 263V302L18 317H83"/><path class="op-armor-sheen" d="M115 317H685M115 3H685"/><path class="op-armor-stripes" d="M741 312l12-12m0 12 12-12m0 12 12-12M23 20 35 8m0 12L47 8m0 12L59 8"/></svg>'}
 function tacticalMember(t,n,i){
-  return '<button type="button" class="op-agent-row" data-op-agent="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 요원 정보">'+tacticalPortrait(n)+'<span class="op-agent-row-name"><small>AGENT '+String(i+1).padStart(2,'0')+'</small><strong>'+esc(agentName(n))+'</strong></span><span class="op-tac-arrow" aria-hidden="true">›</span></button>';
+  return '<button type="button" class="op-agent-row" data-op-agent="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 요원 정보">'+tacticalPortrait(n)+'<span class="op-agent-row-name"><strong>'+esc(agentName(n))+'</strong><small>#'+squadCode(t)+(i+1)+'</small></span><span class="op-tac-arrow" aria-hidden="true">›</span></button>';
 }
 function commanderArt(t){
-  return '<div class="op-commander-art"><span class="op-tac-reticle" aria-hidden="true"></span><img src="'+commanderUrl(t)+'" alt="" decoding="async" width="384" height="384"></div>';
+  return '<div class="op-commander-art"><span class="op-tac-reticle" aria-hidden="true"></span><img src="'+commanderUrl(t)+'" alt="" decoding="async" width="512" height="512"></div>';
 }
 function squadCard(t){
-  return '<article class="op-squad-card" data-op-confirmed-team="'+t.id+'"'+squadStyle(t)+'><div class="op-squad-hero">'+commanderArt(t)+'<div class="op-squad-title"><small>COMMANDER</small><button type="button" class="op-squad-link" data-op-squad="'+t.id+'" aria-label="'+esc(t.name)+' 팀 상세"><strong>'+esc(t.name)+' 팀</strong><span aria-hidden="true">›</span></button><span class="op-squad-coach">코치 <b>'+esc(t.coach)+'</b></span></div></div><div class="op-squad-roster"><div class="op-roster-caption"><span>요원 명단</span><span>05</span></div>'+t.members.map((n,i)=>tacticalMember(t,n,i)).join('')+'</div></article>';
+  return '<article class="op-squad-card" data-op-confirmed-team="'+t.id+'"'+squadStyle(t)+'>'+tacFrame()+'<div class="op-squad-hero">'+commanderArt(t)+'<div class="op-squad-title"><small>COMMANDER / '+squadCode(t)+'</small><button type="button" class="op-squad-link" data-op-squad="'+t.id+'" aria-label="'+esc(t.name)+' 팀 상세">'+tacEmblem()+'<strong>'+esc(t.name)+' 팀</strong><span class="op-tac-slash" aria-hidden="true"></span></button><span class="op-squad-coach"><span>코치</span><b>'+esc(t.coach)+'</b></span></div>'+teamMark(t)+'</div><div class="op-squad-roster"><div class="op-roster-caption"><span>요원 명단</span><span>05</span></div>'+t.members.map((n,i)=>tacticalMember(t,n,i)).join('')+'</div></article>';
 }
 function commandOverview(){
-  return '<section class="op-command-workspace op-command-overview"><div class="op-command-heading"><div><span class="op-tac-kicker">OPERATION M / COMMAND CENTER</span><h2>작전 지휘 본부</h2></div><div class="op-command-count"><span><b>4</b> 팀</span><span><b>20</b> 요원</span><span><b>4</b> 코치</span></div></div><div class="op-command-grid">'+SQUADS.map(squadCard).join('')+'</div><div class="op-command-footer"><span class="op-tac-dot"></span> 팀 편성 완료 <span class="op-command-divider"></span><span>확정 명단</span></div></section>';
+  return '<section class="op-command-workspace op-command-overview"><div class="op-command-heading"><div class="op-brief-title"><span class="op-tac-kicker">OPERATION M / COMMAND CENTER</span><h2>작전 현황</h2></div><div class="op-command-map" aria-hidden="true"><svg viewBox="0 0 480 80" preserveAspectRatio="xMidYMid meet" fill="none"><path d="M12 49 30 23 62 14 90 29 112 13 149 20 165 39 138 43 121 58 93 51 72 72 55 60 42 42 12 49ZM190 22 220 12 246 19 267 12 296 28 337 14 371 27 401 20 445 35 463 54 423 61 399 45 370 48 349 66 319 52 289 57 275 40 242 44 226 67 204 53 190 22Z" fill="#4489aa" fill-opacity=".12" stroke="#5287a0" stroke-dasharray="2 3"/><path d="M24 40H456M240 4V76M68 19 150 54 240 26 330 58 416 20" stroke="#58829b" stroke-opacity=".55" stroke-dasharray="3 4"/><g stroke="#9ad2e8"><circle cx="68" cy="19" r="3"/><circle cx="150" cy="54" r="3"/><circle cx="330" cy="58" r="3"/><circle cx="416" cy="20" r="3"/><path d="M217 28v-8h8m30 0h8v8m0 24v8h-8m-30 0h-8v-8"/></g><path d="M225 49V30l15 12 15-12v19" stroke="#b6d9e7" stroke-width="3"/></svg></div><span class="op-brief-code">04 / 20</span></div><div class="op-command-grid">'+SQUADS.map(squadCard).join('')+'</div><div class="op-command-footer"><span class="op-tac-dot"></span><strong>팀 편성 완료</strong><span class="op-command-divider"></span><span>팀 <b>4</b></span><span class="op-command-divider"></span><span>참가자 <b>20</b>명</span><span class="op-command-divider"></span><span>코치 <b>4</b>명</span><span class="op-footer-stripes" aria-hidden="true"></span></div></section>';
 }
 function commandSquad(t){
   return '<section class="op-command-workspace op-squad-detail"'+squadStyle(t)+'><div class="op-detail-nav">'+button('command-back','이전')+'<span>팀 정보 / '+esc(t.name)+'</span><div class="op-squad-switch">'+SQUADS.map(s=>'<button type="button" data-op-squad="'+s.id+'" aria-pressed="'+(s.id===t.id)+'"'+squadStyle(s)+'>'+esc(s.name)+'</button>').join('')+'</div></div><div class="op-squad-detail-body"><div class="op-command-banner">'+commanderArt(t)+'<div class="op-banner-title"><span class="op-tac-kicker">COMMANDER</span><h2>'+esc(t.name)+' 팀</h2><div class="op-squad-coach">코치 <b>'+esc(t.coach)+'</b></div><span class="op-tac-count">요원 05 / 05</span></div></div><div class="op-team-dossiers"><div class="op-roster-caption"><span>요원 명단</span><span>05</span></div><div class="op-team-agent-grid">'+t.members.map((n,i)=>'<button type="button" class="op-agent-tile" data-op-agent="'+esc(n)+'">'+tacticalPortrait(n,true)+'<small>AGENT '+String(i+1).padStart(2,'0')+'</small><strong>'+esc(agentName(n))+'</strong><span class="op-tac-arrow" aria-hidden="true">›</span></button>').join('')+'</div></div></div></section>';
@@ -106,7 +119,7 @@ function commandView(){
 }
 function goCommand(squad='',agent=''){
   finishDraft(false);stopShuffle();clearRankMotion();rankLock=false;guided=false;choosingMode=false;selected='';tab='command';activeSquad=squad;activeAgent=agent;artNotice='';render();
-  root.querySelector('.op-command-workspace h2')?.setAttribute('tabindex','-1');root.querySelector('.op-command-workspace h2')?.focus({preventScroll:true});
+  const heading=root.querySelector('.op-command-workspace h2');if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true})}const main=root.closest('.main');if(main&&main.scrollTop>0)main.scrollTop=0;
 }
 async function prepareAgentImage(file){
   if(!/^image\/(png|jpeg|webp|avif)$/.test(file.type)||file.size>12*1024*1024)throw Error('PNG, JPG, WebP, AVIF 이미지 12MB 이하만 등록할 수 있습니다.');
@@ -582,7 +595,7 @@ function render(){
   const status=tab==='command'?'':notice||(saveFailed?'브라우저 저장 불가':missing.length?'연락처 미연결 '+missing.length+'명 · 관리자 설정이 필요합니다.':'');
   const previousTab=root.querySelector('.op-tabs [aria-pressed="true"]')?.getBoundingClientRect();
   clearHover();
-  root.innerHTML='<div class="op-shell'+(entering?' op-view-enter':'')+'" data-view="'+tab+'"><div class="op-toolbar"><span class="op-page-label">오퍼 M</span><nav class="op-command-tabs" aria-label="오퍼 M">'+button('tab-command','작전 현황','aria-pressed="'+(tab==='command')+'"')+button('tab-draft','기존 드래프트','aria-pressed="'+(tab!=='command')+'"')+'</nav>'+(tab==='command'?'':'<nav class="op-tabs" aria-label="기존 드래프트 도구">'+[['roster','참가자'],['tier','티어표'],['result','가상 드래프트']].map(([id,label])=>button('tab-'+id,label,'aria-pressed="'+(tab===id)+'"')).join('')+'</nav>')+'<div class="op-actions">'+(tab==='tier'&&!guided?'<span class="op-progress">'+assigned+' / 20</span>':tab==='result'&&!draftRun&&scoreSpread!==null?'<span class="op-progress">점수 차이 <b>'+scoreSpread+'</b></span>':'')+action+(canConfigure()?button('open-config','인물 설정','class="op-settings" aria-label="관리자 인물 설정"'):'')+'</div></div>'+(status?'<div class="op-status" role="status">'+esc(status)+'</div>':'')+(tab==='command'?commandView():tab==='roster'?roster():tab==='tier'?(choosingMode?modeChoice():guided?guidedBoard():tierBoard()):results())+adminConfig()+'</div>';
+  root.innerHTML='<div class="op-shell'+(entering?' op-view-enter':'')+'" data-view="'+tab+'"><div class="op-toolbar"><span class="op-page-label">'+(tab==='command'?tacEmblem()+'<strong>오퍼 M</strong>':'오퍼 M')+'</span><nav class="op-command-tabs" aria-label="오퍼 M">'+button('tab-command','작전 현황','aria-pressed="'+(tab==='command')+'"')+button('tab-draft','기존 드래프트','aria-pressed="'+(tab!=='command')+'"')+'</nav>'+(tab==='command'?'':'<nav class="op-tabs" aria-label="기존 드래프트 도구">'+[['roster','참가자'],['tier','티어표'],['result','가상 드래프트']].map(([id,label])=>button('tab-'+id,label,'aria-pressed="'+(tab===id)+'"')).join('')+'</nav>')+'<div class="op-actions">'+(tab==='tier'&&!guided?'<span class="op-progress">'+assigned+' / 20</span>':tab==='result'&&!draftRun&&scoreSpread!==null?'<span class="op-progress">점수 차이 <b>'+scoreSpread+'</b></span>':'')+action+(canConfigure()?button('open-config','인물 설정','class="op-settings" aria-label="관리자 인물 설정"'):'')+'</div></div>'+(status?'<div class="op-status" role="status">'+esc(status)+'</div>':'')+(tab==='command'?commandView():tab==='roster'?roster():tab==='tier'?(choosingMode?modeChoice():guided?guidedBoard():tierBoard()):results())+adminConfig()+'</div>';
   for(const r of root.querySelectorAll('.op-tier-row')){const g=r.querySelector('.op-player-grid');if(g&&scrolls[r.dataset.tier])g.scrollTop=scrolls[r.dataset.tier]}
   updateSelection();
   if(guided&&root.querySelector('.op-single-stage'))refreshGuided();
@@ -650,7 +663,16 @@ function measureLayout(){
   const layoutTop=el=>{let y=0;for(let e=el;e;e=e.offsetParent)y+=e.offsetTop;return y};
   const areaTop=rootTop+Math.max(0,(layoutTop(area)-layoutTop(root))*scale);
   const available=Math.max(180,(bottom-areaTop)/scale);
-  set('--op-available',available);if(area.classList.contains('op-command-workspace'))return;
+  set('--op-available',available);if(area.classList.contains('op-command-workspace')){
+    // Height budget includes the actual toolbar, fixed bottom controls, browser zoom and sidebar.
+    const width=area.clientWidth;
+    const compact=width>=800&&available>=410;
+    area.classList.toggle('op-command-fit',compact);
+    const height=Math.max(0,available-3);
+    set('--op-command-height',height);
+    set('--op-command-unit',Math.max(9,Math.min(width/125,height/60,24)));
+    return;
+  }
   if(area.classList.contains('op-roster')){fitRoster(area,area.clientWidth,available,set);return}
   if(area.classList.contains('op-teams')){const cta=root.querySelector('.op-result-cta');fitDraft(area,area.clientWidth,Math.max(180,available-(cta?cta.offsetHeight+12:0)),set);return}
   if(area.classList.contains('op-mode-choice'))return;
