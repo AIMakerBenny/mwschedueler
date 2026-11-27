@@ -921,7 +921,9 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-agent-row-name small,#operationM .op-tile-id,#operationM .op-agent-switch small{font:500 clamp(9px,calc(var(--tac-font)*.8),16px) ui-monospace,monospace;color:#afbdc7;white-space:nowrap}
 #operationM .op-tac-arrow{color:var(--squad);font-size:19px;line-height:1}
 #operationM .op-agent-portrait{display:grid;place-items:center;position:relative;isolation:isolate;overflow:hidden;width:100%;min-width:0;min-height:0;aspect-ratio:1;background:radial-gradient(ellipse,#3c505d,#19232b);border:1px solid #667784;border-radius:2px}
-#operationM .op-agent-row .op-agent-portrait{max-height:100%;height:auto}
+#operationM .op-agent-row .op-portrait{max-height:100%;height:auto;border:1px solid #667784;border-radius:2px;background:radial-gradient(ellipse,#3c505d,#19232b)}
+#operationM .op-agent-row .op-initial{font-size:clamp(9px,calc(var(--tac-font)*.95),18px);line-height:1}
+#operationM .op-agent-row .op-portrait img{object-fit:cover}
 #operationM .op-agent-silhouette{width:66%;height:66%;color:#8196a4;opacity:.65}
 #operationM .op-agent-portrait img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:1}
 #operationM .op-command-footer{display:flex;align-items:center;gap:clamp(6px,1cqw,18px);padding:5px 12px;min-height:28px;flex-wrap:wrap;border:1px solid var(--op-panel-edge);background:linear-gradient(180deg,#2a3640,#131c23);font-size:clamp(10px,var(--tac-font),20px);color:#d8e1e7}
@@ -1160,7 +1162,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-agent-switch::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--squad);opacity:0;pointer-events:none;transition:opacity var(--op-motion-fast) var(--op-ease)}
 #operationM .op-agent-switch:is(:hover,.is-current,:focus-visible)::after{opacity:1}
 #operationM .op-agent-switch.is-current small{color:var(--squad)}
-#operationM .op-agent-switch .op-agent-portrait img,#operationM .op-agent-row .op-agent-portrait img{transition:transform var(--op-motion-fast) var(--op-ease)}
+#operationM .op-agent-switch .op-agent-portrait img,#operationM .op-agent-row .op-portrait img{transition:transform var(--op-motion-fast) var(--op-ease)}
 #operationM .op-detail-step .op-detail-position{min-width:48px;text-align:center;font-variant-numeric:tabular-nums;color:#dce8f1}
 /* All command feedback changes paint or inner foreground only. The hit areas and armor stay fixed. */
 #operationM .op-command-workspace button:not(:disabled):active{transform:none!important;filter:brightness(1.1)}
@@ -1177,7 +1179,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
  #operationM[data-op-pointer=mouse] .op-agent-tile:hover .op-armor-frame{opacity:1}
  #operationM[data-op-pointer=mouse] .op-agent-tile:hover .op-agent-tile-plaque{box-shadow:var(--op-control-glint),inset 0 -2px var(--squad)}
  #operationM[data-op-pointer=mouse] .op-agent-row:hover .op-tac-arrow,#operationM[data-op-pointer=mouse] .op-agent-tile:hover .op-tac-arrow,#operationM[data-op-pointer=mouse] .op-dossier-command:hover>.op-tac-arrow{transform:translateX(var(--op-arrow-shift))}
- #operationM[data-op-pointer=mouse] .op-agent-tile:hover .op-agent-portrait img,#operationM[data-op-pointer=mouse] .op-agent-row:hover .op-agent-portrait img,#operationM[data-op-pointer=mouse] .op-agent-switch:hover .op-agent-portrait img{transform:scale(calc(1 + var(--op-portrait-lift)))}
+ #operationM[data-op-pointer=mouse] .op-agent-tile:hover .op-agent-portrait img,#operationM[data-op-pointer=mouse] .op-agent-row:hover .op-portrait img,#operationM[data-op-pointer=mouse] .op-agent-switch:hover .op-agent-portrait img{transform:scale(calc(1 + var(--op-portrait-lift)))}
 html[data-mws-motion=reduced] #operationM .op-command-workspace{--op-commander-lift:0;--op-portrait-lift:0;--op-arrow-shift:0px}
 html[data-mws-motion=reduced] #operationM .op-command-workspace *,html[data-mws-motion=reduced] #operationM .op-command-workspace *::before,html[data-mws-motion=reduced] #operationM .op-command-workspace *::after,html[data-mws-motion=reduced] #operationM dialog.op-config[open],html[data-mws-motion=reduced] #operationM dialog.op-reset-dialog[open]{animation:none!important;transition:none!important}
 @media(prefers-reduced-motion:reduce){#operationM .op-command-workspace{--op-commander-lift:0;--op-portrait-lift:0;--op-arrow-shift:0px}}
