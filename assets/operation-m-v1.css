@@ -1089,3 +1089,8 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 }
 #operationM .op-squad-hero .op-commander-art img{image-rendering:auto}
 #operationM .op-squad-link:focus-visible,#operationM .op-agent-row:focus-visible{outline-offset:-3px;outline-color:var(--squad)}
+
+/* The command HUD owns its tabs, independently of the generic button theme. */
+#operationM .op-shell[data-view="command"] .op-command-tabs button{border-radius:0!important;background:linear-gradient(180deg,#303740,#13171d)!important;color:#dce2e7!important;border:1px solid #4b555e!important}
+#operationM .op-shell[data-view="command"] .op-command-tabs button[aria-pressed="true"]{color:#fff!important;background:linear-gradient(165deg,#442124,#7f252e)!important;border-color:#ff5158!important;box-shadow:inset 0 -2px #ef4444,inset 0 0 14px #ff454522!important}
+#operationM .op-shell[data-view="command"] .op-command-tabs button:focus-visible{outline:2px solid #fff;outline-offset:-4px}

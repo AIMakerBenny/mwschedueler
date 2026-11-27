@@ -64,7 +64,7 @@ const SQUADS=Object.freeze([
 const SHORT_NAMES=Object.freeze({'마왕0216':'마왕','리냐_LIN…':'리냐','고여름_':'고여름','카노미☆':'카노'});
 const agentName=n=>SHORT_NAMES[n]||n;
 const squadFor=n=>SQUADS.find(t=>t.members.includes(n));
-const commanderUrl=t=>'/assets/operation-m-commander-'+t.id+'.avif';
+const commanderUrl=t=>'/assets/operation-m-commander-'+t.id+'.avif?v=16';
 let activeSquad='',activeAgent='',artBusy=false,artNotice='';
 function agentArt(n){
   const p=getData()?.miniGames?.[ART_KEY]?.players;
@@ -73,7 +73,7 @@ function agentArt(n){
 }
 function commanderPortrait(c,name){
   const t=SQUADS.find(t=>t.name===String(name).replace(/!$/,''));
-  return t?'<span class="op-portrait op-commander-only"><img src="'+commanderUrl(t)+'" alt="" decoding="async" width="384" height="384"></span>':photo(c,name);
+  return t?'<span class="op-portrait op-commander-only"><img src="'+commanderUrl(t)+'" alt="" decoding="async" width="512" height="512"></span>':photo(c,name);
 }
 function tacticalPortrait(n,large=false){
   const src=agentArt(n);
@@ -97,7 +97,7 @@ function tacticalMember(t,n,i){
   return '<button type="button" class="op-agent-row" data-op-agent="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 요원 정보">'+tacticalPortrait(n)+'<span class="op-agent-row-name"><strong>'+esc(agentName(n))+'</strong><small>#'+squadCode(t)+(i+1)+'</small></span><span class="op-tac-arrow" aria-hidden="true">›</span></button>';
 }
 function commanderArt(t){
-  return '<div class="op-commander-art"><span class="op-tac-reticle" aria-hidden="true"></span><img src="'+commanderUrl(t)+'" alt="" decoding="async" width="384" height="384"></div>';
+  return '<div class="op-commander-art"><span class="op-tac-reticle" aria-hidden="true"></span><img src="'+commanderUrl(t)+'" alt="" decoding="async" width="512" height="512"></div>';
 }
 function squadCard(t){
   return '<article class="op-squad-card" data-op-confirmed-team="'+t.id+'"'+squadStyle(t)+'>'+tacFrame()+'<div class="op-squad-hero">'+commanderArt(t)+'<div class="op-squad-title"><small>COMMANDER / '+squadCode(t)+'</small><button type="button" class="op-squad-link" data-op-squad="'+t.id+'" aria-label="'+esc(t.name)+' 팀 상세">'+tacEmblem()+'<strong>'+esc(t.name)+' 팀</strong><span class="op-tac-slash" aria-hidden="true"></span></button><span class="op-squad-coach"><span>코치</span><b>'+esc(t.coach)+'</b></span></div>'+teamMark(t)+'</div><div class="op-squad-roster"><div class="op-roster-caption"><span>요원 명단</span><span>05</span></div>'+t.members.map((n,i)=>tacticalMember(t,n,i)).join('')+'</div></article>';
