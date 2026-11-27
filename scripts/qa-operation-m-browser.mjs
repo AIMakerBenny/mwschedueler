@@ -76,6 +76,20 @@ for(const [w,h] of [[1366,768],[1600,900],[1715,894],[1726,892],[1766,831],[1913
  assert(Object.values(adminSettings).every(Boolean),JSON.stringify(adminSettings));console.log('OPERATION_M_ADMIN_SETTINGS_OK',JSON.stringify(adminSettings));
  await capture('settings-saved-agent',1366,768);
 
+ // Capture actual staged artwork and confirmation UI, plus narrow settings navigation.
+ await b.navigate(url,1726,892);
+ await b.evaluate(`(async()=>{const q=s=>document.querySelector(s);for(let i=0;i<100&&!q('.op-command-grid');i++)await new Promise(r=>setTimeout(r,20));document.body.dataset.mwsMode='admin';window.__mwsAppReadyV130=true;window.mwsOperationM.render();q('[data-op-action=open-config]').click();const canvas=document.createElement('canvas');canvas.width=80;canvas.height=80;const cx=canvas.getContext('2d');cx.fillStyle='#abcee0';cx.fillRect(15,10,50,65);const blob=await new Promise(r=>canvas.toBlob(r,'image/png')),dt=new DataTransfer();dt.items.add(new File([blob],'preview.png',{type:'image/png'}));const field=q('.op-config [data-op-agent-upload="마왕0216"]');field.files=dt.files;field.dispatchEvent(new Event('change',{bubbles:true}));for(let i=0;i<100&&!q('.op-art-config-entry.is-edited img');i++)await new Promise(r=>setTimeout(r,20));if(!q('.op-art-config-entry.is-edited img'))throw Error('missing preview');await new Promise(r=>setTimeout(r,200));})()`);
+ const desktopSettings=await b.evaluate(`(()=>{const q=s=>document.querySelector(s),a=q('.op-config-links').getBoundingClientRect(),b=q('.op-config-art').getBoundingClientRect(),d=q('.op-config').getBoundingClientRect(),footer=q('.op-config-footer').getBoundingClientRect();return {sideBySide:b.left>=a.right-1,withinViewport:d.top>=0&&d.bottom<=innerHeight+1&&d.right<=innerWidth+1,footerVisible:footer.bottom<=d.bottom,frameBehind:getComputedStyle(q('.op-config>.op-armor-frame')).zIndex==='0'}})()`);assert(Object.values(desktopSettings).every(Boolean),JSON.stringify(desktopSettings));
+ await capture('settings-staged',1726,892);
+ await b.evaluate("document.querySelector('[data-op-action=close-config]').click()");await capture('settings-discard',1726,892);
+ await b.evaluate("document.querySelector('[data-op-action=discard-config]').click()");
+ await b.navigate(url,390,844);
+ const mobileSettings=await b.evaluate(`(async()=>{const q=s=>document.querySelector(s);for(let i=0;i<100&&!q('.op-command-grid');i++)await new Promise(r=>setTimeout(r,20));document.body.dataset.mwsMode='admin';window.__mwsAppReadyV130=true;window.mwsOperationM.render();q('[data-op-action=open-config]').click();const scroll=q('.op-config-scroll'),d=q('.op-config').getBoundingClientRect();q('[data-op-action=config-jump-art]').click();await new Promise(r=>setTimeout(r,600));const art=q('.op-config-art').getBoundingClientRect(),s=scroll.getBoundingClientRect();return {jump:scroll.scrollTop>0&&Math.abs(art.top-s.top)<30,inside:d.left>=0&&d.right<=innerWidth+1&&d.bottom<=innerHeight+1,locked:getComputedStyle(document.documentElement).overflow==='hidden'}})()`);
+ assert(Object.values(mobileSettings).every(Boolean),JSON.stringify(mobileSettings));await capture('settings-art-mobile',390,844);
+ console.log('OPERATION_M_SETTINGS_LAYOUT_OK',JSON.stringify({desktopSettings,mobileSettings}));
+ await b.evaluate("document.querySelector('[data-op-action=close-config]').click()");
+
+
 // The command-only job makes visual artifacts available without waiting for the long simulation suite.
 if(process.env.MWS_COMMAND_ONLY==='1'){
  await b.navigate(url,1913,901);
