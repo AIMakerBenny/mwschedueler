@@ -1169,16 +1169,15 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-squad-hero:has(.op-squad-link:focus-visible) .op-commander-art img{transform:scale(calc(var(--op-commander-scale) + var(--op-commander-lift)))}
 #operationM .op-agent-row:focus-visible .op-tac-arrow,#operationM .op-agent-tile:focus-visible .op-tac-arrow,#operationM .op-dossier-command:focus-visible>.op-tac-arrow{transform:translateX(var(--op-arrow-shift))}
 #operationM .op-agent-tile:focus-visible .op-agent-portrait img{transform:scale(calc(1 + var(--op-portrait-lift)))}
-@media(hover:hover) and (pointer:fine){
- #operationM .op-squad-hero:hover .op-commander-art img{transform:scale(calc(var(--op-commander-scale) + var(--op-commander-lift)))}
- #operationM .op-shell button.op-agent-row:hover{border-color:var(--squad)!important;box-shadow:inset 3px 0 var(--squad),var(--op-control-glint)!important}
- #operationM .op-agent-row:hover::before{width:3px;opacity:1}
- #operationM .op-shell button.op-agent-tile:hover{box-shadow:inset 0 1px #ffffff35,inset 0 0 0 2px var(--squad),inset 0 -3px #0009!important}
- #operationM .op-agent-tile:hover .op-armor-frame{opacity:1}
- #operationM .op-agent-tile:hover .op-agent-tile-plaque{box-shadow:var(--op-control-glint),inset 0 -2px var(--squad)}
- #operationM .op-agent-row:hover .op-tac-arrow,#operationM .op-agent-tile:hover .op-tac-arrow,#operationM .op-dossier-command:hover>.op-tac-arrow{transform:translateX(var(--op-arrow-shift))}
- #operationM .op-agent-tile:hover .op-agent-portrait img,#operationM .op-agent-row:hover .op-agent-portrait img,#operationM .op-agent-switch:hover .op-agent-portrait img{transform:scale(calc(1 + var(--op-portrait-lift)))}
-}
+/* Pointer Events distinguish mouse hover from touch without relying on headless media capabilities. */
+ #operationM[data-op-pointer=mouse] .op-squad-hero:hover .op-commander-art img{transform:scale(calc(var(--op-commander-scale) + var(--op-commander-lift)))}
+ #operationM[data-op-pointer=mouse] .op-shell button.op-agent-row:hover{border-color:var(--squad)!important;box-shadow:inset 3px 0 var(--squad),var(--op-control-glint)!important}
+ #operationM[data-op-pointer=mouse] .op-agent-row:hover::before{width:3px;opacity:1}
+ #operationM[data-op-pointer=mouse] .op-shell button.op-agent-tile:hover{box-shadow:inset 0 1px #ffffff35,inset 0 0 0 2px var(--squad),inset 0 -3px #0009!important}
+ #operationM[data-op-pointer=mouse] .op-agent-tile:hover .op-armor-frame{opacity:1}
+ #operationM[data-op-pointer=mouse] .op-agent-tile:hover .op-agent-tile-plaque{box-shadow:var(--op-control-glint),inset 0 -2px var(--squad)}
+ #operationM[data-op-pointer=mouse] .op-agent-row:hover .op-tac-arrow,#operationM[data-op-pointer=mouse] .op-agent-tile:hover .op-tac-arrow,#operationM[data-op-pointer=mouse] .op-dossier-command:hover>.op-tac-arrow{transform:translateX(var(--op-arrow-shift))}
+ #operationM[data-op-pointer=mouse] .op-agent-tile:hover .op-agent-portrait img,#operationM[data-op-pointer=mouse] .op-agent-row:hover .op-agent-portrait img,#operationM[data-op-pointer=mouse] .op-agent-switch:hover .op-agent-portrait img{transform:scale(calc(1 + var(--op-portrait-lift)))}
 html[data-mws-motion=reduced] #operationM .op-command-workspace{--op-commander-lift:0;--op-portrait-lift:0;--op-arrow-shift:0px}
 html[data-mws-motion=reduced] #operationM .op-command-workspace *,html[data-mws-motion=reduced] #operationM .op-command-workspace *::before,html[data-mws-motion=reduced] #operationM .op-command-workspace *::after,html[data-mws-motion=reduced] #operationM dialog.op-config[open],html[data-mws-motion=reduced] #operationM dialog.op-reset-dialog[open]{animation:none!important;transition:none!important}
 @media(prefers-reduced-motion:reduce){#operationM .op-command-workspace{--op-commander-lift:0;--op-portrait-lift:0;--op-arrow-shift:0px}}
