@@ -103,6 +103,15 @@ for(const [w,h] of [[1366,768],[1600,900],[1715,894],[1726,892],[1766,831],[1913
  assert(Object.values(motion).every(Boolean),JSON.stringify(motion));console.log('OPERATION_M_STABLE_INTERACTION_OK',JSON.stringify({hover,motion}));
 
 
+ // A real pointer must hit the commander itself, not a title pseudo-element.
+ await b.navigate(url,1726,892);
+ const heroPoint=await b.evaluate(`(async()=>{const q=s=>document.querySelector(s);for(let i=0;i<100&&!q('.op-squad-hit');i++)await new Promise(r=>setTimeout(r,20));const art=q('.op-squad-hero .op-commander-art'),r=art.getBoundingClientRect(),hit=q('.op-squad-hit'),rect=hit.getBoundingClientRect(),img=art.querySelector('img');window.__heroBounds=[rect.x,rect.y,rect.width,rect.height];window.__heroScale=new DOMMatrix(getComputedStyle(img).transform).a;window.__pointerWrites=0;window.__pointerObserver=new MutationObserver(records=>window.__pointerWrites+=records.length);window.__pointerObserver.observe(q('#operationM'),{attributes:true,attributeFilter:['data-op-pointer']});return{x:r.left+r.width*.5,y:r.top+r.height*.5}})()`);
+ await b.movePoint(heroPoint.x,heroPoint.y);await new Promise(r=>setTimeout(r,300));
+ for(let i=0;i<12;i++)await b.movePoint(heroPoint.x+i%4,heroPoint.y+i%3);
+ const heroHover=await b.evaluate(`(()=>{const q=s=>document.querySelector(s),hit=q('.op-squad-hit'),r=hit.getBoundingClientRect(),a=q('.op-squad-hero .op-commander-art img'),depth=q('.op-tactical-depth');return{hit:document.elementFromPoint(${heroPoint.x},${heroPoint.y})===hit,stable:[r.x,r.y,r.width,r.height].every((n,i)=>Math.abs(n-window.__heroBounds[i])<.5),lift:new DOMMatrix(getComputedStyle(a).transform).a-window.__heroScale>.045,scan:parseFloat(getComputedStyle(depth.querySelector('.op-tactical-scan')).opacity)>.8,depth:depth.children.length===5&&getComputedStyle(depth).pointerEvents==='none',pointerWrites:window.__pointerWrites<=1}})()`);
+ assert(Object.values(heroHover).every(Boolean),JSON.stringify(heroHover));await capture('commander-hover',1726,892);
+ await b.clickPoint(heroPoint.x,heroPoint.y);assert.equal(await b.evaluate("document.querySelector('.op-squad-detail h2')?.textContent"),'머독 팀');await capture('team-depth',1726,892);
+ console.log('OPERATION_M_COMMANDER_HIT_OK',JSON.stringify(heroHover));
  // Contacts, not simulated draft links or artwork, drive the confirmed roster.
  await b.navigate(url,1726,892);
  const profileSources=await b.evaluate(`(async()=>{const q=s=>document.querySelector(s),row=n=>q('.op-agent-row[data-op-agent="'+n+'"]'),src=n=>row(n).querySelector('img')?.getAttribute('src'),wait=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));for(let i=0;i<100&&!row('마왕0216');i++)await new Promise(r=>setTimeout(r,20));
@@ -390,8 +399,8 @@ const controls=await b.evaluate(`(async()=>{
  const canShuffle=!q('[data-op-action=shuffle-guided]').disabled;click('[data-op-action=shuffle-guided]');skip();skip();
  const reshuffle=!!q('[data-op-current]')&&q('[data-op-current]').dataset.opCurrent!==old&&Object.keys(JSON.parse(localStorage.getItem(key)).tiers).length===1;
  const before=JSON.parse(localStorage.getItem(key));
- click('[data-op-action=reset]');if(!q('.op-reset-dialog[open]'))throw Error('missing tactical reset dialog');q('.op-reset-dialog').close('cancel');await new Promise(r=>setTimeout(r,30));if(JSON.stringify(JSON.parse(localStorage.getItem(key)))!==JSON.stringify(before))throw Error('cancel changed saved draft');click('[data-op-action=reset]');q('.op-reset-dialog').close('reset');await new Promise(r=>setTimeout(r,30));const after=JSON.parse(localStorage.getItem(key));
- const reset=!!q('.op-deck-phase-shuffle')&&!Object.keys(after.tiers).length&&!after.teams.length&&JSON.stringify(before.links)===JSON.stringify(after.links)&&JSON.stringify(before.roles)===JSON.stringify(after.roles);
+ click('[data-op-action=reset]');if(!q('.op-reset-dialog[open]'))throw Error('missing tactical reset dialog');q('.op-reset-dialog').close('cancel');await new Promise(r=>setTimeout(r,30));if(JSON.stringify(JSON.parse(localStorage.getItem(key)))!==JSON.stringify(before))throw Error('cancel changed saved draft');click('[data-op-action=reset]');q('.op-reset-dialog').querySelector('button[value=reset]').click();for(let i=0;i<100&&q('.op-reset-dialog');i++)await new Promise(r=>setTimeout(r,20));const after=JSON.parse(localStorage.getItem(key));
+ const resetParts={shuffle:!!q('.op-deck-phase-shuffle'),tiers:!Object.keys(after.tiers).length,teams:!after.teams.length,links:JSON.stringify(before.links)===JSON.stringify(after.links),roles:JSON.stringify(before.roles)===JSON.stringify(after.roles)};if(!Object.values(resetParts).every(Boolean))throw Error('reset invariant failed '+JSON.stringify(resetParts));const reset=true;
  skip();skip();
  return {stable,notPaused,members,canShuffle,reshuffle,reset,reveal:!!q('.op-deck-phase-reveal')};
 })()`);
