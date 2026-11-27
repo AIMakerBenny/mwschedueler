@@ -34,6 +34,48 @@ for(const [w,h] of [[1366,768],[1600,900],[1715,894],[1726,892],[1766,831],[1913
  assert.equal(await b.evaluate("document.querySelectorAll('.op-agent-row').length"),20);
  console.log('OPERATION_M_CONFIRMED_COMMAND_OK',w,h,JSON.stringify({command,detail,upload}));
 }
+
+ // Settings use the browser top layer, retain edits in memory until explicit save,
+ // and delegate unconfirmed requests to the existing shared recovery pipeline.
+ await b.navigate(url,1366,768);
+ const adminSettings=await b.evaluate(`(async()=>{
+  const q=s=>document.querySelector(s),click=s=>q(s).click(),wait=async f=>{for(let i=0;i<100&&!f();i++)await new Promise(r=>setTimeout(r,20));if(!f())throw Error('settings wait timeout')};
+  await wait(()=>q('.op-command-grid'));
+  document.body.dataset.mwsMode='admin';window.__mwsAppReadyV130=true;window.mwsOperationM.render();click('[data-op-action=open-config]');
+  const open=!!q('.op-config[open]'),before=JSON.stringify(data),trigger=q('[data-op-config="role:1"]');
+  const close=q('[data-op-action=close-config]');close.focus();close.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',shiftKey:true,bubbles:true,cancelable:true}));
+  const tabTrap=document.activeElement.dataset.opAgentUpload==='카노미☆';
+  trigger.click();const picker=!!q('.op-picker')&&q('.op-config-main').inert&&document.activeElement===q('[data-op-search]');
+  const search=q('[data-op-search]');search.value='천양';search.dispatchEvent(new Event('input',{bubbles:true}));click('[data-op-link]');
+  const focusRestored=document.activeElement.dataset.opConfig==='role:1',unchanged=JSON.stringify(data)===before;
+  const canvas=document.createElement('canvas');canvas.width=30;canvas.height=30;canvas.getContext('2d').fillRect(5,5,20,20);
+  const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));const assign=file=>{const dt=new DataTransfer();dt.items.add(file);const node=q('.op-config [data-op-agent-upload="마왕0216"]');node.files=dt.files;node.dispatchEvent(new Event('change',{bubbles:true}))};
+  q('.op-config-scroll').scrollTop=9999;const scrollBefore=q('.op-config-scroll').scrollTop;
+  assign(new File([blob],'agent.png',{type:'image/png'}));await wait(()=>q('.op-art-config-entry.is-edited img')&&!q('[data-op-action=save-config]').disabled);
+  const staged=JSON.stringify(data)===before&&saves===0&&!!q('.op-art-config-entry.is-edited img'),scrollStable=Math.abs(q('.op-config-scroll').scrollTop-scrollBefore)<40;
+  assign(new File(['invalid'],'bad.txt',{type:'text/plain'}));await wait(()=>q('.op-config-footer [role=status]').textContent.includes('12MB'));
+  const invalidPreserved=!!q('.op-art-config-entry.is-edited img')&&JSON.stringify(data)===before;
+  window.mwsOperationM.refresh();const refreshStable=!!q('.op-art-config-entry.is-edited img')&&q('.op-config[open]');
+  click('[data-op-action=close-config]');const confirm=!!q('.op-config-confirm')&&q('.op-config-main').inert;
+  click('[data-op-action=keep-config]');const kept=!!q('.op-art-config-entry.is-edited img');
+  click('[data-op-action=close-config]');click('[data-op-action=discard-config]');
+  const discarded=!q('.op-config')&&JSON.stringify(data)===before&&saves===0&&document.activeElement.dataset.opAction==='open-config';
+  click('[data-op-action=open-config]');const noOp=q('[data-op-action=save-config]').disabled;assign(new File([blob],'agent.png',{type:'image/png'}));
+  await wait(()=>q('.op-art-config-entry.is-edited img')&&!q('[data-op-action=save-config]').disabled);
+  window.mwsV55SaveNow=async()=>{saves++;return false};click('[data-op-action=save-config]');
+  await wait(()=>q('.op-config-footer [role=status]')?.textContent.includes('온라인 저장 미확인'));
+  const failure=!!q('.op-config[open]')&&!!q('.op-art-config-entry.is-edited img')&&saves===1&&q('[data-op-config="role:1"]').disabled;
+  window.mwsV55SaveNow=async()=>{saves++;return true};click('[data-op-action=save-config]');await wait(()=>!q('.op-config'));
+  const record=data.miniGames.operationMArtV1?.players?.[0];
+  const retry=saves===2&&record?.id==='마왕0216'&&!record.contactId&&JSON.stringify(data.contacts)===JSON.stringify(JSON.parse(before).contacts);
+  click('[data-op-squad=mudok]');click('.op-agent-tile');const image=!!q('.op-dossier-portrait img');
+  document.body.dataset.mwsMode='public';window.mwsOperationM.render();
+  const publicSafe=!q('[data-op-action=open-config]')&&!q('[data-op-agent-upload]')&&!!q('.op-dossier-portrait img');
+  return {open,tabTrap,picker,focusRestored,unchanged,staged,scrollStable,invalidPreserved,refreshStable:!!refreshStable,confirm,kept,discarded,noOp,failure,retry,image,publicSafe};
+ })()`);
+ assert(Object.values(adminSettings).every(Boolean),JSON.stringify(adminSettings));console.log('OPERATION_M_ADMIN_SETTINGS_OK',JSON.stringify(adminSettings));
+ await capture('settings-saved-agent',1366,768);
+
 // The command-only job makes visual artifacts available without waiting for the long simulation suite.
 if(process.env.MWS_COMMAND_ONLY==='1'){
  await b.navigate(url,1913,901);
