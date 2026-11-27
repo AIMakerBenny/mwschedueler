@@ -41,6 +41,28 @@ if(process.env.MWS_COMMAND_ONLY==='1'){
   assert(layout.fit&&layout.all&&!layout.overflow&&layout.bottom<=layout.limit+3,JSON.stringify({sidebar,zoom,layout}));
   console.log('OPERATION_M_COMMAND_RESIZE_OK',JSON.stringify({sidebar,zoom,layout}));await capture('command-sidebar-'+sidebar+'-zoom-'+zoom,1913,901);
  }
+ // Rapid visual pass of every archive view, independently of the long motion suite.
+ for(const [w,h] of [[1366,768],[1726,892],[1913,901],[2560,1440],[390,844]]){
+  await b.navigate(url,w,h);
+  await b.evaluate("document.querySelector('[data-op-squad=mudok]').click()");
+  await capture('team-v17',w,h);
+  await b.evaluate("document.querySelector('.op-agent-tile').click()");
+  if(w===1726)console.log('OPERATION_M_AGENT_SCREENSHOT '+await b.captureScreenshot());
+  await b.evaluate("document.querySelector('[data-op-action=tab-draft]').click()");
+  const inspect=async(sel)=>b.evaluate(`(async()=>{await new Promise(r=>setTimeout(r,330));const q=s=>document.querySelector(s),v=q(${JSON.stringify(sel)}),r=v.getBoundingClientRect(),limit=q('#mwsAccessTools').getBoundingClientRect().top;return {logo:!!q('.op-page-label .op-command-emblem'),top:r.top,bottom:r.bottom,limit,overflow:document.documentElement.scrollWidth>innerWidth+1,buttons:[...v.querySelectorAll('button')].filter(b=>b.getBoundingClientRect().width>0).length}})()`);
+  const roster=await inspect('.op-roster');assert(roster.logo&&!roster.overflow&&roster.buttons>=21,JSON.stringify(roster));
+  if(w>=1366)assert(roster.bottom<=roster.limit+5,JSON.stringify({w,h,roster}));
+  const portraits=await b.evaluate(`(async()=>{const cards=[...document.querySelectorAll('.op-coach')];await Promise.all(cards.map(c=>c.querySelector('img').decode()));return cards.map(c=>({name:c.querySelector('strong').textContent,src:c.querySelector('img').getAttribute('src'),frame:!!c.querySelector('.op-armor-frame'),color:getComputedStyle(c).getPropertyValue('--team').trim()}))})()`);
+  const expected={'우왁굳':['wakgood','#b454f2'],'천양':['cheonyang','#ffb326'],'머독':['mudok','#f0444d'],'고세구!':['gosegu','#268df8']};for(const c of portraits){const e=expected[c.name];assert(e&&c.src.includes('commander-'+e[0]+'.avif?v=17')&&c.color===e[1]&&c.frame,JSON.stringify(c))}
+  await capture('roster-v17',w,h);if(w===1726)console.log('OPERATION_M_ROSTER_SCREENSHOT '+await b.captureScreenshot());
+  await b.evaluate("document.querySelector('[data-op-action=tab-tier]').click()");const choice=await inspect('.op-mode-choice');assert(choice.logo&&!choice.overflow&&choice.buttons===2,JSON.stringify(choice));await capture('choice-v17',w,h);
+  await b.evaluate("document.querySelector('[data-op-action=start-guided]').click();document.querySelector('[data-op-action=skip-guided]').click();document.querySelector('[data-op-action=skip-guided]').click()");
+  const guided=await inspect('.op-guided');assert(guided.logo&&!guided.overflow&&guided.buttons>=10,JSON.stringify(guided));await capture('guided-v17',w,h);
+  await b.evaluate("document.querySelector('[data-op-action=choose-mode]').click();document.querySelector('[data-op-action=start-list]').click()");const board=await inspect('.op-tier-workspace');assert(board.logo&&!board.overflow&&board.buttons>=25,JSON.stringify(board));await capture('board-v17',w,h);
+  await b.evaluate("document.querySelector('[data-op-action=tab-result]').click()");const results=await inspect('.op-teams');assert(results.logo&&!results.overflow,JSON.stringify(results));await capture('results-v17',w,h);
+  await b.evaluate("document.body.dataset.mwsMode='admin';window.__mwsAppReadyV130=true;window.mwsOperationM.render();document.querySelector('[data-op-action=open-config]').click()");const config=await inspect('.op-config');assert(config.logo&&!config.overflow&&config.buttons>=25,JSON.stringify(config));await capture('config-v17',w,h);
+  console.log('OPERATION_M_ALL_VIEWS_OK',JSON.stringify({w,h,roster,choice,guided,board,results,config,portraits}));
+ }
  assert(!requests.some(x=>x.startsWith('/api/')));console.log('OPERATION_M_COMMAND_VISUAL_OK');
 }else{
 for(const [w,h] of [[1366,768],[1726,892],[1715,894],[1920,1080],[2560,1440],[2560,1080],[3440,1440],[3840,2160],[390,844]]){
