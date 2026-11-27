@@ -3,12 +3,13 @@ import {readFileSync,mkdirSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {chromium} from 'playwright';
+import {startCareerLocalApp} from './qa-career-local-app.mjs';
 
-const base=process.env.CAREER_QA_BASE||'https://mawang-scheduler.majoku.workers.dev/';
+const local=await startCareerLocalApp(),base=local.base;
 const output=resolve(process.env.CAREER_QA_OUTPUT||'career-qa');
 mkdirSync(output,{recursive:true});
-const browser=await chromium.launch({...(process.env.CAREER_CHROME?{executablePath:process.env.CAREER_CHROME}:{channel:'chrome'}),headless:true,args:['--no-sandbox'],...(process.env.CAREER_QA_PROXY?{proxy:{server:process.env.CAREER_QA_PROXY}}:{})});
-const candidate=process.env.CAREER_LIVE!=='1';
+const browser=await chromium.launch({...(process.env.CAREER_CHROME?{executablePath:process.env.CAREER_CHROME}:{channel:'chrome'}),headless:true,args:['--no-sandbox'],...(process.env.CAREER_QA_PROXY?{proxy:{server:process.env.CAREER_QA_PROXY}}:{})}).catch(async e=>{await local.close();throw e});
+const candidate=true;
 const mode=process.env.CAREER_QA_MODE||'all';
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const open=async(width,height,video=false,reducedMotion='no-preference')=>{
@@ -22,7 +23,7 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
     },{collapsed:reducedMotion==='reduce'});
   }
   if(candidate){
-    // Use the real public production shell/data with candidate frontend assets
+    // Use the real checked-out application shell with isolated synthetic data and candidate frontend assets
     // overridden, including the workspace layout CSS that provides the timeline
     // title-row stacking context. Otherwise the test uses stale live CSS.
     const sectionPattern=/<section class="section" id="careerTimeline"[\s\S]*?<\/section>/;
@@ -35,7 +36,7 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
     await context.route(base,async route=>{
       const response=await route.fetch();
       const original=await response.text();
-      assert(sectionPattern.test(original),'Timeline section absent from production');
+      assert(sectionPattern.test(original),'Timeline section absent from local application');
       let body=original.replace(sectionPattern,replacement).replace(asidePattern,source.match(asidePattern)[0]);
       if(!body.includes('id="mws-motion-preference"'))body=body.replace('</head>',motionPreference+'</head>');
       if(!body.includes('id="mws-nav-first-paint"'))body=body.replace('</head>',firstPaint+'</head>');
@@ -350,4 +351,4 @@ try{
     console.log('PASS site setting reduced and system and full',JSON.stringify(still));
     await rm.context.close();
   }
-}finally{await browser.close();}
+}finally{await browser.close();await local.close();}

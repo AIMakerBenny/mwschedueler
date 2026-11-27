@@ -1128,3 +1128,44 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
  #operationM .op-tier-workspace .op-pool.op-pool-empty{padding:3px 10px;gap:0}
  #operationM .op-tier-workspace{gap:7px}
 }
+
+/* v18: layered detail plates, equal-sized five-agent formation and stable input geometry. */
+#operationM .op-squad-hero .op-squad-title{position:static}
+#operationM .op-squad-hero .op-squad-link{position:static}
+#operationM .op-squad-hero .op-squad-link::after{content:"";position:absolute;inset:0;z-index:4;cursor:pointer}
+#operationM .op-squad-hero:has(.op-squad-link:focus-visible){outline:2px solid var(--squad);outline-offset:-4px}
+#operationM .op-team-dossiers{background:radial-gradient(ellipse at 50% 5%,color-mix(in srgb,var(--squad) 8%,#23313d),#111b23 70%)}
+#operationM .op-team-dossiers>.op-roster-caption{padding:6px 9px;border-left:2px solid var(--squad);background:linear-gradient(90deg,#33434f,#18232c);box-shadow:inset 0 1px #ffffff18,inset 0 -1px #0008}
+#operationM .op-team-agent-grid{grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:9px}
+#operationM .op-shell button.op-agent-tile{grid-column:span 2;isolation:isolate;overflow:hidden;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:0;padding:5px!important;border:0!important;border-radius:0!important;background:linear-gradient(150deg,color-mix(in srgb,var(--squad) 14%,#33434f),#111a22 76%)!important;box-shadow:inset 0 1px #ffffff2b,inset 0 -3px #0009!important;transition:background .18s ease,box-shadow .18s ease}
+#operationM .op-team-agent-grid>.op-agent-tile:nth-child(4){grid-column:2/span 2}
+#operationM .op-team-agent-grid>.op-agent-tile:nth-child(5){grid-column:4/span 2}
+#operationM .op-agent-tile .op-agent-portrait{grid-row:1;grid-column:1;max-height:none;height:100%;min-height:0;isolation:isolate;border:1px solid #7892a24d;background:radial-gradient(ellipse at 50% 48%,#3d525e66,transparent 72%),repeating-linear-gradient(90deg,transparent 0 19px,#b6cbd90b 19px 20px),repeating-linear-gradient(0deg,transparent 0 19px,#b6cbd90b 19px 20px);border-radius:0;overflow:hidden}
+#operationM .op-agent-tile .op-agent-portrait img{object-position:center bottom;transition:transform .24s cubic-bezier(.2,.8,.2,1)}
+#operationM .op-agent-tile .op-agent-silhouette{width:44%;height:54%;opacity:.55}
+#operationM .op-agent-tile>.op-team-mark{width:69%;height:65%;right:15%;bottom:20%;opacity:.13;z-index:-1}
+#operationM .op-agent-tile>.op-tile-id{position:absolute;top:9px;left:9px;z-index:3;padding:3px 7px;background:#121d27dc;border-left:2px solid var(--squad);color:#d4e2eb;font-size:clamp(9px,.85cqw,17px)}
+#operationM .op-agent-tile-plaque{grid-row:2;grid-column:1;position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:7px;min-width:0;min-height:34px;margin-top:-9px;padding:8px 10px;background:linear-gradient(165deg,#40515e,#1c2933 42%,#111922);border:1px solid #718591;border-bottom:2px solid var(--squad);clip-path:polygon(8px 0,100% 0,100% 100%,0 100%,0 8px);box-shadow:inset 0 1px #ffffff25}
+#operationM .op-agent-tile-plaque strong{font-size:clamp(12px,1.3cqw,25px);line-height:1.3;min-width:0;overflow-wrap:anywhere;color:#f0f5fa}
+#operationM .op-agent-tile-plaque .op-tac-arrow{flex:none;transition:transform .2s ease}
+#operationM .op-agent-tile .op-armor-frame{opacity:.62;transition:opacity .18s ease}
+#operationM .op-shell button.op-agent-tile:hover,#operationM .op-shell button.op-agent-tile:focus-visible{background:linear-gradient(150deg,color-mix(in srgb,var(--squad) 24%,#344653),#141e27 74%)!important}
+#operationM .op-agent-tile:is(:hover,:focus-visible) .op-armor-frame{opacity:1}
+#operationM .op-agent-tile:is(:hover,:focus-visible) .op-agent-tile-plaque{background:linear-gradient(160deg,color-mix(in srgb,var(--squad) 18%,#415462),#18252e 64%)}
+#operationM .op-agent-tile:hover .op-agent-portrait img{transform:scale(1.04)}
+#operationM .op-agent-tile:hover .op-tac-arrow{transform:translateX(2px)}
+#operationM .op-dossier-command .op-armor-frame{opacity:.5;transition:opacity .18s ease}
+#operationM .op-dossier-command:is(:hover,:focus-visible) .op-armor-frame{opacity:1}
+#operationM .op-agent-switch{position:relative;isolation:isolate}
+#operationM .op-agent-switch::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--squad);opacity:0;pointer-events:none;transition:opacity .16s}
+#operationM .op-agent-switch:is(:hover,.is-current,:focus-visible)::after{opacity:1}
+#operationM .op-agent-switch.is-current small{color:var(--squad)}
+#operationM .op-detail-step .op-detail-position{min-width:48px;text-align:center;font-variant-numeric:tabular-nums;color:#dce8f1}
+@container(max-width:799px){
+ #operationM .op-team-agent-grid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:auto;gap:8px}
+ #operationM .op-team-agent-grid>.op-agent-tile:nth-child(4){grid-column:span 2}
+ #operationM .op-team-agent-grid>.op-agent-tile:nth-child(5){grid-column:2/span 2}
+ #operationM .op-agent-tile .op-agent-portrait{aspect-ratio:1;height:auto}
+ #operationM .op-agent-tile-plaque{min-height:29px;padding:6px 8px}
+}
+@media(prefers-reduced-motion:reduce){#operationM .op-agent-tile *,#operationM .op-agent-switch::after,#operationM .op-dossier-command .op-armor-frame{transition:none!important}}

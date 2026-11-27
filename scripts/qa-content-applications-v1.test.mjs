@@ -43,11 +43,12 @@ test('comment links target the verified SOOP comment ID, with a safe source fall
  assert.equal(commentPermalink({url:'https://example.com',commentNo:'123'}),'');
 });
 test('production entry and cloud contract share the campaign core key without changing other fields',()=>{
- const html=read('index.html');assert(html.indexOf('data-tab="contentApplications"')<html.indexOf('data-tab="posts"'));assert(html.includes('id="contentApplications"'));assert(html.includes('content-applications-v2.js?v=7'));
+ const html=read('index.html');assert(html.indexOf('data-tab="contentApplications"')<html.indexOf('data-tab="posts"'));assert(html.includes('id="contentApplications"'));const entry=html.match(/<script\b[^>]*\bsrc="assets\/content-applications-v2\.js\?v=(\d+)(?:&[^"]*)?"[^>]*>/);assert(entry&&Number(entry[1])>=8,'Current versioned application module must be loaded');
  assert(html.indexOf('id="dashboardApplicationSupport"')>html.indexOf('class="dashboard-kpi-grid-local"'));assert(html.indexOf('id="dashboardApplicationSupport"')<html.indexOf('class="dashboard-view-controls"'));
  for(const p of ['assets/cloud-v1.1.js','assets/cloud-runtime-v130.js','src/cf-v111-auth.js']){const keys=read(p).match(/const CORE_KEYS\s*=\s*(\[[^\]\n]+\])/)[1];assert(keys.includes("'contentApplications'"));assert(keys.includes("'achievementCards'"));assert(keys.includes("'contentGroups'"))}
  const server=read('src/cf-v111-auth.js');assert(server.includes('source.contentApplications=previousCore.contentApplications'));assert(server.includes("key==='contentApplications'?normalizeCampaigns(src[key]):src[key]"));
- const ui=read('assets/content-applications-v2.js');assert(ui.includes('data.contentApplications=normalizeCampaigns(rows)'));assert(ui.includes('window.mwsV55SaveNow()'));assert(ui.includes('document.body.dataset.mwsMode===\'admin\''));assert(!ui.includes('method:\'POST\''));
+ const ui=read('assets/content-applications-v2.js');assert(ui.includes('data.contentApplications=normalizeCampaigns(rows)'));assert(ui.includes('window.mwsV55SaveNow()'));assert(ui.includes('document.body.dataset.mwsMode===\'admin\''));// The read-side batch endpoint uses POST for bounded ID lists; workspace writes still use the save contract.
+ const directPosts=[...ui.matchAll(/fetch\(\s*(['"])([^'"]+)\1\s*,\s*\{\s*method:\s*['"]POST['"]/g)].map(m=>m[2]);assert.deepEqual(directPosts,['/api/soop/application-batch']);assert(!/fetch\(\s*['"]\/api\/(?:save|parts\/|workspace)/.test(ui));
 });
 
 test('final six hours is urgent, and expiry never remains urgent',()=>{

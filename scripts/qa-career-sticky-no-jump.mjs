@@ -2,14 +2,15 @@ import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync} from 'node:fs';
 import path from 'node:path';
 import {chromium} from 'playwright';
+import {startCareerLocalApp} from './qa-career-local-app.mjs';
 
-const base='https://mawang-scheduler.majoku.workers.dev/';
+const local=await startCareerLocalApp(),base=local.base;
 const capture=process.env.MWS_TIMELINE_CAPTURE==='1';
 const output='timeline-sticky-qa';
 if(capture)mkdirSync(output,{recursive:true});
 const read=name=>readFileSync(new URL('../assets/'+name,import.meta.url));
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-const browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox']});
+const browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox']}).catch(async e=>{await local.close();throw e});
 const measure=()=> {
   const panel=document.querySelector('.cv-panel');
   const host=panel.querySelector('.cv-bar-host');
@@ -76,7 +77,7 @@ try{
   await page.locator('.cv-panel').waitFor({state:'visible',timeout:20000});
   await delay(350);
   const start=await page.evaluate(measure);
-  assert(start.active&&start.total===106,'Actual public timeline not rendered: '+JSON.stringify({width,start}));
+  assert(start.active&&start.total===106,'Checked-out public timeline not rendered: '+JSON.stringify({width,start}));
   assert.equal(start.sticky,'sticky',JSON.stringify(start));
   assert.equal(start.barPosition,'relative',JSON.stringify(start));
   assert(start.hostHeight>25&&start.barHeight>25&&start.overflow<2,JSON.stringify(start));
@@ -175,4 +176,4 @@ try{
   await context.close();
  }
  assert.deepEqual(errors.filter(e=>e.includes('career-visualizer')),[],'Timeline runtime errors');
-}finally{await browser.close();}
+}finally{await browser.close();await local.close();}
