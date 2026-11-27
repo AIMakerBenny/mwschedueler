@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 import {auditSession} from './qa-request-budget-session.mjs';
 import worker from '../src/cf-v111-entry.js';
 import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
-import {ROSTER as OP_ROSTER,ROLE_NAMES as OP_ROLES} from '../assets/operation-m-model-v1.js';
+import {ROSTER as OP_ROSTER} from '../assets/operation-m-model-v1.js';
 const operationMQA=process.env.MWS_QA_OPERATION_M==='1';
 
 // Real HTML, browser scripts and Worker route chain; all data and upstream
@@ -153,13 +153,13 @@ try{
    await until(()=>browser.evaluate("!!document.querySelector('.op-command-overview')"),'Operation M overview ready');
    await pause(350);
    const overview=await inspect('.op-command-overview');assert(overview.logo&&overview.geometry&&!overview.overflow&&overview.version.length===2&&overview.version.every(x=>x.includes('v=17')),JSON.stringify({w,h,overview}));if(w>=1366)assert(overview.fit,JSON.stringify({w,h,overview}));await capture('overview',w,h);
-   await browser.evaluate("document.querySelector('[data-op-squad=mudok]').click()");await pause(150);const team=await inspect('.op-squad-detail');assert(!team.overflow,JSON.stringify({w,h,team}));await capture('team',w,h);
+   await browser.evaluate("document.querySelector('[data-op-squad=mudok]').click()");await pause(150);const team=await inspect('.op-squad-detail');assert(!team.overflow,JSON.stringify({w,h,team}));if(w>=1366)assert(team.fit,JSON.stringify({w,h,team}));await capture('team',w,h);
    await browser.evaluate("document.querySelector('.op-agent-tile').click()");await pause(150);const agent=await inspect('.op-agent-detail');assert(agent.commander&&agent.members&&!agent.overflow,JSON.stringify({w,h,agent}));if(w>=1366)assert(agent.fit,JSON.stringify({w,h,agent}));await capture('agent',w,h);
    await browser.evaluate("document.querySelector('[data-op-action=tab-draft]').click()");await pause(300);const roster=await inspect('.op-roster');assert(roster.logo&&!roster.overflow,JSON.stringify({w,h,roster}));if(w>=1366)assert(roster.fit,JSON.stringify({w,h,roster}));await capture('roster',w,h);
    await browser.evaluate("document.querySelector('[data-op-action=tab-tier]').click()");await pause(200);const choice=await inspect('.op-mode-choice');assert(!choice.overflow,JSON.stringify({w,h,choice}));await capture('choice',w,h);
-   await browser.evaluate("document.querySelector('[data-op-action=start-list]').click()");await pause(150);const board=await inspect('.op-tier-workspace');assert(!board.overflow,JSON.stringify({w,h,board}));await capture('board',w,h);
-   await browser.evaluate("document.querySelector('[data-op-action=choose-mode]').click();document.querySelector('[data-op-action=start-guided]').click();document.querySelector('[data-op-action=skip-guided]').click();document.querySelector('[data-op-action=skip-guided]').click()");await pause(200);const guided=await inspect('.op-guided');assert(!guided.overflow,JSON.stringify({w,h,guided}));await capture('guided',w,h);
-   await browser.evaluate("document.querySelector('[data-op-action=tab-result]').click()");await pause(150);const result=await inspect('.op-teams');assert(!result.overflow,JSON.stringify({w,h,result}));await capture('result',w,h);
+   await browser.evaluate("document.querySelector('[data-op-action=start-list]').click()");await pause(150);const board=await inspect('.op-tier-workspace');assert(!board.overflow,JSON.stringify({w,h,board}));if(w>=1366)assert(board.fit,JSON.stringify({w,h,board}));await capture('board',w,h);
+   await browser.evaluate("document.querySelector('[data-op-action=choose-mode]').click();document.querySelector('[data-op-action=start-guided]').click();document.querySelector('[data-op-action=skip-guided]').click();document.querySelector('[data-op-action=skip-guided]').click()");await pause(200);const guided=await inspect('.op-guided');assert(!guided.overflow,JSON.stringify({w,h,guided}));if(w>=1366)assert(guided.fit,JSON.stringify({w,h,guided}));await capture('guided',w,h);
+   await browser.evaluate("document.querySelector('[data-op-action=tab-result]').click()");await pause(150);const result=await inspect('.op-teams');assert(!result.overflow,JSON.stringify({w,h,result}));if(w>=1366)assert(result.fit,JSON.stringify({w,h,result}));await capture('result',w,h);
    console.log('OPERATION_M_FULL_APP_VIEW_OK '+JSON.stringify({w,h,overview,team,agent,roster,choice,board,guided,result}));
   }
   assert.equal(errors.length,0,JSON.stringify(errors));console.log('OPERATION_M_FULL_APP_OK');
