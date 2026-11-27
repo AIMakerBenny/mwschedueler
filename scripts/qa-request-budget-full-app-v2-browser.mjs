@@ -8,6 +8,8 @@ import {fileURLToPath} from 'node:url';
 import {auditSession} from './qa-request-budget-session.mjs';
 import worker from '../src/cf-v111-entry.js';
 import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
+import {ROSTER as OP_ROSTER} from '../assets/operation-m-model-v1.js';
+const operationMQA=process.env.MWS_QA_OPERATION_M==='1';
 
 // Real HTML, browser scripts and Worker route chain; all data and upstream
 // responses are synthetic. Neither Cloudflare nor SOOP is contacted.
@@ -19,7 +21,7 @@ const DB={prepare:sql=>statement(sql),batch:async statements=>{db.exec('BEGIN');
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jf2sAAAAASUVORK5CYII=','base64');
 const objects=new Map();
 const IMAGES={get:async key=>objects.has(key)?{body:new Blob([png]).stream(),size:png.length,httpEtag:'"fixture-'+key+'"',writeHttpMetadata:h=>h.set('content-type','image/png')}:null,head:async key=>objects.has(key)?{size:png.length}:null,put:async key=>{objects.set(key,true);return {key,uploaded:new Date(),size:png.length,etag:"a".repeat(32)}},delete:async key=>objects.delete(key),list:async()=>({objects:[],truncated:false})};
-const types={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.ico':'image/x-icon','.woff2':'font/woff2','.woff':'font/woff','.gif':'image/gif'};
+const types={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.avif':'image/avif','.svg':'image/svg+xml','.ico':'image/x-icon','.woff2':'font/woff2','.woff':'font/woff','.gif':'image/gif'};
 const ASSETS={fetch:async req=>{const u=new URL(req.url),name=u.pathname==='/'?'index.html':decodeURIComponent(u.pathname.slice(1)),file=path.resolve(root,name);if(!file.startsWith(root)||!statSafe(file))return new Response('not found',{status:404});return new Response(readFileSync(file),{headers:{'content-type':types[path.extname(file)]||'application/octet-stream','cache-control':'public, max-age=3600'}})}};
 function statSafe(file){try{return statSync(file).isFile()}catch{return false}}
 const env={DB,IMAGES,ASSETS,MWS_ENV:'local-qa',MWS_MEDIA_BATCH_V5:process.env.MWS_QA_V5_ATTRIBUTION==='1'?'1':undefined};
@@ -69,6 +71,11 @@ const day=new Date(Date.now()+9*3600000).toISOString().slice(0,10);
 const fixturePosts=scale?Array.from({length:scalePosts},(_,i)=>({id:'scale-post-'+i,name:'Fixture post '+i,nameManual:true,bjId:'host'+i,postNo:String(i+100),url:'https://www.sooplive.com/station/host'+i+'/post/'+(i+100),lastSyncAt:new Date().toISOString(),comments:Array.from({length:20},(_,j)=>({id:'p'+i+'-c'+j,commentNo:String(j+1),userId:'qa'+((i*20+j)%scale),name:'Fixture '+((i*20+j)%scale),comment:'Synthetic applicant',regDate:'2026-11-20T00:00:00Z',status:'pending'}))})):[];
 const bsandongQA=process.env.MWS_QA_BSANDONG==='1';
 const parts={core:{version:52,categories:[],timezones:[],contentGroups:[],gameLibrary:[],achievementCards,contentApplications:[]},events:[{id:'fixture-event',title:'Fixture event',date:day,start:'12:00',end:'13:00',participants:['qa0'],checklist:[]}],contacts,contactMeta:{contactTags:[],contactTagBanners:{},emoticons:[]},activity:{collaborations:[],todayPeopleByDate:{},todayPeopleManualByDate:{},targetList:[]},clipboard:{scheduleClipboard:[]},notebook:{memos:[],favoriteFolders:[]},posts:fixturePosts,miniGames:{},wardogs:{schemaVersion:1,cards:[]}};
+if(operationMQA){
+ const roles=['대월향','우왁굳','천양','머독','고세구!'];
+ [...OP_ROSTER,...roles].forEach((name,i)=>{contacts[i].name=name==='리냐_LIN…'?'리냐_LINYA':name});
+ parts.miniGames.operationMV1={links:Object.fromEntries(OP_ROSTER.map((name,i)=>[name,contacts[i].id])),roles:roles.map((_,i)=>contacts[OP_ROSTER.length+i].id)};
+}
 if(bsandongQA){
  const prior=n=>new Date(Date.now()+9*3600000-n*86400000).toISOString().slice(0,10);
  parts.core.categories.push({id:'qa-bsandong',name:'브산동',color:'#06b6d4'});
@@ -129,7 +136,34 @@ try{
  const routes=['calendar','contacts','dashboard','memos','careerTimeline','achievements','mawangArchive','gameLadder','gameMultiDraw','contentPlanner','toolTier','toolMatrix','toolRelations','settings','calendar'];
  const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,450));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
  let before=calls.length;
- if(compareMode){
+ if(operationMQA){
+  const captureDir=process.env.MWS_OPERATION_M_CAPTURE;
+  if(captureDir){const {mkdirSync}=await import('node:fs');mkdirSync(captureDir,{recursive:true})}
+  const capture=async(label,w,h)=>{if(!captureDir)return;const shot=await browser.captureScreenshot();writeFileSync(path.join(captureDir,'full-'+label+'-'+w+'x'+h+'.jpg'),Buffer.from(shot,'base64'));if(w===1726&&['overview','agent','roster'].includes(label))console.log('OPERATION_M_FULL_'+label.toUpperCase()+' '+shot)};
+  const inspect=async(sel)=>browser.evaluate('('+function(sel){
+   const q=s=>document.querySelector(s),v=q(sel),box=v.getBoundingClientRect(),limit=q('#mwsAccessTools')?.getBoundingClientRect().top||innerHeight;
+   const parent=q('#operationM').getBoundingClientRect();
+   const content=q('.app>.main').getBoundingClientRect();
+   const contains=(outer,inner)=>inner.top>=outer.top-2&&inner.bottom<=outer.bottom+2&&inner.left>=outer.left-2&&inner.right<=outer.right+2;
+   return {bottom:box.bottom,top:box.top,limit,width:box.width,root:parent.width,fit:box.bottom<=limit+3,overflow:box.right>content.right+2||box.left<content.left-2||document.documentElement.scrollWidth>innerWidth+2,logo:!!q('.op-page-label .op-command-emblem'),geometry:[...v.querySelectorAll('.op-squad-card')].every(c=>contains(c.getBoundingClientRect(),c.querySelector('.op-squad-roster').getBoundingClientRect())&&[...c.querySelectorAll('.op-agent-row')].every(b=>contains(c.getBoundingClientRect(),b.getBoundingClientRect())&&b.querySelector('strong').scrollWidth<=b.querySelector('strong').clientWidth+1)),commander:!q('.op-dossier-command')||contains(q('.op-dossier-command').getBoundingClientRect(),q('.op-command-nameplate').getBoundingClientRect())&&contains(q('.op-dossier-command').getBoundingClientRect(),q('.op-dossier-command .op-commander-art').getBoundingClientRect()),members:!q('.op-agent-detail')||q('.op-dossier-portrait').getBoundingClientRect().bottom<=q('.op-dossier-squad').getBoundingClientRect().top+2,version:[...document.querySelectorAll('link[rel=stylesheet],script[src]')].map(e=>e.getAttribute('href')||e.getAttribute('src')).filter(x=>x?.includes('operation-m-v1.'))};
+  }.toString()+')('+JSON.stringify(sel)+')');
+  for(const [w,h] of [[1366,768],[1726,892],[1913,901],[2560,1440],[390,844]]){
+   if(w!==1366){await browser.navigate(base+':'+server.address().port+'/',w,h,w<761);await until(()=>browser.evaluate("(()=>{document.querySelector('#mwsAnnouncementDialog[open] .mws-notice-close')?.click();return !!window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading')})()"),'Full app reload ready')}
+   await browser.evaluate("window.setTab('operationM')");
+   await until(()=>browser.evaluate("!!document.querySelector('.op-command-overview')"),'Operation M overview ready');
+   await pause(350);
+   const overview=await inspect('.op-command-overview');assert(overview.logo&&overview.geometry&&!overview.overflow&&overview.version.length===2&&overview.version.every(x=>x.includes('v=17')),JSON.stringify({w,h,overview}));if(w>=1366)assert(overview.fit,JSON.stringify({w,h,overview}));await capture('overview',w,h);
+   await browser.evaluate("document.querySelector('[data-op-squad=mudok]').click()");await pause(150);const team=await inspect('.op-squad-detail');assert(!team.overflow,JSON.stringify({w,h,team}));if(w>=1366)assert(team.fit,JSON.stringify({w,h,team}));await capture('team',w,h);
+   await browser.evaluate("document.querySelector('.op-agent-tile').click()");await pause(150);const agent=await inspect('.op-agent-detail');assert(agent.commander&&agent.members&&!agent.overflow,JSON.stringify({w,h,agent}));if(w>=1366)assert(agent.fit,JSON.stringify({w,h,agent}));await capture('agent',w,h);
+   await browser.evaluate("document.querySelector('[data-op-action=tab-draft]').click()");await pause(300);const roster=await inspect('.op-roster');assert(roster.logo&&!roster.overflow,JSON.stringify({w,h,roster}));if(w>=1366)assert(roster.fit,JSON.stringify({w,h,roster}));await capture('roster',w,h);
+   await browser.evaluate("document.querySelector('[data-op-action=tab-tier]').click()");await pause(200);const choice=await inspect('.op-mode-choice');assert(!choice.overflow,JSON.stringify({w,h,choice}));await capture('choice',w,h);
+   await browser.evaluate("document.querySelector('[data-op-action=start-list]').click()");await pause(150);const board=await inspect('.op-tier-workspace');assert(!board.overflow,JSON.stringify({w,h,board}));if(w>=1366)assert(board.fit,JSON.stringify({w,h,board}));await capture('board',w,h);
+   await browser.evaluate("document.querySelector('[data-op-action=choose-mode]').click();document.querySelector('[data-op-action=start-guided]').click();document.querySelector('[data-op-action=skip-guided]').click();document.querySelector('[data-op-action=skip-guided]').click()");await pause(200);const guided=await inspect('.op-guided');assert(!guided.overflow,JSON.stringify({w,h,guided}));if(w>=1366)assert(guided.fit,JSON.stringify({w,h,guided}));await capture('guided',w,h);
+   await browser.evaluate("document.querySelector('[data-op-action=tab-result]').click()");await pause(150);const result=await inspect('.op-teams');assert(!result.overflow,JSON.stringify({w,h,result}));if(w>=1366)assert(result.fit,JSON.stringify({w,h,result}));await capture('result',w,h);
+   console.log('OPERATION_M_FULL_APP_VIEW_OK '+JSON.stringify({w,h,overview,team,agent,roster,choice,board,guided,result}));
+  }
+  assert.equal(errors.length,0,JSON.stringify(errors));console.log('OPERATION_M_FULL_APP_OK');
+ }else if(compareMode){
   const snapshots=[];
   const selectors=['.app','.app>.sidebar','.app>.main','.nav-scroll','.nav button.active','.nav button.active .nav-icon','.nav button.active .nav-label','.sidebar .logo','#pageTextScaleControlV54','.topbar','#pageTitle','#calendar .calendar-topbar-v4','#calendarYearSelect','#calendarMonthSelect','#calendarGrid','#calendarGrid .day','#calendarGrid .mini-event','#calendarGroupToggleV2','#calendarGroupManageToggleV4','#calendarCopyTray','#calendarGroupManagerPanelV4','#calendarGroupMawangLinkV2','#contacts .contact-grid','#contacts .contact-card','#bsandong .bs-tabs','#bsandong .bs-summary','#gameF1Racing','#wardogs','#achievements','#careerTimeline','.section.active','.section.active button','.section.active select'];
   const take=async label=>{
