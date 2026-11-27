@@ -100,10 +100,15 @@ function tacFrame(){return '<svg class="op-armor-frame" aria-hidden="true" viewB
 // Confirmed roster uses the contact's own profile, not dedicated artwork or simulated draft assignments.
 function confirmedProfile(n){
   const c=matchContact(n,contacts);
-  // Only the explicitly confirmed spelling alias is eligible; display abbreviations
-  // are not contact identifiers. Ambiguous original names must remain unresolved.
-  if(c||n!=='카린야'||contacts.some(p=>String(p.name).normalize('NFKC').trim()==='카린야'))return c;
-  return matchContact('카린아',contacts);
+  if(c)return c;
+  // Exact roster names take precedence. Explicit display aliases are supported
+  // only when unique and no ambiguous full-name candidate exists.
+  const norm=x=>String(x||'').normalize('NFKC').trim().toLowerCase();
+  const key=x=>norm(x).replace(/[\s_!☆…\.\-]/g,'');
+  const partial=n.endsWith('…'),k=key(n);
+  if(contacts.some(p=>partial?key(p.name).startsWith(k):key(p.name)===k))return null;
+  const alias=agentName(n);
+  return alias===n?null:matchContact(alias,contacts);
 }
 const photoSource=c=>String(c?.image||c?.avatar||c?.profileImage||'');
 function profilePortrait(n,layout='row'){
@@ -140,8 +145,12 @@ function tacticalMember(t,n,i){
 function commanderArt(t){
   return '<div class="op-commander-art"><span class="op-tac-reticle" aria-hidden="true"></span><img src="'+commanderUrl(t)+'" alt="" decoding="async" width="512" height="512"></div>';
 }
+function tacticalBackdrop(t){
+  // Inert original instrument geometry. All depth planes stay mounted.
+  return '<div class="op-tactical-depth" aria-hidden="true"><svg class="op-tactical-terrain" viewBox="0 0 600 320" preserveAspectRatio="xMidYMid slice" fill="none"><g stroke="currentColor" stroke-width=".9"><path d="M-50 76Q55 28 145 79T345 63T630 38M-40 93Q55 45 145 96T345 80T640 55M-30 111Q55 63 145 114T345 98T650 73M-20 129Q55 81 145 132T345 116T660 91M-20 147Q55 99 145 150T345 134T660 109M-20 165Q55 117 145 168T345 152T660 127M-20 183Q55 135 145 186T345 170T660 145M-20 201Q55 153 145 204T345 188T660 163"/><path stroke-dasharray="4 7" d="M60 285 156 170 272 232 460 90 590 125M155 0V320M430 0V320"/><circle cx="156" cy="170" r="22"/><circle cx="156" cy="170" r="35"/><circle cx="460" cy="90" r="40"/><path d="M146 170h20m-10-10v20M450 90h20m-10-10v20M25 18H80M25 18V50M575 302H520M575 302V270"/></g><g fill="currentColor"><circle cx="156" cy="170" r="3"/><circle cx="272" cy="232" r="3"/><circle cx="460" cy="90" r="3"/></g></svg><span class="op-tactical-plating"></span><span class="op-tactical-sight"></span><span class="op-tactical-scan"></span><span class="op-tactical-edge"></span></div>';
+}
 function squadCard(t){
-  return '<article class="op-squad-card" data-op-confirmed-team="'+t.id+'"'+squadStyle(t)+'>'+tacFrame()+'<div class="op-squad-hero"><span class="op-hero-hud" aria-hidden="true"></span>'+commanderArt(t)+'<div class="op-squad-title"><small>COMMANDER / '+squadCode(t)+'</small><button type="button" class="op-squad-link" data-op-squad="'+t.id+'" aria-label="'+esc(t.name)+' 팀 상세">'+tacEmblem()+'<strong>'+esc(t.name)+' 팀</strong><span class="op-tac-slash" aria-hidden="true"></span></button><span class="op-squad-coach"><span>코치</span><b>'+esc(t.coach)+'</b></span></div>'+teamMark(t)+'</div><div class="op-squad-roster"><div class="op-roster-caption"><span>요원 명단</span><span>05</span></div>'+t.members.map((n,i)=>tacticalMember(t,n,i)).join('')+'</div></article>';
+  return '<article class="op-squad-card" data-op-confirmed-team="'+t.id+'"'+squadStyle(t)+'>'+tacFrame()+'<div class="op-squad-hero">'+tacticalBackdrop(t)+'<span class="op-hero-hud" aria-hidden="true"></span>'+commanderArt(t)+'<div class="op-squad-title"><small>COMMANDER / '+squadCode(t)+'</small><span class="op-squad-link">'+tacEmblem()+'<strong>'+esc(t.name)+' 팀</strong></span><span class="op-squad-coach"><span>코치</span><b>'+esc(t.coach)+'</b></span></div>'+teamMark(t)+'<button type="button" class="op-squad-hit" data-op-squad="'+t.id+'" aria-label="'+esc(t.name)+' 팀 상세"><span class="op-team-entry">팀 정보 <span aria-hidden="true">›</span></span></button></div><div class="op-squad-roster"><div class="op-roster-caption"><span>요원 명단</span><span>05</span></div>'+t.members.map((n,i)=>tacticalMember(t,n,i)).join('')+'</div></article>';
 }
 function commandOverview(){
   return '<section class="op-command-workspace op-command-overview"><div class="op-command-heading"><div class="op-console-banks" aria-hidden="true"><span><i></i><i></i><i></i></span><span><i></i><i></i><i></i></span></div><div class="op-brief-title"><span class="op-tac-kicker">OPERATION M / COMMAND CENTER</span><h2>작전 현황</h2></div><div class="op-command-map" aria-hidden="true"><svg viewBox="0 0 480 80" preserveAspectRatio="xMidYMid meet" fill="none"><path d="M12 49 30 23 62 14 90 29 112 13 149 20 165 39 138 43 121 58 93 51 72 72 55 60 42 42 12 49ZM190 22 220 12 246 19 267 12 296 28 337 14 371 27 401 20 445 35 463 54 423 61 399 45 370 48 349 66 319 52 289 57 275 40 242 44 226 67 204 53 190 22Z" fill="#4489aa" fill-opacity=".12" stroke="#5287a0" stroke-dasharray="2 3"/><path d="M24 40H456M240 4V76M68 19 150 54 240 26 330 58 416 20" stroke="#58829b" stroke-opacity=".55" stroke-dasharray="3 4"/><g stroke="#9ad2e8"><circle cx="68" cy="19" r="3"/><circle cx="150" cy="54" r="3"/><circle cx="330" cy="58" r="3"/><circle cx="416" cy="20" r="3"/><path d="M217 28v-8h8m30 0h8v8m0 24v8h-8m-30 0h-8v-8"/></g><path d="M225 49V30l15 12 15-12v19" stroke="#b6d9e7" stroke-width="3"/></svg></div><span class="op-brief-code">TEAM 04 / AGENT 20</span></div><div class="op-command-grid">'+SQUADS.map(squadCard).join('')+'</div><div class="op-command-footer"><span class="op-tac-dot"></span><strong>팀 편성 완료</strong><span class="op-command-divider"></span><span>팀 <b>4</b></span><span class="op-command-divider"></span><span>참가자 <b>20</b>명</span><span class="op-command-divider"></span><span>코치 <b>4</b>명</span><span class="op-footer-stripes" aria-hidden="true"></span></div></section>';
@@ -150,11 +159,11 @@ function commanderNameplate(t){
   return '<span class="op-command-nameplate">'+tacEmblem()+'<span><small>COMMANDER</small><strong>'+esc(t.name)+'</strong></span></span>';
 }
 function commandSquad(t){
-  return '<section class="op-command-workspace op-squad-detail"'+squadStyle(t)+'><div class="op-detail-nav">'+button('command-back','작전 현황')+'<span>팀 정보</span><div class="op-squad-switch">'+SQUADS.map(s=>'<button type="button" data-op-squad="'+s.id+'" aria-pressed="'+(s.id===t.id)+'"'+squadStyle(s)+'>'+esc(s.name)+'</button>').join('')+'</div></div><div class="op-squad-detail-body"><div class="op-command-banner op-layer-panel">'+tacFrame()+teamMark(t)+commanderArt(t)+'<div class="op-banner-title"><span class="op-tac-kicker">SQUAD / '+squadCode(t)+'</span><h2>'+esc(t.name)+' 팀</h2><div class="op-squad-coach"><span>코치</span><b>'+esc(t.coach)+'</b></div></div></div><div class="op-team-dossiers op-layer-panel"><div class="op-roster-caption"><span>소속 요원</span><span>05 / 05</span></div><div class="op-team-agent-grid">'+t.members.map((n,i)=>'<button type="button" class="op-agent-tile" data-op-agent="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 요원 정보">'+teamMark(t)+profilePortrait(n,'tile')+'<span class="op-tile-id">#'+squadCode(t)+(i+1)+'</span><span class="op-agent-tile-plaque"><strong>'+esc(agentName(n))+'</strong><span class="op-tac-arrow" aria-hidden="true">›</span></span>'+tacFrame()+'</button>').join('')+'</div></div></div></section>';
+  return '<section class="op-command-workspace op-squad-detail"'+squadStyle(t)+'><div class="op-detail-nav">'+button('command-back','작전 현황')+'<span>팀 정보</span><div class="op-squad-switch">'+SQUADS.map(s=>'<button type="button" data-op-squad="'+s.id+'" aria-pressed="'+(s.id===t.id)+'"'+squadStyle(s)+'>'+esc(s.name)+'</button>').join('')+'</div></div><div class="op-squad-detail-body"><div class="op-command-banner op-layer-panel">'+tacFrame()+tacticalBackdrop(t)+teamMark(t)+commanderArt(t)+'<div class="op-banner-title"><span class="op-tac-kicker">SQUAD / '+squadCode(t)+'</span><h2>'+esc(t.name)+' 팀</h2><div class="op-squad-coach"><span>코치</span><b>'+esc(t.coach)+'</b></div></div></div><div class="op-team-dossiers op-layer-panel"><div class="op-roster-caption"><span>소속 요원</span><span>05 / 05</span></div><div class="op-team-agent-grid">'+t.members.map((n,i)=>'<button type="button" class="op-agent-tile" data-op-agent="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 요원 정보">'+teamMark(t)+profilePortrait(n,'tile')+'<span class="op-tile-id">#'+squadCode(t)+(i+1)+'</span><span class="op-agent-tile-plaque"><strong>'+esc(agentName(n))+'</strong><span class="op-tac-arrow" aria-hidden="true">›</span></span>'+tacFrame()+'</button>').join('')+'</div></div></div></section>';
 }
 function commandAgent(t,n){
   const i=t.members.indexOf(n),src=agentArt(n);
-  return '<section class="op-command-workspace op-agent-detail"'+squadStyle(t)+'><div class="op-detail-nav">'+button('command-team-back','팀으로')+'<span>요원 정보 / '+esc(t.name)+'</span><div class="op-detail-step"><button type="button" data-op-agent="'+esc(t.members[(i+4)%5])+'" data-op-step="prev" aria-label="이전 요원">‹</button><span class="op-detail-position" aria-live="polite">'+(i+1)+' / 5</span><button type="button" data-op-agent="'+esc(t.members[(i+1)%5])+'" data-op-step="next" aria-label="다음 요원">›</button></div></div><div class="op-agent-dossier"><div class="op-dossier-portrait op-layer-panel">'+tacFrame()+teamMark(t)+'<div class="op-portrait-instrument"><span class="op-instrument-label">AGENT / '+squadCode(t)+(i+1)+'</span>'+dossierPortrait(n)+'<span class="op-instrument-caption">'+(src||photoSource(confirmedProfile(n))?'':'이미지 미등록')+'</span></div>'+(canConfigure()?'<label class="op-art-upload">'+(artBusy?'저장 중…':src?'요원 이미지 변경':'요원 이미지 등록')+'<input type="file" accept="image/png,image/jpeg,image/webp,image/avif" data-op-agent-upload="'+esc(n)+'" '+(artBusy?'disabled':'')+'></label>':'')+'</div><div class="op-dossier-content"><div class="op-agent-identity op-layer-panel">'+tacEmblem()+'<div><span class="op-tac-kicker">PERSONNEL FILE / '+squadCode(t)+(i+1)+'</span><h2>'+esc(agentName(n))+'</h2></div></div><div class="op-dossier-fields"><div><small>소속 팀</small><strong>'+esc(t.name)+' 팀</strong></div><div><small>담당 코치</small><strong>'+esc(t.coach)+'</strong></div></div><button type="button" class="op-dossier-command op-layer-panel" data-op-squad="'+t.id+'" aria-label="'+esc(t.name)+' 팀 상세">'+tacFrame()+teamMark(t)+commanderArt(t)+commanderNameplate(t)+'<span class="op-tac-arrow" aria-hidden="true">›</span></button>'+(artNotice?'<div class="op-art-notice" role="status">'+esc(artNotice)+'</div>':'')+'</div></div><div class="op-dossier-squad op-layer-panel"><div class="op-roster-caption"><span>팀 요원 전환</span><span>05</span></div><div class="op-agent-switch-grid">'+t.members.map((p,j)=>'<button type="button" class="op-agent-switch'+(p===n?' is-current':'')+'" data-op-agent="'+esc(p)+'" aria-pressed="'+(p===n)+'">'+profilePortrait(p,'switch')+'<span><small>#'+squadCode(t)+(j+1)+'</small><strong>'+esc(agentName(p))+'</strong></span></button>').join('')+'</div></div></section>';
+  return '<section class="op-command-workspace op-agent-detail"'+squadStyle(t)+'><div class="op-detail-nav">'+button('command-team-back','팀으로')+'<span>요원 정보 / '+esc(t.name)+'</span><div class="op-detail-step"><button type="button" data-op-agent="'+esc(t.members[(i+4)%5])+'" data-op-step="prev" aria-label="이전 요원">‹</button><span class="op-detail-position" aria-live="polite">'+(i+1)+' / 5</span><button type="button" data-op-agent="'+esc(t.members[(i+1)%5])+'" data-op-step="next" aria-label="다음 요원">›</button></div></div><div class="op-agent-dossier"><div class="op-dossier-portrait op-layer-panel">'+tacFrame()+tacticalBackdrop(t)+teamMark(t)+'<div class="op-portrait-instrument"><span class="op-instrument-label">AGENT / '+squadCode(t)+(i+1)+'</span>'+dossierPortrait(n)+'<span class="op-instrument-caption">'+(src||photoSource(confirmedProfile(n))?'':'이미지 미등록')+'</span></div>'+(canConfigure()?'<label class="op-art-upload">'+(artBusy?'저장 중…':src?'요원 이미지 변경':'요원 이미지 등록')+'<input type="file" accept="image/png,image/jpeg,image/webp,image/avif" data-op-agent-upload="'+esc(n)+'" '+(artBusy?'disabled':'')+'></label>':'')+'</div><div class="op-dossier-content"><div class="op-agent-identity op-layer-panel">'+tacEmblem()+'<div><span class="op-tac-kicker">PERSONNEL FILE / '+squadCode(t)+(i+1)+'</span><h2>'+esc(agentName(n))+'</h2></div></div><div class="op-dossier-fields"><div><small>소속 팀</small><strong>'+esc(t.name)+' 팀</strong></div><div><small>담당 코치</small><strong>'+esc(t.coach)+'</strong></div></div><button type="button" class="op-dossier-command op-layer-panel" data-op-squad="'+t.id+'" aria-label="'+esc(t.name)+' 팀 상세">'+tacFrame()+teamMark(t)+commanderArt(t)+commanderNameplate(t)+'<span class="op-tac-arrow" aria-hidden="true">›</span></button>'+(artNotice?'<div class="op-art-notice" role="status">'+esc(artNotice)+'</div>':'')+'</div></div><div class="op-dossier-squad op-layer-panel"><div class="op-roster-caption"><span>팀 요원 전환</span><span>05</span></div><div class="op-agent-switch-grid">'+t.members.map((p,j)=>'<button type="button" class="op-agent-switch'+(p===n?' is-current':'')+'" data-op-agent="'+esc(p)+'" aria-pressed="'+(p===n)+'">'+profilePortrait(p,'switch')+'<span><small>#'+squadCode(t)+(j+1)+'</small><strong>'+esc(agentName(p))+'</strong></span></button>').join('')+'</div></div></section>';
 }
 function commandView(){
   if(activeAgent){const t=squadFor(activeAgent);if(t)return commandAgent(t,activeAgent)}
@@ -447,7 +456,7 @@ function openResetDialog(trigger){
   dialog.setAttribute('aria-describedby','op-reset-description');
   dialog.innerHTML=tacFrame()+'<form method="dialog" class="op-reset-body"><header>'+tacEmblem()+'<h2 id="op-reset-title">드래프트 초기화</h2></header><p id="op-reset-description">20명의 티어와 가상 팀 결과를 초기화합니다. 실제 확정 팀 편성, 인물 연결과 등록된 이미지는 유지됩니다.</p><footer><button type="submit" value="cancel" autofocus>취소</button><button type="submit" value="reset" class="op-reset-confirm">초기화</button></footer></form>';
   root.append(dialog);
-  dialog.addEventListener('close',()=>{
+  const settle=()=>{
     if(resetDialog!==dialog)return;
     const confirmed=dialog.returnValue==='reset';resetDialog=null;resetHold=false;dialog.remove();
     if(!confirmed){
@@ -458,7 +467,11 @@ function openResetDialog(trigger){
     stopShuffle();clearRankMotion();rankLock=false;deckPhase='pick';
     state.tiers={};state.teams=[];lastMove=null;guidedHistory=[];choosingMode=false;selected='';notice='';save();
     if(wasGuided)startGuided();else{guided=false;render()}
-  },{once:true});
+  };
+  // Real form submissions settle in the same task; native close/Escape remain supported.
+  dialog.addEventListener('submit',e=>{e.preventDefault();dialog.close(e.submitter?.value||'cancel');settle()});
+  dialog.addEventListener('cancel',e=>{e.preventDefault();dialog.close('cancel');settle()});
+  dialog.addEventListener('close',settle,{once:true});
   dialog.showModal();
 }
 function pickerHtml(){
@@ -957,7 +970,7 @@ function scheduleMeasure(){if(layoutFrame)cancelAnimationFrame(layoutFrame);layo
 window.addEventListener('resize',scheduleMeasure);
 window.visualViewport?.addEventListener('resize',scheduleMeasure);
 if(typeof ResizeObserver==='function'){let lastWidth=-1;const observer=new ResizeObserver(()=>{const width=root.getBoundingClientRect().width;if(root.classList.contains('active')&&Math.abs(width-lastWidth)>.5){lastWidth=width;scheduleMeasure()}});observer.observe(root);const main=root.closest('.main');if(main)observer.observe(main)}
-function signature(){return JSON.stringify(ROSTER.map(n=>{const c=current(n);return[c?.id,c?.name,c?.image]}).concat(state.roles.map(id=>{const c=byId.get(id);return[c?.id,c?.name,c?.image]}),ROSTER.map(n=>agentArt(n)),ROSTER.map(n=>{const c=confirmedProfile(n);return[c?.id,c?.name,c?.image,c?.avatar,c?.profileImage]})))}
+function signature(){return JSON.stringify(ROSTER.map(n=>{const c=current(n);return[c?.id,c?.name,photoSource(c)]}).concat(state.roles.map(id=>{const c=byId.get(id);return[c?.id,c?.name,photoSource(c)]}),ROSTER.map(n=>agentArt(n)),ROSTER.map(n=>{const c=confirmedProfile(n);return[c?.id,c?.name,c?.image,c?.avatar,c?.profileImage]})))}
 function updateSelection(){
   root.querySelectorAll('.op-player[aria-pressed]').forEach(b=>{const on=b.dataset.opPlayer===selected,was=b.classList.contains('op-selected');b.classList.toggle('op-selected',on);b.setAttribute('aria-pressed',String(on));if(on!==was&&!reducedMotion()){b.querySelector('.op-card-front')?.animate?.(on?[{filter:'brightness(1.25)',transform:'scale(.97)'},{filter:'none',transform:'none'}]:[{opacity:.82},{opacity:1}],{duration:180,easing:'ease-out'})}});
   const board=root.querySelector('.op-board');if(board)board.classList.toggle('op-awaiting-drop',!!selected);
@@ -1027,7 +1040,11 @@ function animateTab(previous){
   const indicator=document.createElement('span');indicator.className='op-tab-travel';indicator.setAttribute('aria-hidden','true');indicator.style.cssText='left:'+((next.left-parent.left)/scale)+'px;top:'+((next.bottom-parent.top)/scale-3)+'px;width:'+(next.width/scale)+'px';tabs.append(indicator);
   const anim=indicator.animate?.([{transform:'translate('+((previous.left-next.left)/scale)+'px,'+((previous.top-next.top)/scale)+'px) scaleX('+previous.width/next.width+')',opacity:1},{transform:'none',opacity:1},{opacity:0}],{duration:240,easing:'cubic-bezier(.2,.75,.2,1)'});if(anim)anim.onfinish=()=>indicator.remove();else indicator.remove();
 }
-const updateCommandPointer=e=>{if(e.pointerType==='mouse')root.dataset.opPointer='mouse';else delete root.dataset.opPointer};
+const updateCommandPointer=e=>{
+  const mouse=e.pointerType==='mouse';
+  if(mouse&&root.dataset.opPointer!=='mouse')root.dataset.opPointer='mouse';
+  else if(!mouse&&root.hasAttribute('data-op-pointer'))root.removeAttribute('data-op-pointer');
+};
 root.addEventListener('pointerover',updateCommandPointer);
 root.addEventListener('pointerdown',updateCommandPointer);
 root.addEventListener('pointermove',e=>{
