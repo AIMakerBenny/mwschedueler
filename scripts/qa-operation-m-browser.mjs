@@ -116,6 +116,40 @@ for(const [w,h] of [[1366,768],[1600,900],[1715,894],[1726,892],[1766,831],[1913
  return {correctDespiteDraft,avatarRefresh,missing,ambiguous,restored,saves:saves===0}})()`);
  assert(Object.values(profileSources).every(Boolean),JSON.stringify(profileSources));console.log('OPERATION_M_ROSTER_PROFILE_SOURCES_OK',JSON.stringify(profileSources));
 
+
+ // Data refresh must preserve live command nodes; all member lists use contact photos.
+ await b.navigate(url,1726,892);
+ const incremental=await b.evaluate(`(async()=>{const q=s=>document.querySelector(s),wait=()=>new Promise(r=>setTimeout(r,30));for(let i=0;i<100&&!q('.op-agent-row');i++)await wait();
+ const shell=q('.op-shell'),frame=q('.op-armor-frame'),row=q('[data-op-agent="마왕0216"]'),other=q('[data-op-agent="김웰로"] img'),old=row.querySelector('img'),c=data.contacts.find(x=>x.name==='마왕0216');
+ row.focus();c.image=c.image.replace('blue','red');window.mwsOperationM.refresh();window.mwsOperationM.render();window.dispatchEvent(new CustomEvent('mws:app-ready',{detail:{scope:'public'}}));await wait();
+ const overview=shell===q('.op-shell')&&frame===q('.op-armor-frame')&&row===q('[data-op-agent="마왕0216"]')&&other===q('[data-op-agent="김웰로"] img')&&row.querySelector('img')!==old&&document.activeElement===row&&row.querySelector('img').getAttribute('src')===c.image;
+ q('[data-op-squad=mudok]').click();const tiles=[...document.querySelectorAll('.op-agent-tile')],teamProfiles=tiles.every(tile=>tile.querySelector('img')?.getAttribute('src')===data.contacts.find(x=>x.name===tile.dataset.opAgent)?.image);
+ const canvas=document.createElement('canvas');canvas.width=20;canvas.height=20;canvas.getContext('2d').fillRect(0,0,20,20);const art=canvas.toDataURL('image/png');
+ data.miniGames.operationMArtV1={players:[{id:'마왕0216',image:art}]};window.mwsOperationM.refresh();tiles[0].click();
+ const detailFrame=q('.op-dossier-portrait .op-armor-frame'),switches=[...document.querySelectorAll('.op-agent-switch')],custom=q('.op-dossier-portrait img')?.getAttribute('src')===art,profileSwitch=switches.every(x=>x.querySelector('img')?.getAttribute('src')===data.contacts.find(p=>p.name===x.dataset.opAgent)?.image);
+ data.miniGames.operationMArtV1={players:[]};window.mwsOperationM.refresh();await wait();
+ const fallback=q('.op-dossier-portrait img')?.getAttribute('src')===c.image,stable=detailFrame===q('.op-dossier-portrait .op-armor-frame')&&switches.every((x,i)=>x===document.querySelectorAll('.op-agent-switch')[i]);
+ return {overview,teamProfiles,custom,profileSwitch,fallback,stable,saves:saves===0}})()`);
+ assert(Object.values(incremental).every(Boolean),JSON.stringify(incremental));console.log('OPERATION_M_INCREMENTAL_REFRESH_OK',JSON.stringify(incremental));await capture('profile-dossier',1726,892);
+ // Last-card completion must never destroy an open reset confirmation. While open,
+ // neither auto-draw, repeated render, refresh, nor keyboard rank shortcuts can act.
+ await b.navigate(url,1726,892);
+ await b.evaluate("localStorage.removeItem('mws.operationM.simulation.v1')");
+ await b.navigate(url,1726,892);
+ const modalRace=await b.evaluate(`(async()=>{const q=s=>document.querySelector(s),click=s=>q(s).click(),wait=ms=>new Promise(r=>setTimeout(r,ms)),key='mws.operationM.simulation.v1',saved=()=>JSON.stringify(JSON.parse(localStorage.getItem(key)).tiers);for(let i=0;i<100&&!q('.op-command-grid');i++)await wait(20);
+ click('[data-op-action=tab-draft]');click('[data-op-action=tab-tier]');click('[data-op-action=start-guided]');
+ click('[data-op-action=reset]');const modal=q('.op-reset-dialog'),prior=saved();window.mwsOperationM.render();window.mwsOperationM.refresh();await wait(1800);
+ const shuffleHeld=modal===q('.op-reset-dialog[open]')&&saved()===prior&&!q('[data-op-current]');
+ modal.close('cancel');await wait(900);const resumed=!!q('.op-deck-phase-reveal')&&!q('.op-reset-dialog');
+ click('[data-op-action=choose-mode]');click('[data-op-action=start-list]');for(let i=0;i<19;i++){click('.op-pool .op-player');click('.op-tier-row[data-tier=S] .op-tier-label')}
+ click('[data-op-action=choose-mode]');click('[data-op-action=start-guided]');click('[data-op-action=skip-guided]');click('[data-op-action=skip-guided]');
+ click('[data-op-assign=D]');click('[data-op-action=reset]');const finalModal=q('.op-reset-dialog'),finalTiers=saved();data.contacts[0].image=data.contacts[0].image.replace('blue','green');window.mwsOperationM.refresh();window.mwsOperationM.render();window.dispatchEvent(new KeyboardEvent('keydown',{key:'1',bubbles:true}));await wait(1400);
+ const finalHeld=finalModal===q('.op-reset-dialog[open]')&&saved()===finalTiers&&Object.keys(JSON.parse(finalTiers)).length===20;
+ finalModal.close('cancel');await wait(50);const cancelPreserved=saved()===finalTiers&&!!q('.op-tier-workspace');
+ click('[data-op-action=reset]');q('.op-reset-dialog').close('reset');await wait(50);
+ return {shuffleHeld,resumed,finalHeld,cancelPreserved,resetClears:Object.keys(JSON.parse(saved())).length===0}})()`);
+ assert(Object.values(modalRace).every(Boolean),JSON.stringify(modalRace));console.log('OPERATION_M_MODAL_RACE_OK',JSON.stringify(modalRace));
+
 // The command-only job makes visual artifacts available without waiting for the long simulation suite.
 if(process.env.MWS_COMMAND_ONLY==='1'){
  // 11 desktop viewport sizes × sidebar pinned/hidden × three zoom values.
