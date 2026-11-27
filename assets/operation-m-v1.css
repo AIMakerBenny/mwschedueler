@@ -850,3 +850,105 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
  #operationM .op-preview-card{width:50%}
  #operationM .op-preview-board{height:min(100%,170px);width:min(96%,260px)}
 }
+
+/* OPERATION M: confirmed command-center view. The simulation is intentionally isolated. */
+#operationM .op-command-tabs{display:flex;gap:4px;align-items:center;padding:3px;border:1px solid var(--border);border-radius:9px;background:var(--panel)}
+#operationM .op-command-tabs button[aria-pressed=true]{background:color-mix(in srgb,var(--accent) 22%,var(--panel));border-color:var(--accent);font-weight:750}
+#operationM .op-command-workspace{--tac-bg:#12171d;--tac-line:#303b46;color:#edf1f5;position:relative;min-width:0;min-height:var(--op-available,65dvh);display:grid;align-content:start;gap:12px;padding:clamp(10px,1.2cqw,22px);background:radial-gradient(ellipse at 50% 0,#24354080,transparent 58%),linear-gradient(145deg,#11171d,#0c1014);border:1px solid #3b4651;border-radius:12px;isolation:isolate}
+#operationM .op-command-workspace::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;background-image:linear-gradient(#73899a0a 1px,transparent 1px),linear-gradient(90deg,#73899a0a 1px,transparent 1px);background-size:24px 24px;mask-image:linear-gradient(#000,transparent 95%)}
+#operationM .op-command-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:0 3px 4px;border-bottom:1px solid #45505a}
+#operationM .op-tac-kicker{font-size:clamp(10px,.8cqw,18px);letter-spacing:.14em;font-weight:650;color:#97a9b7}
+#operationM .op-command-heading h2,#operationM .op-command-workspace h2{margin:4px 0 8px;line-height:1.15;font-size:clamp(24px,2.5cqw,52px);font-weight:850;letter-spacing:-.04em;color:#f2f5f8}
+#operationM .op-command-count{display:flex;align-items:center;gap:clamp(10px,1.4cqw,25px);color:#aebdc7;font-size:clamp(12px,1cqw,19px);white-space:nowrap}
+#operationM .op-command-count b{font-size:1.5em;color:#f5f8fa;letter-spacing:-.04em;margin-right:3px}
+#operationM .op-command-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:12px;min-width:0;min-height:max(480px,calc(var(--op-available,650px) - 125px))}
+#operationM .op-squad-card{position:relative;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);min-width:0;min-height:0;border:1px solid color-mix(in srgb,var(--squad) 52%,#27323d);border-top:2px solid var(--squad);border-radius:9px;overflow:hidden;background:linear-gradient(115deg,color-mix(in srgb,var(--squad) 14%,#151a21),#11151a 74%);box-shadow:0 8px 24px #0005;transition:border-color .18s,box-shadow .18s}
+#operationM .op-squad-card:hover{border-color:var(--squad);box-shadow:0 8px 28px #0006,0 0 16px color-mix(in srgb,var(--squad) 12%,transparent)}
+#operationM .op-squad-hero{position:relative;min-width:0;isolation:isolate;display:flex;align-items:flex-start;padding:14px}
+#operationM .op-commander-art{position:relative;isolation:isolate;overflow:hidden;min-width:0;min-height:0;background:radial-gradient(ellipse at 50% 60%,color-mix(in srgb,var(--squad,#88a5be) 25%,transparent),transparent 70%)}
+#operationM .op-squad-hero .op-commander-art{position:absolute;inset:0;z-index:-1}
+#operationM .op-commander-art img{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 8px 14px #0007);transition:transform .3s ease}
+#operationM .op-squad-card:hover .op-commander-art img{transform:scale(1.025)}
+#operationM .op-squad-hero::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:-1;background:linear-gradient(180deg,#0b1015b5 0%,transparent 32%,transparent 78%,#0a0e13a6)}
+#operationM .op-tac-reticle{position:absolute;inset:15%;border:1px solid color-mix(in srgb,var(--squad,#88a5be) 24%,transparent);border-radius:50%;opacity:.7}
+#operationM .op-tac-reticle::after{content:"";position:absolute;inset:12%;border:1px dashed color-mix(in srgb,var(--squad,#88a5be) 24%,transparent);border-radius:50%}
+#operationM .op-squad-title{min-width:0;position:relative;z-index:1;text-shadow:0 2px 8px #000}
+#operationM .op-squad-title>small,#operationM .op-squad-coach{display:block;font-size:clamp(10px,.8cqw,16px);letter-spacing:.065em;color:#d6e1e8}
+#operationM button.op-squad-link{display:flex;align-items:center;gap:8px;padding:0!important;border:0!important;background:transparent!important;color:var(--squad)!important;text-align:left;box-shadow:none!important}
+#operationM .op-squad-link strong{font-size:clamp(21px,2.15cqw,42px);line-height:1.3;letter-spacing:-.04em;white-space:nowrap}
+#operationM .op-squad-coach{display:inline-flex;align-items:center;gap:8px;padding:4px 8px;border-left:2px solid var(--squad);background:#0c1117ce;border-radius:2px;color:#b5c1ca;margin-top:5px}
+#operationM .op-squad-coach b{color:#f3f6f8}
+#operationM .op-squad-roster{display:grid;grid-template-rows:auto repeat(5,minmax(0,1fr));min-height:0;min-width:0;gap:5px;padding:10px;background:#10151be6;border-left:1px solid color-mix(in srgb,var(--squad) 25%,#212a33)}
+#operationM .op-roster-caption{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#a9bac6;font-size:clamp(11px,.8cqw,16px);font-weight:700;letter-spacing:.035em;padding:2px 2px 5px}
+#operationM .op-roster-caption>span:last-child{color:var(--squad);font-variant-numeric:tabular-nums}
+#operationM button.op-agent-row{display:grid;grid-template-columns:clamp(29px,3cqw,52px) minmax(0,1fr) auto;align-items:center;gap:clamp(6px,.8cqw,14px);width:100%;min-width:0;padding:4px 8px;background:linear-gradient(100deg,#232d36,#171e26)!important;border:1px solid #374551!important;border-radius:5px;color:#eef2f6!important;text-align:left;transition:transform .16s,border-color .16s,background .16s}
+#operationM button.op-agent-row:hover{background:color-mix(in srgb,var(--squad) 17%,#1a232c)!important;border-color:var(--squad)!important;transform:translateX(2px)}
+#operationM .op-agent-row-name{min-width:0;display:grid;gap:1px}
+#operationM .op-agent-row-name small,#operationM .op-agent-tile small,#operationM .op-dossier-content small{color:#a1b2bd;font-size:clamp(9px,.65cqw,13px);letter-spacing:.08em;font-weight:650}
+#operationM .op-agent-row-name strong{font-size:clamp(12px,1.2cqw,25px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+#operationM .op-tac-arrow{font-size:clamp(19px,1.6cqw,30px);line-height:1;color:var(--squad);font-weight:500}
+#operationM .op-agent-portrait{position:relative;display:grid;place-items:center;aspect-ratio:1;width:100%;overflow:hidden;isolation:isolate;border-radius:4px;background:radial-gradient(ellipse,#32414e,#19232b);border:1px solid #52616c}
+#operationM .op-agent-silhouette{width:78%;height:78%;color:#758795;opacity:.65}
+#operationM .op-agent-portrait img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#151f27;z-index:1}
+#operationM .op-command-footer{display:flex;align-items:center;gap:8px;padding:4px 2px;color:#a9b7c2;font-size:12px}
+#operationM .op-tac-dot{width:7px;height:7px;background:#82c6a7;border-radius:50%;box-shadow:0 0 6px #82c6a755}
+#operationM .op-command-divider{height:15px;width:1px;background:#46545f;margin:0 6px}
+#operationM .op-detail-nav{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap;color:#aebecb;font-size:13px;border-bottom:1px solid #3a4650;padding-bottom:10px}
+#operationM .op-squad-switch,#operationM .op-detail-step{display:flex;align-items:center;gap:5px;margin-left:auto;flex-wrap:wrap}
+#operationM .op-squad-switch button[aria-pressed=true]{color:var(--squad)!important;border-color:var(--squad)!important}
+#operationM .op-squad-detail-body{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:12px;min-height:max(470px,calc(var(--op-available,650px) - 90px));min-width:0}
+#operationM .op-command-banner{position:relative;isolation:isolate;min-height:360px;overflow:hidden;border:1px solid var(--squad);border-radius:9px;background:linear-gradient(150deg,color-mix(in srgb,var(--squad) 20%,#11171d),#11171d);display:flex;align-items:flex-start;padding:20px}
+#operationM .op-command-banner .op-commander-art{position:absolute;inset:0;z-index:-1}
+#operationM .op-banner-title{position:relative;text-shadow:0 2px 9px #000}
+#operationM .op-banner-title h2{color:var(--squad);font-size:clamp(34px,4cqw,78px)}
+#operationM .op-tac-count{display:block;margin-top:10px;font-size:13px;letter-spacing:.1em;color:#d8e3ea}
+#operationM .op-team-dossiers{display:grid;grid-template-rows:auto 1fr;gap:8px;min-width:0}
+#operationM .op-team-agent-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-content:center;min-width:0}
+#operationM button.op-agent-tile{position:relative;display:grid;gap:6px;min-width:0;padding:8px;background:#1b242e!important;border:1px solid #41505c!important;color:#eff3f7!important;text-align:left}
+#operationM button.op-agent-tile:hover{border-color:var(--squad)!important;box-shadow:0 0 14px color-mix(in srgb,var(--squad) 15%,transparent)}
+#operationM .op-agent-tile strong{font-size:clamp(13px,1.35cqw,25px);overflow-wrap:anywhere}
+#operationM .op-agent-tile>.op-tac-arrow{position:absolute;right:9px;bottom:9px}
+#operationM .op-agent-dossier{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(12px,1.5cqw,28px);align-items:start;min-width:0}
+#operationM .op-dossier-portrait{position:relative;display:grid;gap:10px;min-width:0;padding:10px;border:1px solid var(--squad);border-radius:8px;background:linear-gradient(150deg,#1b2832,#10161c)}
+#operationM .op-dossier-portrait .op-agent-portrait{aspect-ratio:1;max-height:calc(var(--op-available,680px) - 180px);border:1px solid color-mix(in srgb,var(--squad) 60%,#33434e);background:radial-gradient(circle at 50% 45%,#354754,#142029)}
+#operationM .op-dossier-portrait .op-agent-portrait img{background:transparent}
+#operationM .op-dossier-portrait-label{display:grid;gap:2px;padding:5px}
+#operationM .op-dossier-portrait-label small{font-size:11px;color:#9aacb9;letter-spacing:.12em}
+#operationM .op-dossier-portrait-label strong{font-size:clamp(20px,2cqw,38px)}
+#operationM .op-art-upload{position:relative;display:grid;place-items:center;min-height:42px;border:1px solid var(--squad);border-radius:5px;background:#1c2a34;color:#e6eff5;font-weight:700;cursor:pointer;overflow:hidden}
+#operationM .op-art-upload input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+#operationM .op-art-upload:focus-within{outline:2px solid var(--squad);outline-offset:3px}
+#operationM .op-dossier-content{display:grid;gap:10px;min-width:0}
+#operationM .op-dossier-content h2{font-size:clamp(32px,4cqw,72px);margin:0 0 3px}
+#operationM .op-dossier-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#operationM .op-dossier-fields>div{display:grid;gap:5px;padding:10px;border:1px solid #3c4b56;border-top-color:var(--squad);border-radius:5px;background:#1c262e;min-width:0}
+#operationM .op-dossier-fields strong{font-size:clamp(13px,1.45cqw,28px);overflow-wrap:anywhere}
+#operationM button.op-dossier-command{display:grid;grid-template-columns:80px minmax(0,1fr) auto;align-items:center;gap:12px;min-height:80px;padding:0 12px 0 0;background:#1c262e!important;border:1px solid #4b5c68!important;border-left-color:var(--squad)!important;color:#eaf0f5!important;text-align:left}
+#operationM .op-dossier-command .op-commander-art{height:80px}
+#operationM .op-dossier-command>span:not(.op-tac-arrow){display:grid;gap:4px}
+#operationM .op-dossier-command strong{font-size:clamp(18px,1.8cqw,32px);color:var(--squad)}
+#operationM .op-dossier-squad{display:grid;gap:5px;min-width:0}
+#operationM .op-dossier-member.is-current .op-agent-row{border-color:var(--squad)!important;background:color-mix(in srgb,var(--squad) 16%,#1a232c)!important}
+#operationM .op-art-notice{padding:8px 10px;border:1px solid #465761;background:#18232d;color:#e1ebf0;border-radius:5px}
+#operationM .op-commander-only img{object-fit:contain!important;background:transparent}
+@container(max-width:1000px){
+ #operationM .op-command-grid{min-height:max(480px,calc(var(--op-available,650px) - 125px))}
+ #operationM .op-squad-hero{padding:9px}
+ #operationM .op-squad-roster{padding:7px}
+ #operationM button.op-agent-row{grid-template-columns:30px minmax(0,1fr) auto;gap:5px;padding:3px 5px}
+ #operationM .op-squad-link strong{font-size:20px}
+}
+@container(max-width:760px){
+ #operationM .op-command-workspace{min-height:0;padding:10px;gap:10px}
+ #operationM .op-command-grid{grid-template-columns:1fr;grid-template-rows:none;min-height:0}
+ #operationM .op-squad-card{min-height:265px}
+ #operationM .op-squad-hero{padding:10px}
+ #operationM .op-squad-roster{padding:7px}
+ #operationM .op-squad-detail-body,#operationM .op-agent-dossier{grid-template-columns:1fr;min-height:0}
+ #operationM .op-command-banner{min-height:300px}
+ #operationM .op-team-agent-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #operationM .op-dossier-portrait .op-agent-portrait{max-height:none}
+ #operationM .op-dossier-fields{gap:5px}
+ #operationM .op-dossier-fields>div{padding:8px}
+}
+@media(prefers-reduced-motion:reduce){#operationM .op-command-workspace *{transition:none!important}}

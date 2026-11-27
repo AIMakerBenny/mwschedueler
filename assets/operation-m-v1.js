@@ -4,7 +4,7 @@ if(root){
 const KEY='mws.operationM.simulation.v1';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const read=()=>{try{return normalizeState(JSON.parse(localStorage.getItem(KEY)||'null'))}catch(_){return normalizeState(null)}};
-let state=read(),tab='roster',selected='',dragName='',picker='',query='',notice='',lastSignature='',saveFailed=false;
+let state=read(),tab='command',selected='',dragName='',picker='',query='',notice='',lastSignature='',saveFailed=false;
 let configDraft=null,configSaving=false,workspaceReady=false,workspaceLoading=false,workspaceError=false;
 let arrived='',layoutFrame=0,queue=[],guided=false,choosingMode=false,rankLock=false,rankTimer=0;
 let lastView='',guidedHistory=[],lastMove=null;
@@ -53,6 +53,88 @@ function cardFace(c,name,t='',large=false){
 }
 const DEFAULT_ROLES=['대월향','우왁굳','천양','머독','고세구!']; // confirmed by the current Admin screenshot
 const CONFIG_KEY='operationMV1';
+// Confirmed lineup is independent of the legacy simulation and contact settings.
+const ART_KEY='operationMArtV1';
+const SQUADS=Object.freeze([
+  {id:'mudok',name:'머독',coach:'에스카',color:'#e96f75',members:['마왕0216','김웰로','다키','베베리','물초코']},
+  {id:'gosegu',name:'고세구',coach:'쪼이',color:'#6bcde6',members:['뽀린걸','깡담비','박재박','거대별','햇비']},
+  {id:'cheonyang',name:'천양',coach:'dg98',color:'#e6ba69',members:['리냐_LIN…','난워니','유키라','최또','스위데']},
+  {id:'wakgood',name:'우왁굳',coach:'감블러',color:'#a995f4',members:['카푸','고여름_','양지팡','카린야','카노미☆']}
+].map(t=>Object.freeze({...t,members:Object.freeze(t.members)})));
+const SHORT_NAMES=Object.freeze({'마왕0216':'마왕','리냐_LIN…':'리냐','고여름_':'고여름','카노미☆':'카노'});
+const agentName=n=>SHORT_NAMES[n]||n;
+const squadFor=n=>SQUADS.find(t=>t.members.includes(n));
+const commanderUrl=t=>'/assets/operation-m-commander-'+t.id+'.avif';
+let activeSquad='',activeAgent='',artBusy=false,artNotice='';
+function agentArt(n){
+  const p=getData()?.miniGames?.[ART_KEY]?.players;
+  const src=String(Array.isArray(p)?p.find(x=>x?.id===n)?.image||'':'');
+  return /^(?:\/media\/workspace\/[A-Za-z0-9_-]+(?:\?v=\d+)?$|data:image\/(?:webp|png|jpeg|avif);base64,[A-Za-z0-9+/=]+$)/.test(src)?src:'';
+}
+function commanderPortrait(c,name){
+  const t=SQUADS.find(t=>t.name===String(name).replace(/!$/,''));
+  return t?'<span class="op-portrait op-commander-only"><img src="'+commanderUrl(t)+'" alt="" decoding="async" width="384" height="384"></span>':photo(c,name);
+}
+function tacticalPortrait(n,large=false){
+  const src=agentArt(n);
+  return '<span class="op-agent-portrait'+(large?' op-agent-large':'')+'"><svg class="op-agent-silhouette" aria-hidden="true" viewBox="0 0 100 100" fill="currentColor"><circle cx="50" cy="34" r="18"/><path d="M14 88c0-23 16-37 36-37s36 14 36 37z"/></svg>'+(src?'<img src="'+esc(src)+'" alt="" decoding="async" loading="lazy">':'')+'</span>';
+}
+function squadStyle(t){return ' style="--squad:'+t.color+'"'}
+function tacticalMember(t,n,i){
+  return '<button type="button" class="op-agent-row" data-op-agent="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 요원 정보">'+tacticalPortrait(n)+'<span class="op-agent-row-name"><small>AGENT '+String(i+1).padStart(2,'0')+'</small><strong>'+esc(agentName(n))+'</strong></span><span class="op-tac-arrow" aria-hidden="true">›</span></button>';
+}
+function commanderArt(t){
+  return '<div class="op-commander-art"><span class="op-tac-reticle" aria-hidden="true"></span><img src="'+commanderUrl(t)+'" alt="" decoding="async" width="384" height="384"></div>';
+}
+function squadCard(t){
+  return '<article class="op-squad-card" data-op-confirmed-team="'+t.id+'"'+squadStyle(t)+'><div class="op-squad-hero">'+commanderArt(t)+'<div class="op-squad-title"><small>COMMANDER</small><button type="button" class="op-squad-link" data-op-squad="'+t.id+'" aria-label="'+esc(t.name)+' 팀 상세"><strong>'+esc(t.name)+' 팀</strong><span aria-hidden="true">›</span></button><span class="op-squad-coach">코치 <b>'+esc(t.coach)+'</b></span></div></div><div class="op-squad-roster"><div class="op-roster-caption"><span>요원 명단</span><span>05</span></div>'+t.members.map((n,i)=>tacticalMember(t,n,i)).join('')+'</div></article>';
+}
+function commandOverview(){
+  return '<section class="op-command-workspace op-command-overview"><div class="op-command-heading"><div><span class="op-tac-kicker">OPERATION M / COMMAND CENTER</span><h2>작전 지휘 본부</h2></div><div class="op-command-count"><span><b>4</b> 팀</span><span><b>20</b> 요원</span><span><b>4</b> 코치</span></div></div><div class="op-command-grid">'+SQUADS.map(squadCard).join('')+'</div><div class="op-command-footer"><span class="op-tac-dot"></span> 팀 편성 완료 <span class="op-command-divider"></span><span>확정 명단</span></div></section>';
+}
+function commandSquad(t){
+  return '<section class="op-command-workspace op-squad-detail"'+squadStyle(t)+'><div class="op-detail-nav">'+button('command-back','이전')+'<span>팀 정보 / '+esc(t.name)+'</span><div class="op-squad-switch">'+SQUADS.map(s=>'<button type="button" data-op-squad="'+s.id+'" aria-pressed="'+(s.id===t.id)+'"'+squadStyle(s)+'>'+esc(s.name)+'</button>').join('')+'</div></div><div class="op-squad-detail-body"><div class="op-command-banner">'+commanderArt(t)+'<div class="op-banner-title"><span class="op-tac-kicker">COMMANDER</span><h2>'+esc(t.name)+' 팀</h2><div class="op-squad-coach">코치 <b>'+esc(t.coach)+'</b></div><span class="op-tac-count">요원 05 / 05</span></div></div><div class="op-team-dossiers"><div class="op-roster-caption"><span>요원 명단</span><span>05</span></div><div class="op-team-agent-grid">'+t.members.map((n,i)=>'<button type="button" class="op-agent-tile" data-op-agent="'+esc(n)+'">'+tacticalPortrait(n,true)+'<small>AGENT '+String(i+1).padStart(2,'0')+'</small><strong>'+esc(agentName(n))+'</strong><span class="op-tac-arrow" aria-hidden="true">›</span></button>').join('')+'</div></div></div></section>';
+}
+function commandAgent(t,n){
+  const i=t.members.indexOf(n),src=agentArt(n);
+  return '<section class="op-command-workspace op-agent-detail"'+squadStyle(t)+'><div class="op-detail-nav">'+button('command-team-back','팀으로')+'<span>요원 정보 / '+esc(t.name)+'</span><div class="op-detail-step"><button type="button" data-op-agent="'+esc(t.members[(i+4)%5])+'" aria-label="이전 요원">‹</button><span>'+(i+1)+' / 5</span><button type="button" data-op-agent="'+esc(t.members[(i+1)%5])+'" aria-label="다음 요원">›</button></div></div><div class="op-agent-dossier"><div class="op-dossier-portrait">'+tacticalPortrait(n,true)+'<div class="op-dossier-portrait-label"><small>OPERATION M / AGENT</small><strong>'+esc(agentName(n))+'</strong></div>'+(canConfigure()?'<label class="op-art-upload">'+(artBusy?'저장 중…':src?'오퍼 M 사진 변경':'오퍼 M 사진 등록')+'<input type="file" accept="image/png,image/jpeg,image/webp,image/avif" data-op-agent-upload="'+esc(n)+'" '+(artBusy?'disabled':'')+'></label>':'')+'</div><div class="op-dossier-content"><span class="op-tac-kicker">PERSONNEL FILE / AGENT '+String(i+1).padStart(2,'0')+'</span><h2>'+esc(agentName(n))+'</h2><div class="op-dossier-fields"><div><small>소속 팀</small><strong>'+esc(t.name)+' 팀</strong></div><div><small>담당 코치</small><strong>'+esc(t.coach)+'</strong></div><div><small>편성</small><strong>확정</strong></div></div><button type="button" class="op-dossier-command" data-op-squad="'+t.id+'">'+commanderArt(t)+'<span><small>COMMANDER</small><strong>'+esc(t.name)+'</strong></span><span class="op-tac-arrow" aria-hidden="true">›</span></button><div class="op-dossier-squad"><div class="op-roster-caption"><span>팀 요원</span><span>05</span></div>'+t.members.map((p,j)=>'<div class="op-dossier-member'+(p===n?' is-current':'')+'">'+tacticalMember(t,p,j)+'</div>').join('')+'</div>'+(artNotice?'<div class="op-art-notice" role="status">'+esc(artNotice)+'</div>':'')+'</div></div></section>';
+}
+function commandView(){
+  if(activeAgent){const t=squadFor(activeAgent);if(t)return commandAgent(t,activeAgent)}
+  const t=SQUADS.find(x=>x.id===activeSquad);
+  return t?commandSquad(t):commandOverview();
+}
+function goCommand(squad='',agent=''){
+  finishDraft(false);stopShuffle();clearRankMotion();rankLock=false;guided=false;choosingMode=false;selected='';tab='command';activeSquad=squad;activeAgent=agent;artNotice='';render();
+  root.querySelector('.op-command-workspace h2')?.setAttribute('tabindex','-1');root.querySelector('.op-command-workspace h2')?.focus({preventScroll:true});
+}
+async function prepareAgentImage(file){
+  if(!/^image\/(png|jpeg|webp|avif)$/.test(file.type)||file.size>12*1024*1024)throw Error('PNG, JPG, WebP, AVIF 이미지 12MB 이하만 등록할 수 있습니다.');
+  const url=URL.createObjectURL(file);
+  try{
+    const im=new Image();im.src=url;await im.decode();if(!im.naturalWidth||!im.naturalHeight)throw Error('이미지를 읽을 수 없습니다.');
+    const canvas=document.createElement('canvas'),ratio=Math.min(1,768/Math.max(im.naturalWidth,im.naturalHeight));canvas.width=Math.max(1,Math.round(im.naturalWidth*ratio));canvas.height=Math.max(1,Math.round(im.naturalHeight*ratio));
+    canvas.getContext('2d').drawImage(im,0,0,canvas.width,canvas.height);let result=canvas.toDataURL('image/webp',.84);
+    if(result.length>260000)result=canvas.toDataURL('image/webp',.62);
+    if(result.length>400000)throw Error('이미지가 너무 큽니다. 더 작은 이미지를 선택하세요.');
+    return result;
+  }finally{URL.revokeObjectURL(url)}
+}
+async function saveAgentImage(n,file){
+  if(!canConfigure()||artBusy||!squadFor(n)||!file)return;
+  artBusy=true;artNotice='';render();
+  let d,prior,next;
+  try{
+    const image=await prepareAgentImage(file);if(!canConfigure())throw Error('관리자 연결을 확인하세요.');
+    d=getData();prior=d.miniGames[ART_KEY];const players=(Array.isArray(prior?.players)?prior.players:[]).filter(p=>p&&p.id!==n&&squadFor(p.id));
+    // No contactId: the existing server media pipeline stores this as workspace artwork.
+    next={...prior,players:[...players,{id:n,image}]};d.miniGames[ART_KEY]=next;
+    window.saveData('오퍼 M 요원 사진');if(!await window.mwsV55SaveNow())throw Error('온라인 저장을 확인하지 못했습니다.');
+    artNotice='요원 사진 저장 완료';
+  }catch(err){if(d&&d.miniGames[ART_KEY]===next){if(prior===undefined)delete d.miniGames[ART_KEY];else d.miniGames[ART_KEY]=prior}artNotice=err.message||'사진 저장 실패';}
+  finally{artBusy=false;render()}
+}
+
 const admin=()=>document.body.dataset.mwsMode==='admin'&&window.__mwsAppReadyV130===true;
 const report=()=>window.mwsV55EgressReport?.();
 const canConfigure=()=>admin()&&workspaceReady&&report()?.loadedParts?.includes('miniGames')&&Number.isInteger(report()?.manifest?.parts?.miniGames)&&typeof window.mwsV55SaveNow==='function';
@@ -115,7 +197,7 @@ function row(t){
 }
 function roster(){
   const host=byId.get(state.roles[0]);
-  return '<div class="op-roster"><div class="op-block-head"><h2>감독</h2><span class="op-host">'+photo(host,host?.name||'주최자')+'<span>주최자 · '+esc(host?.name||'미지정')+'</span></span></div><div class="op-coaches">'+state.roles.slice(1).map((id,i)=>{const c=byId.get(id),name=c?.name||'미지정';return '<article class="op-coach" data-team="'+i+'" style="--op-order:'+i+'">'+photo(c,name)+'<div class="op-coach-plate"><strong title="'+esc(name)+'">'+esc(name)+'</strong></div><span class="op-coach-frame" aria-hidden="true"><i></i><i></i><i></i><i></i></span></article>'}).join('')+'</div><div class="op-block-head"><h2>참가자 <small>'+(20-missing.length)+' / 20</small></h2></div><div class="op-roster-grid">'+ROSTER.map(n=>player(n,'roster')).join('')+'</div><div class="op-roster-next">'+button('choose-mode','다음','class="op-primary"')+'</div></div>';
+  return '<div class="op-roster"><div class="op-block-head"><h2>감독</h2><span class="op-host">'+photo(host,host?.name||'주최자')+'<span>주최자 · '+esc(host?.name||'미지정')+'</span></span></div><div class="op-coaches">'+state.roles.slice(1).map((id,i)=>{const c=byId.get(id),name=c?.name||'미지정';return '<article class="op-coach" data-team="'+i+'" style="--op-order:'+i+'">'+commanderPortrait(c,name)+'<div class="op-coach-plate"><strong title="'+esc(name)+'">'+esc(name)+'</strong></div><span class="op-coach-frame" aria-hidden="true"><i></i><i></i><i></i><i></i></span></article>'}).join('')+'</div><div class="op-block-head"><h2>참가자 <small>'+(20-missing.length)+' / 20</small></h2></div><div class="op-roster-grid">'+ROSTER.map(n=>player(n,'roster')).join('')+'</div><div class="op-roster-next">'+button('choose-mode','다음','class="op-primary"')+'</div></div>';
 }
 function modePreview(mode){
   if(mode==='guided')return '<span class="op-mode-preview op-mode-preview-guided" aria-hidden="true"><span class="op-preview-stack">'+[0,1,2].map(i=>'<span class="op-preview-card op-preview-back" style="--op-i:'+i+'">'+cardBack()+'</span>').join('')+'<span class="op-preview-card op-preview-draw"><span class="op-preview-portrait"></span><span class="op-preview-plate"></span></span></span></span>';
@@ -360,7 +442,7 @@ async function saveConfig(){
 }
 function teamHeader(i,score){
   const c=byId.get(state.roles[i+1]),name=c?.name||'감독 '+(i+1);
-  return '<header>'+photo(c,name)+'<div class="op-team-identity"><strong title="'+esc(name)+'">'+esc(name)+'</strong></div><b data-op-team-score>'+score+'점</b></header>';
+  return '<header>'+commanderPortrait(c,name)+'<div class="op-team-identity"><strong title="'+esc(name)+'">'+esc(name)+'</strong></div><b data-op-team-score>'+score+'점</b></header>';
 }
 function teamFooter(stats){
   return '<footer>'+TIERS.map(t=>'<span data-tier="'+t+'" aria-label="'+t+' 티어 '+stats.counts[t]+'명">'+crest(t)+'<span>'+t+'</span><b>'+stats.counts[t]+'</b></span>').join('')+'</footer>';
@@ -495,12 +577,12 @@ function render(){
   const scrolls=lastView===view?Object.fromEntries([...root.querySelectorAll('.op-tier-row')].map(r=>[r.dataset.tier,r.querySelector('.op-player-grid')?.scrollTop||0])):{};
   lastView=view;
   if(!guided)sync();const assigned=ROSTER.filter(n=>TIERS.includes(state.tiers[n])).length;
-  const action=tab==='roster'||guided||choosingMode?'':button('draft',state.teams.length?'다시 자동 드래프트':'자동 드래프트','class="op-primary" '+(!available()||draftRun?'disabled':''))+(draftRun?button('skip-draft','연출 건너뛰기','class="op-skip-draft"'):tab==='result'&&state.teams.length===4?button('copy-results','명단 복사'):'');
+  const action=tab==='command'||tab==='roster'||guided||choosingMode?'':button('draft',state.teams.length?'다시 자동 드래프트':'자동 드래프트','class="op-primary" '+(!available()||draftRun?'disabled':''))+(draftRun?button('skip-draft','연출 건너뛰기','class="op-skip-draft"'):tab==='result'&&state.teams.length===4?button('copy-results','명단 복사'):'');
   const scoreSpread=state.teams.length?Math.max(...state.teams.map(t=>teamStats(t,state.tiers).score))-Math.min(...state.teams.map(t=>teamStats(t,state.tiers).score)):null;
-  const status=notice||(saveFailed?'브라우저 저장 불가':missing.length?'연락처 미연결 '+missing.length+'명 · 관리자 설정이 필요합니다.':'');
+  const status=tab==='command'?'':notice||(saveFailed?'브라우저 저장 불가':missing.length?'연락처 미연결 '+missing.length+'명 · 관리자 설정이 필요합니다.':'');
   const previousTab=root.querySelector('.op-tabs [aria-pressed="true"]')?.getBoundingClientRect();
   clearHover();
-  root.innerHTML='<div class="op-shell'+(entering?' op-view-enter':'')+'" data-view="'+tab+'"><div class="op-toolbar"><span class="op-page-label">오퍼 M</span><nav class="op-tabs" aria-label="오퍼 M 도구">'+[['roster','참가자'],['tier','티어표'],['result','가상 드래프트']].map(([id,label])=>button('tab-'+id,label,'aria-pressed="'+(tab===id)+'"')).join('')+'</nav><div class="op-actions">'+(tab==='tier'&&!guided?'<span class="op-progress">'+assigned+' / 20</span>':tab==='result'&&!draftRun&&scoreSpread!==null?'<span class="op-progress">점수 차이 <b>'+scoreSpread+'</b></span>':'')+action+(canConfigure()?button('open-config','인물 설정','class="op-settings" aria-label="관리자 인물 설정"'):'')+'</div></div>'+(status?'<div class="op-status" role="status">'+esc(status)+'</div>':'')+(tab==='roster'?roster():tab==='tier'?(choosingMode?modeChoice():guided?guidedBoard():tierBoard()):results())+adminConfig()+'</div>';
+  root.innerHTML='<div class="op-shell'+(entering?' op-view-enter':'')+'" data-view="'+tab+'"><div class="op-toolbar"><span class="op-page-label">오퍼 M</span><nav class="op-command-tabs" aria-label="오퍼 M">'+button('tab-command','작전 현황','aria-pressed="'+(tab==='command')+'"')+button('tab-draft','기존 드래프트','aria-pressed="'+(tab!=='command')+'"')+'</nav>'+(tab==='command'?'':'<nav class="op-tabs" aria-label="기존 드래프트 도구">'+[['roster','참가자'],['tier','티어표'],['result','가상 드래프트']].map(([id,label])=>button('tab-'+id,label,'aria-pressed="'+(tab===id)+'"')).join('')+'</nav>')+'<div class="op-actions">'+(tab==='tier'&&!guided?'<span class="op-progress">'+assigned+' / 20</span>':tab==='result'&&!draftRun&&scoreSpread!==null?'<span class="op-progress">점수 차이 <b>'+scoreSpread+'</b></span>':'')+action+(canConfigure()?button('open-config','인물 설정','class="op-settings" aria-label="관리자 인물 설정"'):'')+'</div></div>'+(status?'<div class="op-status" role="status">'+esc(status)+'</div>':'')+(tab==='command'?commandView():tab==='roster'?roster():tab==='tier'?(choosingMode?modeChoice():guided?guidedBoard():tierBoard()):results())+adminConfig()+'</div>';
   for(const r of root.querySelectorAll('.op-tier-row')){const g=r.querySelector('.op-player-grid');if(g&&scrolls[r.dataset.tier])g.scrollTop=scrolls[r.dataset.tier]}
   updateSelection();
   if(guided&&root.querySelector('.op-single-stage'))refreshGuided();
@@ -555,7 +637,7 @@ function fitDraft(area,width,height,set){
 }
 function measureLayout(){
   if(!root.classList.contains('active'))return;
-  const area=root.querySelector('.op-teams,.op-board,.op-guided,.op-mode-choice,.op-roster');if(!area)return;
+  const area=root.querySelector('.op-command-workspace,.op-teams,.op-board,.op-guided,.op-mode-choice,.op-roster');if(!area)return;
   const rootRect=root.getBoundingClientRect(),scale=root.offsetWidth?rootRect.width/root.offsetWidth||1:1;
   const access=document.getElementById('mwsAccessTools'),accessRect=access?.getBoundingClientRect(),viewport=window.visualViewport;
   const viewportBottom=viewport?Math.min(innerHeight,viewport.offsetTop+viewport.height):innerHeight;
@@ -568,7 +650,7 @@ function measureLayout(){
   const layoutTop=el=>{let y=0;for(let e=el;e;e=e.offsetParent)y+=e.offsetTop;return y};
   const areaTop=rootTop+Math.max(0,(layoutTop(area)-layoutTop(root))*scale);
   const available=Math.max(180,(bottom-areaTop)/scale);
-  set('--op-available',available);
+  set('--op-available',available);if(area.classList.contains('op-command-workspace'))return;
   if(area.classList.contains('op-roster')){fitRoster(area,area.clientWidth,available,set);return}
   if(area.classList.contains('op-teams')){const cta=root.querySelector('.op-result-cta');fitDraft(area,area.clientWidth,Math.max(180,available-(cta?cta.offsetHeight+12:0)),set);return}
   if(area.classList.contains('op-mode-choice'))return;
@@ -594,7 +676,7 @@ function scheduleMeasure(){if(layoutFrame)cancelAnimationFrame(layoutFrame);layo
 window.addEventListener('resize',scheduleMeasure);
 window.visualViewport?.addEventListener('resize',scheduleMeasure);
 if(typeof ResizeObserver==='function'){let lastWidth=-1;const observer=new ResizeObserver(()=>{const width=root.getBoundingClientRect().width;if(root.classList.contains('active')&&Math.abs(width-lastWidth)>.5){lastWidth=width;scheduleMeasure()}});observer.observe(root);const main=root.closest('.main');if(main)observer.observe(main)}
-function signature(){return JSON.stringify(ROSTER.map(n=>{const c=current(n);return[c?.id,c?.name,c?.image]}).concat(state.roles.map(id=>{const c=byId.get(id);return[c?.id,c?.name,c?.image]})))}
+function signature(){return JSON.stringify(ROSTER.map(n=>{const c=current(n);return[c?.id,c?.name,c?.image]}).concat(state.roles.map(id=>{const c=byId.get(id);return[c?.id,c?.name,c?.image]}),ROSTER.map(n=>agentArt(n))))}
 function updateSelection(){
   root.querySelectorAll('.op-player[aria-pressed]').forEach(b=>{const on=b.dataset.opPlayer===selected,was=b.classList.contains('op-selected');b.classList.toggle('op-selected',on);b.setAttribute('aria-pressed',String(on));if(on!==was&&!reducedMotion()){b.querySelector('.op-card-front')?.animate?.(on?[{filter:'brightness(1.25)',transform:'scale(.97)'},{filter:'none',transform:'none'}]:[{opacity:.82},{opacity:1}],{duration:180,easing:'ease-out'})}});
   const board=root.querySelector('.op-board');if(board)board.classList.toggle('op-awaiting-drop',!!selected);
@@ -679,8 +761,8 @@ root.addEventListener('pointerleave',clearHover);
 root.addEventListener('scroll',clearHover,true);
 window.addEventListener('resize',clearHover);
 root.addEventListener('click',e=>{
-  const b=e.target.closest('button');if(b?.dataset.opCompleted){showTierMembers(b.dataset.opCompleted);return}if(b?.dataset.opAction==='close-tier-members'||e.target.classList.contains('op-tier-members')){root.querySelector('.op-tier-members')?.remove();root.querySelector('[data-op-completed="'+expandedTier+'"]')?.focus({preventScroll:true});expandedTier='';return}if(draftRun){const action=b?.dataset.opAction;if(action==='skip-draft'){finishDraft(true);return}if(!['tab-roster','tab-tier','tab-result'].includes(action))return;finishDraft(false)}if(b?.hasAttribute('data-op-draw')&&root.contains(b)){drawCard(Number(b.dataset.opDraw));return}if(!b||!root.contains(b)){const target=e.target.closest('.op-tier-row');if(target&&selected&&!rankLock)move(selected,target.dataset.tier);else if(e.target.closest('.op-pool')&&selected&&!rankLock)move(selected,'');return;}
-  if(guided&&['shuffle','draw','flip'].includes(deckPhase)&&!['choose-mode','exit-guided','tab-roster','tab-tier','tab-result','toggle-pause','skip-guided','reset'].includes(b.dataset.opAction))return;
+  const b=e.target.closest('button');if(b?.dataset.opAgent){const t=squadFor(b.dataset.opAgent);if(t&&!artBusy)goCommand(t.id,b.dataset.opAgent);return}if(b?.dataset.opSquad){if(!artBusy)goCommand(b.dataset.opSquad);return}if(b?.dataset.opCompleted){showTierMembers(b.dataset.opCompleted);return}if(b?.dataset.opAction==='close-tier-members'||e.target.classList.contains('op-tier-members')){root.querySelector('.op-tier-members')?.remove();root.querySelector('[data-op-completed="'+expandedTier+'"]')?.focus({preventScroll:true});expandedTier='';return}if(draftRun){const action=b?.dataset.opAction;if(action==='skip-draft'){finishDraft(true);return}if(!['tab-command','tab-draft','tab-roster','tab-tier','tab-result'].includes(action))return;finishDraft(false)}if(b?.hasAttribute('data-op-draw')&&root.contains(b)){drawCard(Number(b.dataset.opDraw));return}if(!b||!root.contains(b)){const target=e.target.closest('.op-tier-row');if(target&&selected&&!rankLock)move(selected,target.dataset.tier);else if(e.target.closest('.op-pool')&&selected&&!rankLock)move(selected,'');return;}
+  if(guided&&['shuffle','draw','flip'].includes(deckPhase)&&!['choose-mode','exit-guided','tab-command','tab-draft','tab-roster','tab-tier','tab-result','toggle-pause','skip-guided','reset'].includes(b.dataset.opAction))return;
   const n=b.dataset.opPlayer;
   if(n){if(b.dataset.opResult||tab!=='tier'||!current(n))return;selected=selected===n?'':n;notice='';updateSelection();return}
   if(b.hasAttribute('data-op-tier')){if(selected)move(selected,b.dataset.opTier);return}
@@ -697,8 +779,12 @@ root.addEventListener('click',e=>{
   if(b.dataset.opAssign){if(e.detail<=1)confirmRank(b.dataset.opAssign,b);return}
   if(rankLock&&b.dataset.opAction==='skip-guided'){skipGuidedMotion();return}
   if(rankLock&&b.dataset.opAction==='toggle-pause'){paused=!paused;b.textContent=paused?'계속 진행':'일시정지';b.setAttribute('aria-pressed',String(paused));return}
-  if(rankLock&&b.dataset.opAction!=='reset'){if(!['choose-mode','exit-guided','tab-roster','tab-tier','tab-result'].includes(b.dataset.opAction))return;clearRankMotion();rankLock=false;deckPhase='pick';}
+  if(rankLock&&b.dataset.opAction!=='reset'){if(!['choose-mode','exit-guided','tab-command','tab-draft','tab-roster','tab-tier','tab-result'].includes(b.dataset.opAction))return;clearRankMotion();rankLock=false;deckPhase='pick';}
   switch(b.dataset.opAction){
+    case 'tab-command':if(!artBusy)goCommand();break;
+    case 'command-back':if(!artBusy)goCommand();break;
+    case 'command-team-back':if(!artBusy)goCommand(activeSquad);break;
+    case 'tab-draft':if(artBusy)break;stopShuffle();clearRankMotion();rankLock=false;choosingMode=false;guided=false;tab='roster';selected='';notice='';render();break;
     case 'choose-mode':chooseMode(e.detail===0);break;
     case 'start-guided':lastMove=null;startGuided();break;
     case 'shuffle-guided':if(guided&&['pick','reveal'].includes(deckPhase))shuffleDeck();break;
@@ -722,8 +808,9 @@ root.addEventListener('click',e=>{
     case 'close-copy':root.querySelector('.op-copy-overlay')?.remove();root.querySelector('[data-op-action="copy-results"]')?.focus({preventScroll:true});break;
   }
 });
+root.addEventListener('change',e=>{const n=e.target.dataset?.opAgentUpload;if(n)void saveAgentImage(n,e.target.files?.[0])});
 root.addEventListener('error',e=>{if(e.target instanceof HTMLImageElement)e.target.style.visibility='hidden'},true);
-root.addEventListener('keydown',e=>{if(e.key==='Escape'&&root.querySelector('.op-tier-members')){root.querySelector('.op-tier-members')?.remove();root.querySelector('[data-op-completed="'+expandedTier+'"]')?.focus({preventScroll:true});expandedTier=''}else if(e.key==='Escape'&&root.querySelector('.op-copy-overlay')){root.querySelector('.op-copy-overlay')?.remove();root.querySelector('[data-op-action="copy-results"]')?.focus({preventScroll:true})}else if(e.key==='Escape'&&dragName){clearDrag(true)}else if(e.key==='Escape'&&picker){picker='';query='';render()}else if(e.key==='Escape'&&configDraft&&!configSaving){configDraft=null;notice='';render()}else if(e.key==='Escape'&&selected){selected='';updateSelection()}});
+root.addEventListener('keydown',e=>{if(e.key==='Escape'&&root.querySelector('.op-tier-members')){root.querySelector('.op-tier-members')?.remove();root.querySelector('[data-op-completed="'+expandedTier+'"]')?.focus({preventScroll:true});expandedTier=''}else if(e.key==='Escape'&&root.querySelector('.op-copy-overlay')){root.querySelector('.op-copy-overlay')?.remove();root.querySelector('[data-op-action="copy-results"]')?.focus({preventScroll:true})}else if(e.key==='Escape'&&dragName){clearDrag(true)}else if(e.key==='Escape'&&picker){picker='';query='';render()}else if(e.key==='Escape'&&configDraft&&!configSaving){configDraft=null;notice='';render()}else if(e.key==='Escape'&&tab==='command'&&!artBusy&&(activeAgent||activeSquad)){goCommand(activeAgent?activeSquad:'')}else if(e.key==='Escape'&&selected){selected='';updateSelection()}});
 window.addEventListener('keydown',e=>{if(!root.classList.contains('active')||!guided||deckPhase!=='reveal'||rankLock||configDraft||root.querySelector('.op-tier-members')||e.repeat||e.ctrlKey||e.altKey||e.metaKey||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||'')||e.target?.isContentEditable)return;const i=Number(e.key)-1;if(/^[1-5]$/.test(e.key)&&TIERS[i]){e.preventDefault();root.querySelector('[data-op-assign="'+TIERS[i]+'"]')?.click()}});
 root.addEventListener('input',e=>{
   if(!e.target.hasAttribute('data-op-search'))return;
@@ -739,8 +826,8 @@ root.addEventListener('dragover',e=>{const r=e.target.closest('[data-op-drop]');
 root.addEventListener('drop',e=>{const r=e.target.closest('[data-op-drop]');if(!r||!dragName)return;e.preventDefault();const n=dragName,t=r.dataset.opDrop;clearDrag(false);move(n,t)});
 root.addEventListener('dragleave',e=>{const r=e.target.closest('[data-op-drop]');if(r&&!r.contains(e.relatedTarget))r.classList.remove('op-drop-active')});
 root.addEventListener('dragend',()=>clearDrag(!!dragName));
-window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{clearHover();finishDraft(false);stopShuffle();clearDrag(false);clearRankMotion();rankLock=false;tab='roster';choosingMode=false;guided=false;selected='';picker='';configDraft=null}});
-window.addEventListener('mws:app-ready',()=>{if(guided&&workspaceReady&&root.classList.contains('active'))return;finishDraft(false);stopShuffle();clearRankMotion();rankLock=false;guided=false;choosingMode=false;tab='roster';workspaceReady=false;configDraft=null;picker='';if(root.classList.contains('active'))void enter()});
+window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{clearHover();finishDraft(false);stopShuffle();clearDrag(false);clearRankMotion();rankLock=false;tab='command';activeAgent='';activeSquad='';choosingMode=false;guided=false;selected='';picker='';configDraft=null}});
+window.addEventListener('mws:app-ready',()=>{if(guided&&workspaceReady&&root.classList.contains('active'))return;finishDraft(false);stopShuffle();clearRankMotion();rankLock=false;guided=false;choosingMode=false;tab='command';activeAgent='';activeSquad='';workspaceReady=false;configDraft=null;picker='';if(root.classList.contains('active'))void enter()});
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){clearHover();if(draftRun)finishDraft(true);return}
   if(guided&&!paused&&deckPhase==='pick'&&!rankLock)drawCard(0);
