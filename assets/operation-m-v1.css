@@ -1,7 +1,7 @@
 /* Operation M is isolated from the shared tools and calendar layouts. */
-#operationM{--op-metal-edge:#8297a6;--op-metal-housing:linear-gradient(145deg,#344450,#121c24 68%);--op-modal-shadow:inset 0 1px #ffffff38,inset 0 -3px #0009,0 20px 65px #000c;--op-motion-fast:180ms;--op-ease:cubic-bezier(.2,.8,.2,1);--op-focus:#b9d7e8;min-width:0;--op-s:#fbdc9d;--op-a:#eab34e;--op-b:#bc93ff;--op-c:#75baff;--op-d:#b6bfce;--op-u:#858b9c}
+#operationM{--op-metal-edge:#8297a6;--op-metal-housing:linear-gradient(145deg,#344450,#121c24 68%);--op-modal-shadow:inset 0 1px #ffffff38,inset 0 -3px #0009,0 20px 65px #000c;--op-motion-fast:180ms;--op-ease:cubic-bezier(.2,.8,.2,1);--op-focus:#b9d7e8;--op-panel-edge:#50616d;--op-panel-depth:linear-gradient(145deg,#27333f,#141c25 45%,#0e151c);--op-control-face:linear-gradient(170deg,#29343e,#141c24);--op-control-hover:linear-gradient(165deg,#3b4955,#19232c);--op-control-glint:inset 0 1px #ffffff25;--op-panel-shadow:inset 0 1px #ffffff17,inset 0 -3px #0008,0 5px 14px #0006;--op-active-accent:#e25e64;--op-commander-scale:1;--op-commander-lift:.025;--op-portrait-lift:.04;--op-arrow-shift:3px;min-width:0;--op-s:#fbdc9d;--op-a:#eab34e;--op-b:#bc93ff;--op-c:#75baff;--op-d:#b6bfce;--op-u:#858b9c}
 #operationM [data-tier="S"]{--tier:var(--op-s)}#operationM [data-tier="A"]{--tier:var(--op-a)}#operationM [data-tier="B"]{--tier:var(--op-b)}#operationM [data-tier="C"]{--tier:var(--op-c)}#operationM [data-tier="D"]{--tier:var(--op-d)}#operationM [data-tier="U"]{--tier:var(--op-u)}
-#operationM .op-shell{max-width:none;margin:0;padding:0 0 14px;display:grid;gap:8px;min-width:0}
+#operationM .op-shell{max-width:none;margin:0;padding:0 0 14px;display:grid;min-width:0}
 
 #operationM .op-actions,#operationM .op-tabs{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 #operationM button:not(.op-player):not(.op-tier-label):not(.op-guide-rank):not(.op-empty):not(.op-mode-card):not(.op-deck-card){border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:9px;padding:9px 13px;line-height:1.4;font-size:13px;min-width:0;min-height:0;box-shadow:none;cursor:pointer;transition:background .15s,transform .15s,border-color .15s}
@@ -36,15 +36,15 @@
 #operationM .op-block-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
 #operationM .op-block-head h2{margin:0;font-size:15px;line-height:1.35;font-weight:750}
 #operationM .op-block-head h2 small{font-size:12px;color:var(--muted);font-weight:500;margin-left:5px}
-#operationM .op-roster{display:grid;gap:10px;min-width:0}
+#operationM .op-roster{display:grid;min-width:0}
 #operationM .op-host{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
 #operationM .op-host .op-portrait{width:30px;flex:none}
 #operationM .op-coaches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;min-width:0}
-#operationM .op-coach{--team:#739bff;position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr);gap:0;padding:4px;min-width:0;border:1px solid transparent;border-radius:12px;background:linear-gradient(145deg,#252c39,#121722) padding-box,linear-gradient(130deg,color-mix(in srgb,var(--team) 65%,white),#242a35 40%,var(--team) 77%,#d7e1f0) border-box;box-shadow:0 6px 17px #0005,inset 0 0 0 1px #ffffff12;transition:transform .22s ease,box-shadow .22s ease}
+#operationM .op-coach{--team:#739bff;position:relative;isolation:isolate;grid-template-columns:minmax(0,1fr);gap:0;padding:4px;min-width:0;border:1px solid transparent;border-radius:12px;background:linear-gradient(145deg,#252c39,#121722) padding-box,linear-gradient(130deg,color-mix(in srgb,var(--team) 65%,white),#242a35 40%,var(--team) 77%,#d7e1f0) border-box;box-shadow:0 6px 17px #0005,inset 0 0 0 1px #ffffff12;transition:transform .22s ease,box-shadow .22s ease}
 #operationM .op-coach[data-team="1"]{--team:#ed8296}#operationM .op-coach[data-team="2"]{--team:#69caa4}#operationM .op-coach[data-team="3"]{--team:#e8bb65}
-#operationM .op-coach .op-portrait{width:100%;height:clamp(92px,10.5cqw,218px);aspect-ratio:auto;border-radius:8px 8px 3px 3px;outline:1px solid color-mix(in srgb,var(--team) 55%,transparent)}
+#operationM .op-coach .op-portrait{height:clamp(92px,10.5cqw,218px);aspect-ratio:auto;border-radius:8px 8px 3px 3px;outline:1px solid color-mix(in srgb,var(--team) 55%,transparent)}
 #operationM .op-coach .op-portrait img{object-position:50% 33%}
-#operationM .op-coach-plate{position:relative;z-index:2;min-width:0;display:grid;justify-items:center;align-items:center;min-height:29px;padding:5px 10px;border-top:1px solid var(--team);background:linear-gradient(180deg,color-mix(in srgb,var(--team) 25%,#252e3d),#141923);border-radius:0 0 7px 7px}
+#operationM .op-coach-plate{position:relative;z-index:2;display:grid;justify-items:center;align-items:center;min-height:29px;padding:5px 10px;border-top:1px solid var(--team);background:linear-gradient(180deg,color-mix(in srgb,var(--team) 25%,#252e3d),#141923);border-radius:0 0 7px 7px}
 #operationM .op-coach strong{display:block;max-width:100%;font-size:clamp(13px,1.25cqw,21px);line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#f5f6fa;text-shadow:0 1px 3px #000}
 #operationM .op-coach-frame{position:absolute;inset:4px;z-index:3;pointer-events:none;overflow:hidden;border-radius:8px}
 #operationM .op-coach-frame i{position:absolute;width:14%;height:18%;border:0 solid var(--team);filter:drop-shadow(0 0 3px var(--team))}
@@ -83,7 +83,7 @@
 body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){display:none!important}
 #operationM{container-type:inline-size;--op-available:70dvh;--op-team-card:clamp(78px,calc((var(--op-available) - 190px)/2),245px)}
 
-#operationM .op-page-label{font-size:15px;font-weight:800;white-space:nowrap;margin-right:5px}
+#operationM .op-page-label{font-size:15px;font-weight:800;margin-right:5px}
 #operationM .op-actions{margin-left:auto}
 
 #operationM .op-progress{white-space:nowrap}
@@ -98,13 +98,13 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-pool .op-player{max-width:none;min-width:0}
 #operationM .op-pool.op-drop-active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 15%,var(--panel))}
 #operationM .op-board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;min-width:0;align-items:stretch;height:max(300px,var(--op-available,60dvh));min-height:0}
-#operationM .op-tier-row{position:relative;display:grid;grid-template-rows:auto minmax(0,1fr);min-width:0;min-height:0;gap:9px;padding:9px;border:1px solid color-mix(in srgb,var(--tier) 55%,var(--border));border-radius:14px;background:linear-gradient(155deg,color-mix(in srgb,var(--tier) 13%,var(--panel)),var(--panel) 60%);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--tier) 30%,transparent),0 6px 18px #0003;transition:background .18s,border-color .18s,box-shadow .18s}
+#operationM .op-tier-row{position:relative;display:grid;min-height:0;border:1px solid color-mix(in srgb,var(--tier) 55%,var(--border));border-radius:14px;background:linear-gradient(155deg,color-mix(in srgb,var(--tier) 13%,var(--panel)),var(--panel) 60%);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--tier) 30%,transparent),0 6px 18px #0003;transition:background .18s,border-color .18s,box-shadow .18s}
 #operationM .op-tier-label,#operationM button.op-guide-rank{position:relative;display:flex;align-items:center;justify-content:space-between;gap:5px;padding:9px 12px;min-height:57px;border:1px solid color-mix(in srgb,var(--tier) 80%,white);border-radius:9px;background:linear-gradient(145deg,color-mix(in srgb,var(--tier) 72%,white),var(--tier) 56%,color-mix(in srgb,var(--tier) 72%,#202029));color:#202029;box-shadow:0 4px 14px color-mix(in srgb,var(--tier) 22%,transparent),inset 0 1px 0 #ffffff70;cursor:pointer;transition:filter .16s,transform .16s}
 #operationM .op-tier-label:hover,#operationM button.op-guide-rank:hover{filter:brightness(1.13);transform:translateY(-3px)}
 #operationM .op-tier-label strong,#operationM .op-guide-rank strong{font-size:34px;font-weight:900;line-height:1;letter-spacing:-.04em;text-shadow:0 1px 0 #ffffff50}
 #operationM .op-tier-label small,#operationM .op-guide-rank small{font-size:11px;font-weight:800;white-space:nowrap}
 
-#operationM .op-tier-row .op-player-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-content:start;align-items:start;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;padding:3px;scrollbar-gutter:auto}
+#operationM .op-tier-row .op-player-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-content:start;align-items:start;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;padding:3px;scrollbar-gutter:auto}
 #operationM .op-tier-row .op-player{width:100%;justify-self:center}
 
 #operationM .op-tier-row.op-drop-active{border-color:var(--tier);background:color-mix(in srgb,var(--tier) 25%,var(--panel));box-shadow:0 0 20px color-mix(in srgb,var(--tier) 40%,transparent)}
@@ -116,14 +116,14 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 
 #operationM .op-arrived{animation:op-arrival .35s ease both}
 @keyframes op-arrival{0%{transform:scale(.86);opacity:.55}65%{transform:scale(1.04);opacity:1}100%{transform:none;opacity:1}}
-#operationM .op-teams{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:start;min-width:0}
-#operationM .op-team{--team:#739bff;min-width:0;border:1px solid color-mix(in srgb,var(--team) 65%,var(--border));border-radius:14px;overflow:hidden;background:linear-gradient(165deg,color-mix(in srgb,var(--team) 9%,var(--panel)),var(--panel) 45%);box-shadow:0 7px 20px #0003}
+#operationM .op-teams{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:start;min-width:0}
+#operationM .op-team{--team:#739bff;border:1px solid color-mix(in srgb,var(--team) 65%,var(--border));border-radius:14px;overflow:hidden;background:linear-gradient(165deg,color-mix(in srgb,var(--team) 9%,var(--panel)),var(--panel) 45%);box-shadow:0 7px 20px #0003}
 #operationM .op-team[data-team="1"]{--team:#ed8296}#operationM .op-team[data-team="2"]{--team:#69caa4}#operationM .op-team[data-team="3"]{--team:#e8bb65}
 #operationM .op-team header{display:grid;grid-template-columns:clamp(44px,4cqw,70px) minmax(0,1fr) auto;align-items:center;gap:9px;padding:9px;background:linear-gradient(135deg,color-mix(in srgb,var(--team) 22%,var(--panel)),var(--panel));border-bottom:2px solid var(--team)}
 #operationM .op-team header div{min-width:0;display:grid;gap:3px}
 #operationM .op-team header strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(14px,1.3cqw,22px)}
 #operationM .op-team header b{font-size:clamp(16px,1.5cqw,24px);color:var(--team);white-space:nowrap}
-#operationM .op-team-players{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;padding:5px;justify-items:center}
+#operationM .op-team-players{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;padding:5px;}
 #operationM .op-team-players .op-player,#operationM .op-team-slot{grid-column:span 2;width:100%;max-width:var(--op-team-card);min-width:0;cursor:default}
 #operationM .op-team-players>:nth-child(4){grid-column:2/span 2}#operationM .op-team-players>:nth-child(5){grid-column:4/span 2}
 #operationM .op-team footer{display:flex;justify-content:center;gap:5px;flex-wrap:wrap;border-top:1px solid var(--border);padding:8px}
@@ -133,14 +133,14 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-guided-top{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:750}
 #operationM .op-guided-track{height:6px;background:var(--input);flex:1;border-radius:8px;overflow:hidden}
 #operationM .op-guided-track i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,var(--accent),#b98aff);transition:width .25s}
-#operationM .op-guided-stage{display:grid;place-items:center;min-height:0;padding:8px}
+#operationM .op-guided-stage{display:grid;place-items:center;padding:8px}
 #operationM .op-reveal-card{display:grid;width:min(100%,clamp(165px,calc(var(--op-available) - 198px),440px));gap:10px;padding:9px;border:1px solid color-mix(in srgb,var(--accent) 65%,var(--border));border-radius:17px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 20%,var(--panel)),var(--panel));box-shadow:0 12px 42px #0005,0 0 26px color-mix(in srgb,var(--accent) 24%,transparent);animation:none}
 #operationM .op-reveal-card .op-portrait{border-radius:12px}
 #operationM .op-guided-ranks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
 #operationM button.op-guide-rank{display:flex;flex-direction:column;min-height:76px;justify-content:center}
 #operationM button.op-guide-rank:hover{background:linear-gradient(145deg,color-mix(in srgb,var(--tier) 72%,white),var(--tier));border-color:var(--tier);box-shadow:0 0 23px color-mix(in srgb,var(--tier) 40%,transparent)}
 @container(max-width:1000px){#operationM .op-board{gap:7px}#operationM .op-tier-row{padding:6px;gap:6px}#operationM .op-tier-label{padding:7px;min-height:46px}#operationM .op-tier-label strong{font-size:26px}#operationM .op-tier-row .op-player-grid{gap:5px}}
-@container(max-width:800px){#operationM .op-teams{grid-template-columns:repeat(2,minmax(0,1fr))}#operationM .op-team-players .op-player{max-width:none}#operationM .op-tier-row .op-player-grid{min-height:76px;scrollbar-gutter:auto}#operationM .op-pool .op-player-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@container(max-width:800px){#operationM .op-teams{grid-template-columns:repeat(2,minmax(0,1fr))}#operationM .op-team-players .op-player{max-width:none}#operationM .op-tier-row .op-player-grid{min-height:76px;scrollbar-gutter:auto}}
 @media(max-width:760px){#operationM .op-config-roles,#operationM .op-config-players{grid-template-columns:repeat(2,minmax(0,1fr))}#operationM .op-guided{padding:6px;min-height:0}#operationM .op-guided-ranks{gap:5px}#operationM button.op-guide-rank{padding:6px;min-height:66px}#operationM .op-guide-rank strong{font-size:27px}}
 
 
@@ -158,7 +158,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 
 #operationM .op-card{position:relative;isolation:isolate;overflow:hidden;border:2px solid transparent;padding:6px;background:linear-gradient(155deg,var(--dark),var(--input)) padding-box,var(--foil) border-box;box-shadow:0 5px 12px #0005,0 0 13px color-mix(in srgb,var(--glow) 22%,transparent)}
 #operationM .op-card .op-portrait{outline:1px solid color-mix(in srgb,var(--tier) 65%,transparent);border-radius:5px}
-#operationM .op-card .op-player-name{position:relative;z-index:3;color:var(--tier);font-weight:800;text-shadow:0 1px 3px #000;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--dark) 88%,transparent),transparent)}
+#operationM .op-card .op-player-name{position:relative;z-index:3;font-weight:800;text-shadow:0 1px 3px #000;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--dark) 88%,transparent),transparent)}
 #operationM .op-rarity-art{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden;border-radius:inherit}
 #operationM .op-rarity-art i{position:absolute;width:19%;height:19%;border:0 solid var(--tier);filter:drop-shadow(0 0 3px var(--glow))}
 #operationM .op-rarity-art i:nth-child(1){left:3px;top:3px;border-top-width:2px;border-left-width:2px}
@@ -263,7 +263,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-guided{width:min(100%,1000px);margin:0 auto;min-height:0;height:auto;gap:10px;padding:10px 16px 12px}
 #operationM .op-guided-count{font-size:17px;font-variant-numeric:tabular-nums;white-space:nowrap}
 #operationM .op-guided-top{gap:9px}
-#operationM .op-guided-stage{position:relative;isolation:isolate;overflow:hidden;min-height:0;padding:16px;border-radius:18px;background:radial-gradient(ellipse at 50% 52%,#9d76ff18,transparent 66%),linear-gradient(150deg,#ffffff04,transparent 75%)}
+#operationM .op-guided-stage{position:relative;isolation:isolate;overflow:hidden;padding:16px;border-radius:18px;background:radial-gradient(ellipse at 50% 52%,#9d76ff18,transparent 66%),linear-gradient(150deg,#ffffff04,transparent 75%)}
 #operationM .op-stage-halo{position:absolute;z-index:-1;left:50%;top:50%;width:min(85%,650px);height:80%;transform:translate(-50%,-50%);background:radial-gradient(ellipse,#9d75ff24,transparent 65%);pointer-events:none}
 #operationM .op-reveal-card{width:min(100%,var(--op-guided-card,340px));transform-origin:50% 55%;isolation:isolate}
 #operationM .op-reveal-card[data-rarity="holo"] .op-confirm-rank{box-shadow:0 0 28px #d3afff99,0 6px 20px #0008}
@@ -322,8 +322,8 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 @container(max-width:480px){
   #operationM .op-tier-row .op-player-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   #operationM .op-tier-row{--op-narrow-card-max:160px}
-  #operationM .op-teams{grid-template-columns:minmax(0,1fr)}
-  #operationM .op-team header{grid-template-columns:52px minmax(0,1fr) auto;padding:9px;gap:8px}
+  
+  #operationM .op-team header{padding:9px;gap:8px}
   #operationM .op-team header b{grid-column:auto;font-size:19px}
   #operationM .op-team header strong{font-size:17px}
   #operationM .op-team-players{grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:10px}
@@ -411,7 +411,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 /* Roster: the actual available width determines card count, not the monitor. */
 @container(max-width:1100px){#operationM .op-roster-grid{gap:8px}}
 @container(max-width:960px){#operationM .op-roster-grid{grid-template-columns:repeat(8,minmax(0,1fr))}}
-@container(max-width:760px){#operationM .op-roster-grid{grid-template-columns:repeat(5,minmax(0,1fr))}#operationM .op-coaches{gap:9px;grid-template-columns:repeat(2,minmax(0,1fr))}#operationM .op-coach .op-portrait{height:clamp(100px,23cqw,160px)}}
+@container(max-width:760px){#operationM .op-roster-grid{grid-template-columns:repeat(5,minmax(0,1fr))}#operationM .op-coaches{gap:9px;}#operationM .op-coach .op-portrait{height:clamp(100px,23cqw,160px)}}
 @container(max-width:480px){#operationM .op-roster-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}#operationM .op-coach .op-portrait{height:clamp(92px,25cqw,125px)}#operationM .op-coach-plate{padding:4px 6px}}
 @container(max-width:320px){#operationM .op-roster-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 #operationM .op-view-enter .op-coach{animation:op-coach-arrive .28s calc(var(--op-order,0)*45ms) ease-out both}
@@ -426,16 +426,16 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-tabs button[aria-pressed="true"]{box-shadow:inset 0 1px 0 #ffffff40,0 2px 6px #0002}
 
 /* Tier mode chooser: equal-sized large controls with self-contained motion previews. */
-#operationM .op-mode-choice{width:min(100%,1080px);margin:clamp(12px,3cqw,42px) auto 12px;display:grid;gap:15px;min-width:0}
-#operationM .op-mode-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(12px,2cqw,25px);min-width:0}
-#operationM button.op-mode-card{position:relative;isolation:isolate;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:0;min-width:0;padding:0;overflow:hidden;text-align:center;color:var(--text);border:1px solid color-mix(in srgb,var(--accent) 30%,var(--border));border-radius:18px;background:linear-gradient(150deg,var(--panel2,var(--panel)),var(--panel));box-shadow:0 8px 22px #0004;cursor:pointer;transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s,border-color .22s,opacity .22s}
+#operationM .op-mode-choice{width:min(100%,1080px);margin:clamp(12px,3cqw,42px) auto 12px;gap:15px;min-width:0}
+#operationM .op-mode-options{display:grid;gap:clamp(12px,2cqw,25px);min-width:0}
+#operationM button.op-mode-card{position:relative;isolation:isolate;display:grid;gap:0;min-width:0;padding:0;overflow:hidden;text-align:center;color:var(--text);border:1px solid color-mix(in srgb,var(--accent) 30%,var(--border));border-radius:18px;background:linear-gradient(150deg,var(--panel2,var(--panel)),var(--panel));box-shadow:0 8px 22px #0004;cursor:pointer;transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s,border-color .22s,opacity .22s}
 #operationM .op-mode-card[data-mode="guided"]{--op-mode-accent:#c5a3ff;--op-mode-light:#7560be}
 #operationM .op-mode-card[data-mode="list"]{--op-mode-accent:#8edbdc;--op-mode-light:#3c8796}
 #operationM .op-mode-card::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse at 50% 35%,color-mix(in srgb,var(--op-mode-light) 34%,transparent),transparent 72%);pointer-events:none}
 #operationM .op-mode-card:focus-visible{outline:2px solid var(--op-mode-accent);outline-offset:4px}
 #operationM .op-mode-card:active{transform:scale(.98);border-color:var(--op-mode-accent)}
 #operationM .op-mode-preview{position:relative;display:grid;place-items:center;min-height:clamp(184px,25cqw,330px);overflow:hidden;perspective:750px;padding:14px}
-#operationM .op-mode-caption{display:grid;gap:6px;justify-items:center;padding:18px 10px 20px;border-top:1px solid color-mix(in srgb,var(--op-mode-accent) 18%,var(--border));background:linear-gradient(180deg,#0000,#0002)}
+#operationM .op-mode-caption{display:grid;justify-items:center;padding:18px 10px 20px;border-top:1px solid color-mix(in srgb,var(--op-mode-accent) 18%,var(--border));background:linear-gradient(180deg,#0000,#0002)}
 #operationM .op-mode-caption strong{font-size:clamp(17px,2cqw,26px);line-height:1.25;letter-spacing:-.03em}
 #operationM .op-mode-caption>span{font-size:clamp(11px,1.1cqw,14px);line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
 #operationM .op-mode-back{display:flex;justify-content:center}
@@ -471,7 +471,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 }
 #operationM .op-view-enter .op-mode-choice,#operationM .op-view-enter .op-tier-workspace,#operationM .op-view-enter .op-guided{animation:op-view-arrive .18s ease-out both}
 @keyframes op-view-arrive{from{opacity:.72}to{opacity:1}}
-@container(max-width:600px){#operationM .op-mode-choice{margin:10px auto;gap:10px}#operationM .op-mode-options{gap:12px;grid-template-columns:minmax(0,1fr)}#operationM .op-mode-preview{min-height:172px;padding:8px}#operationM .op-preview-board{height:150px}#operationM .op-preview-stack{width:145px;padding-bottom:135px}#operationM .op-mode-caption{padding:12px 8px 14px}}
+@container(max-width:600px){#operationM .op-mode-choice{margin:10px auto;gap:10px}#operationM .op-mode-preview{min-height:172px;padding:8px}#operationM .op-preview-board{height:150px}#operationM .op-preview-stack{width:145px;padding-bottom:135px}#operationM .op-mode-caption{padding:12px 8px 14px}}
 @media(prefers-reduced-motion:reduce){#operationM .op-mode-card,#operationM .op-coach{transform:none!important}#operationM .op-mode-options .op-mode-card{opacity:1!important}}
 
 /* Board interactions keep the original node and its cached portrait. */
@@ -506,7 +506,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-deck-remaining{display:block;text-align:center;color:var(--muted);font-size:11px;line-height:1.2;font-variant-numeric:tabular-nums}
 #operationM .op-deck-reserve{position:absolute;left:calc(50% + min(21%,130px));top:50%;width:clamp(42px,9cqw,100px);aspect-ratio:3/4;transform:translate(-50%,-50%);pointer-events:none;z-index:-1}
 #operationM .op-deck-reserve>span{position:absolute;inset:0;border-radius:8px;transform:translate(calc(var(--op-i)*7px),calc(var(--op-i)*-2px)) rotate(calc(var(--op-i)*4deg))}
-@container(max-width:600px){#operationM .op-guided-stage{padding:5px}#operationM .op-deck-pick{grid-template-columns:repeat(auto-fit,minmax(47px,1fr));gap:5px;padding:8px 4px}#operationM .op-deck-controls{gap:4px}#operationM .op-deck-controls button{font-size:11px;padding:6px 7px}#operationM .op-deck-shuffling .op-deck-card{width:70px}}
+@container(max-width:600px){#operationM .op-guided-stage{padding:5px}#operationM .op-deck-pick{gap:5px;padding:8px 4px}#operationM .op-deck-controls{gap:4px}#operationM .op-deck-controls button{font-size:11px;padding:6px 7px}#operationM .op-deck-shuffling .op-deck-card{width:70px}}
 @media(prefers-reduced-motion:reduce){#operationM .op-deck-card,#operationM .op-deck-card:hover{transform:none!important}}
 
 /* Guided rank confirmation: button energy, material change, flight to classified tray. */
@@ -556,13 +556,13 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 @media(prefers-reduced-motion:reduce){#operationM .op-rank-beam:not(.op-motion-full *),#operationM .op-draft-layer{display:none!important}}
 
 /* Result panels keep portraits in a 3+2 formation, with compact rank counts. */
-#operationM .op-teams{gap:10px;align-items:stretch}
-#operationM .op-team{position:relative;isolation:isolate;display:grid;grid-template-rows:auto 1fr auto;border:1px solid transparent;border-radius:13px;background:linear-gradient(160deg,color-mix(in srgb,var(--team) 10%,var(--panel)),var(--panel) 52%) padding-box,linear-gradient(135deg,color-mix(in srgb,var(--team) 78%,white),#333946 42%,var(--team)) border-box;box-shadow:0 7px 20px #0004,inset 0 0 0 1px #ffffff0d}
+#operationM .op-teams{gap:10px;}
+#operationM .op-team{display:grid;grid-template-rows:auto 1fr auto;border:1px solid transparent;border-radius:13px;background:linear-gradient(160deg,color-mix(in srgb,var(--team) 10%,var(--panel)),var(--panel) 52%) padding-box,linear-gradient(135deg,color-mix(in srgb,var(--team) 78%,white),#333946 42%,var(--team)) border-box;box-shadow:0 7px 20px #0004,inset 0 0 0 1px #ffffff0d}
 #operationM .op-team header{grid-template-columns:clamp(44px,4.7cqw,80px) minmax(0,1fr) auto;gap:7px;padding:7px;border-bottom:1px solid color-mix(in srgb,var(--team) 70%,transparent);background:linear-gradient(145deg,color-mix(in srgb,var(--team) 22%,var(--panel)),var(--panel))}
 #operationM .op-team header .op-portrait{outline:1px solid var(--team);box-shadow:0 2px 6px #0006}
-#operationM .op-team header strong{font-size:clamp(13px,1.25cqw,21px);line-height:1.3;min-width:0}
+#operationM .op-team header strong{font-size:clamp(13px,1.25cqw,21px);line-height:1.3;}
 #operationM .op-team header b{position:relative;display:block;min-width:0;line-height:1.3;font-size:clamp(16px,1.6cqw,26px);font-variant-numeric:tabular-nums;text-shadow:0 1px 2px #0006}
-#operationM .op-team-players{align-content:center}
+
 #operationM .op-team-players .op-player.op-card{padding:3px}
 #operationM .op-team-players .op-player-name{font-size:clamp(10px,1cqw,16px);padding:2px 1px}
 #operationM .op-team-players .op-chip{font-size:11px;min-width:19px;height:19px;padding:1px 3px;gap:1px;top:2px;left:2px}
@@ -583,7 +583,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 @container(max-width:480px){#operationM .op-teams{grid-template-columns:minmax(0,1fr)}#operationM .op-team-players{padding:8px;gap:7px}#operationM .op-team-players .op-player,#operationM .op-team-slot{max-width:none}#operationM .op-team header{grid-template-columns:52px minmax(0,1fr) auto}#operationM .op-team footer>span{padding:4px 2px;font-size:11px}}
 /* Consistent, restrained feedback for controls without altering their geometry. */
 #operationM .op-tabs{position:relative}
-#operationM .op-tab-travel{position:absolute;height:3px;border-radius:4px;background:#e3d8ff;box-shadow:0 0 6px #a98aff;pointer-events:none;z-index:3;transform-origin:left}
+#operationM .op-tab-travel{position:absolute;height:3px;border-radius:4px;background:#ffd5d7;box-shadow:0 0 6px var(--op-active-accent);pointer-events:none;z-index:3;transform-origin:left}
 #operationM button:not(:disabled){-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 #operationM button:not(:disabled):active{filter:brightness(1.12)}
 #operationM button:not(.op-player):not(.op-tier-label):not(.op-guide-rank):not(.op-empty):not(.op-mode-card):not(.op-deck-card):active:not(:disabled){transform:translateY(1px) scale(.98)}
@@ -632,7 +632,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-single-stage .op-guided-stage{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(100px,.8fr) minmax(0,2.3fr) minmax(135px,1fr);align-items:center;justify-items:stretch;gap:clamp(12px,2cqw,34px);height:var(--op-single-stage-height,clamp(340px,calc(var(--op-available,70dvh) - 205px),760px));padding:clamp(12px,1.8cqw,26px);overflow:visible;border:1px solid color-mix(in srgb,var(--border) 65%,transparent);border-radius:22px;background:radial-gradient(ellipse at 50% 49%,#8c6bc022,transparent 55%),linear-gradient(140deg,#ffffff05,transparent 68%);box-shadow:inset 0 1px 0 #ffffff0a,0 12px 36px #0002}
 #operationM .op-single-stage .op-stage-halo{width:min(60%,760px);height:96%;background:radial-gradient(ellipse,#9d75ff24 0,transparent 68%)}
 #operationM .op-single-deck{display:grid;justify-items:center;align-content:center;gap:18px;min-width:0;min-height:0}
-#operationM .op-single-stage button.op-deck-reserve{display:block;position:relative;inset:auto;transform:none;z-index:1;width:clamp(86px,12cqw,182px);max-width:calc(100% - 16px);aspect-ratio:3/4;padding:0;border:0;background:none;border-radius:11px;box-shadow:0 15px 26px #0007;opacity:1;cursor:pointer;transition:filter .2s,transform .2s}
+#operationM .op-single-stage button.op-deck-reserve{display:block;position:relative;inset:auto;transform:none;z-index:1;width:clamp(86px,12cqw,182px);aspect-ratio:3/4;padding:0;border:0;background:none;border-radius:11px;box-shadow:0 15px 26px #0007;opacity:1;cursor:pointer;transition:filter .2s,transform .2s}
 #operationM .op-single-stage button.op-deck-reserve:disabled{cursor:default;opacity:1}
 #operationM .op-single-stage button.op-deck-reserve:not(:disabled):hover{transform:translateY(-5px);filter:brightness(1.13)}
 #operationM .op-single-stage button.op-deck-reserve:focus-visible{outline:2px solid #c7adf3;outline-offset:5px}
@@ -678,13 +678,13 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 @container(max-width:760px){
  #operationM .op-single-stage{gap:8px}
  #operationM .op-single-stage .op-guided-stage{grid-template-columns:minmax(70px,.65fr) minmax(0,1.9fr);grid-template-rows:clamp(245px,64cqw,420px) auto;height:auto;padding:10px;gap:10px;border-radius:14px}
- #operationM .op-single-stage .op-completed-tray{grid-column:1/-1;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:auto;max-width:none;gap:4px}
+ #operationM .op-single-stage .op-completed-tray{grid-column:1/-1;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:auto;gap:4px}
  #operationM .op-single-stage .op-completed-slot{grid-template-columns:auto auto;justify-content:space-between;padding:6px 4px;gap:3px}
  #operationM .op-single-stage .op-completed-names{display:none}
  #operationM .op-single-stage .op-completed-rank{font-size:14px;gap:2px}
  #operationM .op-single-stage .op-completed-rank svg{width:15px}
  #operationM .op-single-stage .op-completed-slot b{font-size:13px}
- #operationM .op-single-stage button.op-deck-reserve{width:clamp(58px,15cqw,105px);max-width:100%}
+ 
  #operationM .op-single-deck{gap:11px}
  #operationM .op-single-stage .op-deck-remaining{font-size:11px}
  #operationM .op-single-stage .op-reveal-card{padding:5px}
@@ -692,7 +692,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
  #operationM .op-single-stage button.op-guide-rank{min-height:68px;padding:5px 2px}
  #operationM .op-single-stage .op-guide-rank strong{font-size:clamp(22px,5cqw,32px);gap:3px}
  #operationM .op-single-stage .op-guide-rank .op-rank-crest{width:clamp(17px,4cqw,26px)}
- #operationM .op-single-stage .op-guided-top{flex-wrap:wrap;gap:5px}
+ #operationM .op-single-stage .op-guided-top{flex-wrap:wrap;}
 }
 @container(max-width:360px){#operationM .op-single-stage .op-completed-rank svg{display:none}#operationM .op-single-stage .op-guide-rank .op-rank-crest{width:16px}#operationM .op-single-stage .op-completed-slot{padding:5px 3px}}
 @media(prefers-reduced-motion:reduce){#operationM .op-single-stage:not(.op-motion-full) .op-shuffle-layer{display:none}#operationM .op-single-stage .op-reveal-card.op-face-open .op-card-front{visibility:visible;transform:none}}
@@ -757,11 +757,11 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 @container(min-width:1600px){#operationM .op-flow-frame{box-shadow:inset 0 0 0 1px var(--glow)}#operationM .op-single-stage .op-reveal-card .op-card-front::before{box-shadow:0 0 0 3px #282b3b,inset 0 0 0 2px #333849}}
 
 /* The mode chooser is a workspace, not a large empty preview panel. */
-#operationM .op-mode-choice{width:min(100%,1040px);min-height:clamp(320px,calc(var(--op-available,530px) - 16px),620px);margin:0 auto;box-sizing:border-box;padding:16px clamp(8px,1.5cqw,20px) 24px;display:grid;align-content:center;gap:0}
+#operationM .op-mode-choice{width:min(100%,1040px);min-height:clamp(320px,calc(var(--op-available,530px) - 16px),620px);margin:0 auto;box-sizing:border-box;padding:16px clamp(8px,1.5cqw,20px) 24px;display:grid;gap:0}
 #operationM .op-mode-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(14px,2.1cqw,28px);align-items:stretch}
 #operationM button.op-mode-card{height:auto;min-height:0;grid-template-rows:auto 1fr;border-radius:16px;transition:transform .16s cubic-bezier(.2,.7,.3,1),border-color .16s,box-shadow .16s}
-#operationM .op-mode-preview{height:clamp(185px,calc(var(--op-available,530px)*.49),285px);min-height:0;padding:12px 16px;box-sizing:border-box}
-#operationM .op-preview-stack{width:clamp(170px,48%,220px);height:100%;padding-bottom:0;max-height:218px}
+#operationM .op-mode-preview{height:clamp(185px,calc(var(--op-available,530px)*.49),285px);padding:12px 16px;box-sizing:border-box}
+#operationM .op-preview-stack{width:clamp(170px,48%,220px);padding-bottom:0;max-height:218px}
 #operationM .op-preview-card{width:54%;max-width:119px}
 #operationM .op-preview-board{width:min(92%,310px);height:min(100%,220px);box-sizing:border-box}
 #operationM .op-mode-caption{align-content:center;gap:6px;min-height:76px;padding:14px 12px 16px;box-sizing:border-box}
@@ -865,14 +865,14 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-command-emblem{width:1.5em;height:1.5em;flex:none}
 #operationM .op-command-tabs,#operationM .op-tabs{display:flex;align-items:center;gap:5px;padding:0;border:0;background:none;flex-wrap:wrap}
 #operationM .op-tabs{border-left:1px solid #54616b;padding-left:8px}
-#operationM .op-shell button:not(.op-player):not(.op-tier-label):not(.op-guide-rank):not(.op-empty):not(.op-mode-card):not(.op-deck-card){border-radius:3px;color:#e1e8ee;background:linear-gradient(170deg,#29343e,#141c24);border-color:#4a5864;box-shadow:inset 0 1px #ffffff14}
-#operationM .op-shell button:not(.op-player):not(.op-tier-label):not(.op-guide-rank):not(.op-empty):not(.op-mode-card):not(.op-deck-card):hover:not(:disabled){border-color:#a2b7c7;background:linear-gradient(165deg,#3b4955,#19232c);transform:none}
+#operationM .op-shell button:not(.op-player):not(.op-tier-label):not(.op-guide-rank):not(.op-empty):not(.op-mode-card):not(.op-deck-card){border-radius:3px;color:#e1e8ee;background:var(--op-control-face);border-color:#4a5864;box-shadow:inset 0 1px #ffffff14}
+#operationM .op-shell button:not(.op-player):not(.op-tier-label):not(.op-guide-rank):not(.op-empty):not(.op-mode-card):not(.op-deck-card):hover:not(:disabled){border-color:#a2b7c7;background:var(--op-control-hover);transform:none}
 #operationM .op-shell .op-command-tabs button,#operationM .op-shell .op-tabs button{clip-path:polygon(9px 0,100% 0,calc(100% - 9px) 100%,0 100%);padding:7px 16px;border-radius:0!important;font-weight:750}
-#operationM .op-shell .op-command-tabs button[aria-pressed=true],#operationM .op-shell .op-tabs button[aria-pressed=true],#operationM .op-shell button.op-primary{background:linear-gradient(160deg,#6d3035,#321b22)!important;border-color:#e25e64!important;box-shadow:inset 0 -2px #dc4a51,inset 0 1px #ffb5b62b!important;color:#fff!important}
-#operationM .op-shell button:focus-visible,#operationM .op-art-upload:focus-within{outline:2px solid #c0deed;outline-offset:-3px}
+#operationM .op-shell .op-command-tabs button[aria-pressed=true],#operationM .op-shell .op-tabs button[aria-pressed=true],#operationM .op-shell button.op-primary{background:linear-gradient(160deg,#6d3035,#321b22)!important;border-color:var(--op-active-accent)!important;box-shadow:inset 0 -2px #dc4a51,inset 0 1px #ffb5b62b!important;color:#fff!important}
+#operationM .op-shell button:focus-visible,#operationM .op-art-upload:focus-within{outline:2px solid var(--op-focus);outline-offset:-3px}
 #operationM .op-shell .op-command-workspace h2:focus{outline:none}
 #operationM .op-shell .op-actions{margin-left:auto}
-#operationM .op-layer-panel,#operationM .op-squad-card{position:relative;isolation:isolate;min-width:0;background:linear-gradient(145deg,#27333f,#141c25 45%,#0e151c);border:1px solid #4a5964;box-shadow:inset 0 1px #ffffff17,inset 0 -3px #0008,0 5px 14px #0006}
+#operationM .op-layer-panel,#operationM .op-squad-card{position:relative;isolation:isolate;min-width:0;background:var(--op-panel-depth);border:1px solid #4a5964;box-shadow:var(--op-panel-shadow)}
 #operationM .op-layer-panel::before,#operationM .op-squad-card::before{content:"";position:absolute;inset:3px;z-index:-1;pointer-events:none;border:1px solid #a1bac417;background:repeating-linear-gradient(135deg,transparent 0 6px,#adbfca05 6px 7px)}
 #operationM .op-armor-frame{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;overflow:visible;color:var(--squad,var(--team,#6a8598))}
 #operationM .op-armor-frame path{vector-effect:non-scaling-stroke;stroke:currentColor}
@@ -894,7 +894,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-command-grid{min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:9px}
 #operationM .op-command-overview:not(.op-command-fit) .op-command-grid{grid-template-rows:repeat(2,minmax(245px,auto))}
 #operationM .op-squad-card{--cut:14px;display:grid;grid-template-columns:minmax(0,1.48fr) minmax(0,1fr);padding:8px;min-height:0;border:0;clip-path:polygon(var(--cut) 0,calc(100% - var(--cut)) 0,100% var(--cut),100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,var(--cut) 100%,0 calc(100% - var(--cut)),0 var(--cut));background:linear-gradient(120deg,color-mix(in srgb,var(--squad) 16%,#202a32),#10171e 70%)}
-#operationM .op-squad-card:hover .op-armor-outline{stroke:#e7f2fa}
+
 #operationM .op-squad-hero{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);min-width:0;min-height:0;overflow:hidden;background:radial-gradient(ellipse at 25% 80%,color-mix(in srgb,var(--squad) 20%,transparent),transparent 70%),repeating-linear-gradient(90deg,transparent 0 19px,#9cb1be0d 19px 20px),repeating-linear-gradient(0deg,transparent 0 19px,#9cb1be0d 19px 20px)}
 #operationM .op-commander-art{position:relative;isolation:isolate;overflow:hidden;min-width:0;min-height:0;background:radial-gradient(ellipse at 50% 60%,color-mix(in srgb,var(--squad,#a3b6c9) 20%,transparent),transparent 70%)}
 #operationM .op-commander-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;display:block;filter:drop-shadow(3px 5px 5px #0008)}
@@ -915,7 +915,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-roster-caption{display:flex;justify-content:space-between;align-items:center;gap:5px;padding:2px 3px;color:#cfdee7;font-size:clamp(11px,calc(var(--tac-font)*1.05),21px);font-weight:700;line-height:1.2}
 #operationM .op-roster-caption>span:last-child{color:var(--squad);font-family:ui-monospace,monospace}
 #operationM .op-shell button.op-agent-row{display:grid;grid-template-columns:clamp(22px,calc(var(--tac-font)*2.65),52px) minmax(0,1fr) auto;align-items:center;gap:6px;padding:2px 6px!important;min-height:0;min-width:0;height:100%;text-align:left;position:relative;overflow:hidden;background:linear-gradient(165deg,#313c46,#161f27 60%)!important;border:1px solid #50606c!important;border-radius:2px!important}
-#operationM .op-shell button.op-agent-row:hover{border-color:var(--squad)!important;box-shadow:inset 3px 0 var(--squad),inset 0 1px #ffffff20!important}
+#operationM .op-shell button.op-agent-row:focus-visible{border-color:var(--squad)!important;box-shadow:inset 3px 0 var(--squad),var(--op-control-glint)!important}
 #operationM .op-agent-row-name{display:flex;justify-content:space-between;align-items:center;gap:4px;min-width:0}
 #operationM .op-agent-row-name strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(11px,calc(var(--tac-font)*1.32),28px);line-height:1.15}
 #operationM .op-agent-row-name small,#operationM .op-tile-id,#operationM .op-agent-switch small{font:500 clamp(9px,calc(var(--tac-font)*.8),16px) ui-monospace,monospace;color:#afbdc7;white-space:nowrap}
@@ -924,7 +924,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-agent-row .op-agent-portrait{max-height:100%;height:auto}
 #operationM .op-agent-silhouette{width:66%;height:66%;color:#8196a4;opacity:.65}
 #operationM .op-agent-portrait img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;z-index:1}
-#operationM .op-command-footer{display:flex;align-items:center;gap:clamp(6px,1cqw,18px);padding:5px 12px;min-height:28px;flex-wrap:wrap;border:1px solid #50616d;background:linear-gradient(180deg,#2a3640,#131c23);font-size:clamp(10px,var(--tac-font),20px);color:#d8e1e7}
+#operationM .op-command-footer{display:flex;align-items:center;gap:clamp(6px,1cqw,18px);padding:5px 12px;min-height:28px;flex-wrap:wrap;border:1px solid var(--op-panel-edge);background:linear-gradient(180deg,#2a3640,#131c23);font-size:clamp(10px,var(--tac-font),20px);color:#d8e1e7}
 #operationM .op-tac-dot{width:7px;height:7px;border-radius:50%;background:#8bd6ab;box-shadow:0 0 7px #8bd6ab77}
 #operationM .op-command-divider{height:15px;width:1px;background:#53616d}
 #operationM .op-footer-stripes{margin-left:auto;width:80px;color:#81919d}
@@ -940,9 +940,9 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-banner-title{grid-row:1;z-index:3;position:relative}
 #operationM .op-banner-title h2{color:var(--squad);font-size:clamp(26px,3.3cqw,60px)}
 #operationM .op-team-dossiers{display:grid;grid-template-rows:auto minmax(0,1fr);gap:8px;padding:10px;min-height:0}
-#operationM .op-team-agent-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:8px;min-height:0}
-#operationM .op-shell button.op-agent-tile{display:grid;grid-template-rows:minmax(0,1fr) auto auto;position:relative;min-height:0;gap:4px;padding:7px;text-align:left;border:1px solid #596a76;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
-#operationM .op-agent-tile .op-agent-portrait{height:100%;aspect-ratio:auto;min-height:0;max-height:260px}
+#operationM .op-team-agent-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;min-height:0}
+#operationM .op-shell button.op-agent-tile{grid-template-rows:minmax(0,1fr) auto auto;position:relative;min-height:0;gap:4px;padding:7px;text-align:left;border:1px solid #596a76;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+#operationM .op-agent-tile .op-agent-portrait{aspect-ratio:auto;max-height:260px}
 #operationM .op-agent-tile strong{font-size:clamp(13px,1.3cqw,25px);overflow-wrap:anywhere}
 #operationM .op-agent-tile>.op-tac-arrow{position:absolute;bottom:9px;right:9px}
 #operationM .op-agent-detail{grid-template-rows:auto auto auto}
@@ -950,7 +950,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-agent-dossier{display:grid;grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr);gap:12px;min-height:0;min-width:0;align-items:stretch}
 #operationM .op-dossier-portrait{display:grid;grid-template-rows:minmax(0,1fr);gap:7px;min-height:0;padding:10px;overflow:hidden;--squad:inherit}
 #operationM .op-dossier-portrait:has(.op-art-upload){grid-template-rows:minmax(0,1fr) auto}
-#operationM .op-portrait-instrument{position:relative;display:grid;grid-template-rows:auto minmax(0,1fr) auto;align-items:stretch;min-height:0;padding:10px;background:radial-gradient(ellipse at 50% 50%,#344a56,#111d27 75%);border:1px solid #687d89;isolation:isolate}
+#operationM .op-portrait-instrument{position:relative;display:grid;grid-template-rows:auto minmax(0,1fr) auto;align-items:stretch;min-height:0;padding:10px;border:1px solid #687d89;isolation:isolate}
 #operationM .op-portrait-instrument::before{content:"";position:absolute;inset:12%;border:1px dashed #87a8b54d;border-radius:50%;pointer-events:none;z-index:-1}
 #operationM .op-portrait-instrument .op-agent-portrait{height:100%;aspect-ratio:auto;background:transparent;border:0;min-height:180px;max-height:500px}
 #operationM .op-detail-fit .op-portrait-instrument .op-agent-portrait{min-height:0}
@@ -958,16 +958,16 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-instrument-caption{font-size:11px;color:#a6bac7;text-align:center;min-height:12px}
 #operationM .op-art-upload{position:relative;display:grid;place-items:center;min-height:34px;overflow:hidden;cursor:pointer;color:#e7eef4;background:linear-gradient(160deg,#3b454e,#1a242d);border:1px solid var(--squad);font-size:13px;font-weight:650}
 #operationM .op-art-upload input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
-#operationM .op-dossier-content{display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;align-content:start;gap:9px;min-height:0;min-width:0}
+#operationM .op-dossier-content{display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;align-content:start;min-height:0;min-width:0}
 #operationM .op-agent-identity{display:flex;align-items:center;gap:12px;padding:clamp(10px,1.4cqw,24px);border-left:3px solid var(--squad)}
 #operationM .op-agent-identity .op-command-emblem{width:clamp(34px,4cqw,76px);height:clamp(34px,4cqw,76px);color:var(--squad)}
 #operationM .op-agent-identity h2{font-size:clamp(26px,3.2cqw,64px)}
 #operationM .op-dossier-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-#operationM .op-dossier-fields>div{display:grid;gap:4px;padding:10px 12px;border:1px solid #50616d;background:linear-gradient(160deg,#2e3c47,#18222b)}
+#operationM .op-dossier-fields>div{display:grid;gap:4px;padding:10px 12px;border:1px solid var(--op-panel-edge);background:linear-gradient(160deg,#2e3c47,#18222b)}
 #operationM .op-dossier-fields small,#operationM .op-command-nameplate small{color:#a6becd;font-size:11px;letter-spacing:.06em}
 #operationM .op-dossier-fields strong{font-size:clamp(15px,1.5cqw,28px);overflow-wrap:anywhere}
 #operationM .op-shell button.op-dossier-command{display:grid;grid-template-columns:minmax(72px,.75fr) minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left;min-height:92px;max-height:220px;height:100%;overflow:hidden;padding:0 12px 0 0;border:1px solid #576a76;border-left:3px solid var(--squad);background:radial-gradient(ellipse at 20% 50%,color-mix(in srgb,var(--squad) 20%,#2c3b45),#14202a 70%);border-radius:0}
-#operationM .op-detail-fit button.op-dossier-command{min-height:0}
+
 #operationM .op-dossier-command .op-commander-art{height:100%;min-height:0;align-self:stretch}
 #operationM .op-command-nameplate{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden}
 #operationM .op-command-nameplate .op-command-emblem{color:var(--squad);width:clamp(22px,3cqw,50px);height:clamp(22px,3cqw,50px)}
@@ -993,8 +993,8 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
  #operationM .op-command-workspace{height:auto!important}
  #operationM .op-squad-detail-body,#operationM .op-agent-dossier{grid-template-columns:1fr}
  #operationM .op-command-banner{height:330px}
- #operationM .op-team-agent-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:auto}
- #operationM .op-agent-tile .op-agent-portrait{aspect-ratio:1;height:auto}
+ #operationM .op-team-agent-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+ 
  #operationM .op-portrait-instrument .op-agent-portrait{height:240px}
  #operationM .op-dossier-command .op-commander-art{height:100px}
  #operationM .op-agent-switch-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -1051,8 +1051,8 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-brief-code{padding:7px 8px;background:#101a22bd;border-left:1px solid #597281}
 #operationM .op-hero-hud{position:absolute;inset:8px 5px;pointer-events:none;z-index:0;background:linear-gradient(90deg,var(--squad) 1px,transparent 1px) left top/18px 9px no-repeat,linear-gradient(0deg,var(--squad) 1px,transparent 1px) left top/18px 9px no-repeat,linear-gradient(90deg,transparent calc(100% - 1px),var(--squad) calc(100% - 1px)) right bottom/18px 9px no-repeat,linear-gradient(0deg,var(--squad) 1px,transparent 1px) right bottom/18px 9px no-repeat;opacity:.45}
 #operationM .op-squad-hero .op-commander-art{overflow:visible}
-#operationM .op-squad-hero .op-commander-art img{filter:drop-shadow(3px 5px 4px #0009);transition:transform .25s ease;transform-origin:center bottom}
-#operationM .op-squad-card:hover .op-commander-art img{transform:scale(1.018)}
+#operationM .op-squad-hero .op-commander-art img{filter:drop-shadow(3px 5px 4px #0009);transition:transform var(--op-motion-fast) var(--op-ease);transform:scale(var(--op-commander-scale));transform-origin:center bottom}
+
 #operationM .op-squad-title .op-squad-coach{box-shadow:0 4px 7px #0005,inset 0 1px #ffffff22}
 #operationM .op-agent-row::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--squad);opacity:.38;pointer-events:none}
 #operationM .op-agent-row::after{content:"";position:absolute;bottom:0;right:0;width:14px;height:9px;background:repeating-linear-gradient(135deg,transparent 0 3px,#a0b2bd66 3px 4px,transparent 4px 6px);clip-path:polygon(100% 0,100% 100%,0 100%);pointer-events:none}
@@ -1110,8 +1110,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-shell button.op-agent-switch{grid-template-columns:clamp(28px,4.4cqw,92px) minmax(0,1fr);min-height:52px;padding:6px!important}
 #operationM .op-agent-switch strong{font-size:clamp(12px,1.25cqw,25px)}
 @container(min-width:800px){
- #operationM .op-squad-hero .op-commander-art img{transform:scale(1.10);transform-origin:bottom center}
- #operationM .op-squad-card:hover .op-commander-art img{transform:scale(1.125)}
+ #operationM .op-squad-hero{--op-commander-scale:1.10}
  #operationM .op-squad-link strong{font-size:clamp(15px,min(calc(var(--tac-font)*2.45),1.98cqw),44px)}
  #operationM .op-squad-link .op-command-emblem{width:clamp(20px,2cqw,45px);height:clamp(20px,2cqw,45px)}
  #operationM .op-agent-dossier{grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr)}
@@ -1139,30 +1138,50 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-team-dossiers{background:radial-gradient(ellipse at 50% 5%,color-mix(in srgb,var(--squad) 8%,#23313d),#111b23 70%)}
 #operationM .op-team-dossiers>.op-roster-caption{padding:6px 9px;border-left:2px solid var(--squad);background:linear-gradient(90deg,#33434f,#18232c);box-shadow:inset 0 1px #ffffff18,inset 0 -1px #0008}
 #operationM .op-team-agent-grid{grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:9px}
-#operationM .op-shell button.op-agent-tile{grid-column:span 2;isolation:isolate;overflow:hidden;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:0;padding:5px!important;border:0!important;border-radius:0!important;background:linear-gradient(150deg,color-mix(in srgb,var(--squad) 14%,#33434f),#111a22 76%)!important;box-shadow:inset 0 1px #ffffff2b,inset 0 -3px #0009!important;transition:background .18s ease,box-shadow .18s ease}
+#operationM .op-shell button.op-agent-tile{grid-column:span 2;isolation:isolate;overflow:hidden;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:0;padding:5px!important;border:0!important;border-radius:0!important;background:linear-gradient(150deg,color-mix(in srgb,var(--squad) 14%,#33434f),#111a22 76%)!important;box-shadow:inset 0 1px #ffffff2b,inset 0 -3px #0009!important;transition:box-shadow var(--op-motion-fast) var(--op-ease)}
 #operationM .op-team-agent-grid>.op-agent-tile:nth-child(4){grid-column:2/span 2}
 #operationM .op-team-agent-grid>.op-agent-tile:nth-child(5){grid-column:4/span 2}
 #operationM .op-agent-tile .op-agent-portrait{grid-row:1;grid-column:1;max-height:none;height:100%;min-height:0;isolation:isolate;border:1px solid #7892a24d;background:radial-gradient(ellipse at 50% 48%,#3d525e66,transparent 72%),repeating-linear-gradient(90deg,transparent 0 19px,#b6cbd90b 19px 20px),repeating-linear-gradient(0deg,transparent 0 19px,#b6cbd90b 19px 20px);border-radius:0;overflow:hidden}
-#operationM .op-agent-tile .op-agent-portrait img{object-position:center bottom;transition:transform .24s cubic-bezier(.2,.8,.2,1)}
+#operationM .op-agent-tile .op-agent-portrait img{object-position:center bottom;transition:transform var(--op-motion-fast) var(--op-ease)}
 #operationM .op-agent-tile .op-agent-silhouette{width:44%;height:54%;opacity:.55}
 #operationM .op-agent-tile>.op-team-mark{width:69%;height:65%;right:15%;bottom:20%;opacity:.13;z-index:-1}
 #operationM .op-agent-tile>.op-tile-id{position:absolute;top:9px;left:9px;z-index:3;padding:3px 7px;background:#121d27dc;border-left:2px solid var(--squad);color:#d4e2eb;font-size:clamp(9px,.85cqw,17px)}
 #operationM .op-agent-tile-plaque{grid-row:2;grid-column:1;position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:7px;min-width:0;min-height:34px;margin-top:-9px;padding:8px 10px;background:linear-gradient(165deg,#40515e,#1c2933 42%,#111922);border:1px solid #718591;border-bottom:2px solid var(--squad);clip-path:polygon(8px 0,100% 0,100% 100%,0 100%,0 8px);box-shadow:inset 0 1px #ffffff25}
 #operationM .op-agent-tile-plaque strong{font-size:clamp(12px,1.3cqw,25px);line-height:1.3;min-width:0;overflow-wrap:anywhere;color:#f0f5fa}
-#operationM .op-agent-tile-plaque .op-tac-arrow{flex:none;transition:transform .2s ease}
-#operationM .op-agent-tile .op-armor-frame{opacity:.62;transition:opacity .18s ease}
-#operationM .op-shell button.op-agent-tile:hover,#operationM .op-shell button.op-agent-tile:focus-visible{background:linear-gradient(150deg,color-mix(in srgb,var(--squad) 24%,#344653),#141e27 74%)!important}
-#operationM .op-agent-tile:is(:hover,:focus-visible) .op-armor-frame{opacity:1}
-#operationM .op-agent-tile:is(:hover,:focus-visible) .op-agent-tile-plaque{background:linear-gradient(160deg,color-mix(in srgb,var(--squad) 18%,#415462),#18252e 64%)}
-#operationM .op-agent-tile:hover .op-agent-portrait img{transform:scale(1.04)}
-#operationM .op-agent-tile:hover .op-tac-arrow{transform:translateX(2px)}
-#operationM .op-dossier-command .op-armor-frame{opacity:.5;transition:opacity .18s ease}
+#operationM .op-agent-tile-plaque .op-tac-arrow{flex:none;transition:transform var(--op-motion-fast) var(--op-ease)}
+#operationM .op-agent-tile .op-armor-frame{opacity:.82;transition:opacity var(--op-motion-fast) var(--op-ease)}
+#operationM .op-shell button.op-agent-tile:focus-visible{box-shadow:inset 0 1px #ffffff35,inset 0 0 0 2px var(--squad),inset 0 -3px #0009!important}
+#operationM .op-agent-tile:focus-visible .op-armor-frame{opacity:1}
+#operationM .op-agent-tile:focus-visible .op-agent-tile-plaque{box-shadow:var(--op-control-glint),inset 0 -2px var(--squad)}
+
+#operationM .op-dossier-command .op-armor-frame{opacity:.72;transition:opacity var(--op-motion-fast) var(--op-ease)}
 #operationM .op-dossier-command:is(:hover,:focus-visible) .op-armor-frame{opacity:1}
 #operationM .op-agent-switch{position:relative;isolation:isolate}
-#operationM .op-agent-switch::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--squad);opacity:0;pointer-events:none;transition:opacity .16s}
+#operationM .op-agent-switch::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--squad);opacity:0;pointer-events:none;transition:opacity var(--op-motion-fast) var(--op-ease)}
 #operationM .op-agent-switch:is(:hover,.is-current,:focus-visible)::after{opacity:1}
 #operationM .op-agent-switch.is-current small{color:var(--squad)}
+#operationM .op-agent-switch .op-agent-portrait img,#operationM .op-agent-row .op-agent-portrait img{transition:transform var(--op-motion-fast) var(--op-ease)}
 #operationM .op-detail-step .op-detail-position{min-width:48px;text-align:center;font-variant-numeric:tabular-nums;color:#dce8f1}
+/* All command feedback changes paint or inner foreground only. The hit areas and armor stay fixed. */
+#operationM .op-command-workspace button:not(:disabled):active{transform:none!important;filter:brightness(1.1)}
+#operationM .op-agent-row .op-tac-arrow,#operationM .op-dossier-command>.op-tac-arrow{transition:transform var(--op-motion-fast) var(--op-ease)}
+#operationM .op-agent-row::before{transition:opacity var(--op-motion-fast) var(--op-ease),width var(--op-motion-fast) var(--op-ease)}
+#operationM .op-squad-hero:has(.op-squad-link:focus-visible) .op-commander-art img{transform:scale(calc(var(--op-commander-scale) + var(--op-commander-lift)))}
+#operationM .op-agent-row:focus-visible .op-tac-arrow,#operationM .op-agent-tile:focus-visible .op-tac-arrow,#operationM .op-dossier-command:focus-visible>.op-tac-arrow{transform:translateX(var(--op-arrow-shift))}
+#operationM .op-agent-tile:focus-visible .op-agent-portrait img{transform:scale(calc(1 + var(--op-portrait-lift)))}
+/* Pointer Events distinguish mouse hover from touch without relying on headless media capabilities. */
+ #operationM[data-op-pointer=mouse] .op-squad-hero:hover .op-commander-art img{transform:scale(calc(var(--op-commander-scale) + var(--op-commander-lift)))}
+ #operationM[data-op-pointer=mouse] .op-shell button.op-agent-row:hover{border-color:var(--squad)!important;box-shadow:inset 3px 0 var(--squad),var(--op-control-glint)!important}
+ #operationM[data-op-pointer=mouse] .op-agent-row:hover::before{width:3px;opacity:1}
+ #operationM[data-op-pointer=mouse] .op-shell button.op-agent-tile:hover{box-shadow:inset 0 1px #ffffff35,inset 0 0 0 2px var(--squad),inset 0 -3px #0009!important}
+ #operationM[data-op-pointer=mouse] .op-agent-tile:hover .op-armor-frame{opacity:1}
+ #operationM[data-op-pointer=mouse] .op-agent-tile:hover .op-agent-tile-plaque{box-shadow:var(--op-control-glint),inset 0 -2px var(--squad)}
+ #operationM[data-op-pointer=mouse] .op-agent-row:hover .op-tac-arrow,#operationM[data-op-pointer=mouse] .op-agent-tile:hover .op-tac-arrow,#operationM[data-op-pointer=mouse] .op-dossier-command:hover>.op-tac-arrow{transform:translateX(var(--op-arrow-shift))}
+ #operationM[data-op-pointer=mouse] .op-agent-tile:hover .op-agent-portrait img,#operationM[data-op-pointer=mouse] .op-agent-row:hover .op-agent-portrait img,#operationM[data-op-pointer=mouse] .op-agent-switch:hover .op-agent-portrait img{transform:scale(calc(1 + var(--op-portrait-lift)))}
+html[data-mws-motion=reduced] #operationM .op-command-workspace{--op-commander-lift:0;--op-portrait-lift:0;--op-arrow-shift:0px}
+html[data-mws-motion=reduced] #operationM .op-command-workspace *,html[data-mws-motion=reduced] #operationM .op-command-workspace *::before,html[data-mws-motion=reduced] #operationM .op-command-workspace *::after,html[data-mws-motion=reduced] #operationM dialog.op-config[open],html[data-mws-motion=reduced] #operationM dialog.op-reset-dialog[open]{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){#operationM .op-command-workspace{--op-commander-lift:0;--op-portrait-lift:0;--op-arrow-shift:0px}}
+
 @container(min-width:1600px){
  #operationM .op-squad-detail-body{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(160px,.8fr) minmax(0,1.2fr)}
  #operationM .op-command-banner{min-height:180px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
