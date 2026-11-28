@@ -173,12 +173,21 @@ try{
   await capture('calendar');
   const geom=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),main=document.querySelector('.app>.main'),r=grid.getBoundingClientRect(),m=main.getBoundingClientRect();return {cards:grid.querySelectorAll('.mini-event[data-evid]').length,rootOverflow:document.documentElement.scrollWidth-innerWidth,gridWidth:r.width,mainWidth:m.width,gridHeight:r.height,theme:document.body.dataset.theme,font:getComputedStyle(grid).fontFamily}})()`);
   assert(geom.cards>=25&&geom.rootOverflow<=2&&geom.gridWidth>0,JSON.stringify(geom));
-  await browser.evaluate("document.querySelector('#calendarGrid .mini-event[data-evid]').click()");
-  await until(()=>browser.evaluate("window.mwsCalendarDetailsV1?.isOpen()===true"),'Calendar detail open');
-  await capture('calendar-detail');
-  await browser.evaluate("window.mwsCalendarDetailsV1.close({restoreFocus:false})");
+  if(viewport[0]<761){
+   const labels=await browser.evaluate(`(()=>{const cards=[...document.querySelectorAll('#calendarGrid .mini-event[data-evid].calendar-event-vr-v1')].filter(c=>c.getBoundingClientRect().width>0);return cards.map(c=>{const title=c.querySelector('.calendar-card-title-v2'),r=title.getBoundingClientRect(),box=c.getBoundingClientRect(),s=getComputedStyle(c);return {width:r.width,card:box.width,visible:!!title.textContent&&getComputedStyle(title).visibility==='visible',padding:parseFloat(s.paddingRight)}})})()`);
+   assert(labels.length>0&&labels.every(x=>x.visible&&x.width>=x.card*.65&&x.padding<=3),'Mobile VR titles clipped '+JSON.stringify(labels));
+   await browser.evaluate("document.querySelector('#calendarGrid .day:has(.mini-event[data-evid])').click()");
+   await until(()=>browser.evaluate("!!document.querySelector('.mws-mobile-calendar-day-detail-v130.open')"),'Mobile day sheet open');
+   await capture('calendar-detail');
+   await browser.evaluate("document.querySelector('.mws-mobile-day-close-v130').click()");
+  }else{
+   await browser.evaluate("document.querySelector('#calendarGrid .mini-event[data-evid]').click()");
+   await until(()=>browser.evaluate("window.mwsCalendarDetailsV1?.isOpen()===true"),'Calendar detail open');
+   await capture('calendar-detail');
+   await browser.evaluate("window.mwsCalendarDetailsV1.close({restoreFocus:false})");
+  }
   await nav(['dashboard']);await capture('dashboard');
-  await nav(['calendar']);await browser.evaluate("document.body.dataset.theme='light'");await capture('calendar-light');
+  await nav(['calendar']);await browser.evaluate("document.body.dataset.theme='ocean'");await capture('calendar-ocean');
   assert.equal(errors.length,0,JSON.stringify(errors));
   writeFileSync(path.join(captureDir,'geometry-'+viewport[0]+'.json'),JSON.stringify({viewport,geom,requests:summary(calls)},null,2));
   console.log('CALENDAR_VISUAL_CAPTURE_OK '+JSON.stringify({viewport,geom}));
