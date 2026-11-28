@@ -1270,7 +1270,8 @@ function calendarGamePreviewHTMLV3(event){
   const game=calendarGamePreviewV3(event);if(!game?.name)return '';
   return `<section class="calendar-preview-game-v3"><div class="event-details-game-v1">${game.image?`<img src="${esc(game.image)}" alt="${esc(game.name)}" loading="eager">`:''}<span>${esc(game.name)}</span></div></section>`;
 }
-function calendarPreviewHTML(e,{detail=false}={}){
+function calendarPreviewHTML(e){
+  const detail=arguments[1]?.detail===true;
   const cat=category(e.categoryId),linkedGroup=data.contentGroups?.find(g=>g.id===e.contentGroupId);
   const color=e.restDay?'#e85d75':(linkedGroup?.color||e.color||cat?.color||'#64748b');
   if(e.restDay){

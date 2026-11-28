@@ -60,6 +60,16 @@ test('calendar hover actual template shows broadcast duration by the time, not o
   assert(visible.indexOf('12:36')<visible.indexOf('총 3시간 14분'),'duration follows time in hover');
   assert(!context.calendarPreviewHTML({...event,end:'TBD'}).includes('총 '));
   assert(!context.calendarPreviewHTML({...event,restDay:true}).includes('총 '));
+  const detail=e=>context.calendarPreviewHTML(e,{detail:true});
+  assert.match(detail(event),/09:22.*12:36/);
+  assert.match(detail(event),/총 3시간 14분/);
+  assert.match(detail({...event,start:'23:00',end:'01:00'}),/다음 날 종료/);
+  assert.match(detail({...event,start:'23:00',end:'01:00'}),/총 2시간 0분/);
+  assert.match(detail({...event,start:'TBD',end:'TBD'}),/시간 미정/);
+  assert.match(detail({...event,end:'TBD'}),/종료 시간 미정/);
+  assert.match(detail({...event,end:event.start}),/시간 합계 미확정/);
+  assert.match(detail({...event,restDay:true}),/하루 종일/);
+  assert(!detail({...event,restDay:true}).includes('총 '));
 });
 test('editor preview updates from event time fields without changing saved event data',()=>{
   const start=core.indexOf('function updateEventBroadcastDurationPreviewV1(){');
