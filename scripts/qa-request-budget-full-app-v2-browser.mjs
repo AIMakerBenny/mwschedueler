@@ -581,6 +581,19 @@ try{
   await browser.evaluate("document.querySelector('#qa-cdn-fallback-contact')?.remove()");
   console.log('FULL_APP_CDN '+JSON.stringify({cdn:cdnCalls.length,workerContact:cold.filter(r=>r.path.startsWith('/media/contact/')).length,workerAchievement:cold.filter(r=>r.path.startsWith('/media/achievement/')).length}));
  }
+ // Premium environment scope and stable dashboard geometry using the real app.
+ if(viewport[0]>=901){
+  await nav(['dashboard']);
+  const room=await browser.evaluate(`(()=>{const main=document.querySelector('.app>.main'),cards=[...document.querySelectorAll('#dashboardOverviewMode .dashboard-kpi-grid-local>.card')];const style=getComputedStyle(main);return {overview:document.querySelector('#dashboardOverviewMode').classList.contains('active'),art:style.backgroundImage.includes('data:image/svg+xml'),metrics:cards.length,stable:cards.every(c=>{const r=c.getBoundingClientRect();return r.width>0&&r.height>0&&r.right<=main.getBoundingClientRect().right+2}),visible:cards.every(c=>!!c.querySelector('.kpi strong')?.textContent.trim())}})()`);
+  assert(room.overview&&room.art&&room.metrics===6&&room.stable&&room.visible,JSON.stringify(room));
+  await browser.evaluate("document.querySelector('[data-dashboard-mode=reminders]').click()");
+  assert.equal(await browser.evaluate("getComputedStyle(document.querySelector('.app>.main')).backgroundImage.includes('data:image/svg+xml')"),false,'Dashboard art leaked into reminder mode');
+  await browser.evaluate("document.querySelector('[data-dashboard-mode=overview]').click()");
+  await nav(['contacts']);
+  assert.equal(await browser.evaluate("getComputedStyle(document.querySelector('.app>.main')).backgroundImage.includes('data:image/svg+xml')"),false,'Dashboard art leaked into contacts');
+  await nav(['calendar']);
+  console.log('PREMIUM_ENVIRONMENT_SCOPE_OK '+JSON.stringify(room));
+ }
  before=calls.length;await nav([...routes,...routes]);await pause(700);const warm=calls.slice(before);console.log('FULL_APP_WARM_NAV '+JSON.stringify(summary(warm)));
  assert.equal(warm.filter(common).length,0);
  assert.equal(warm.filter(r=>r.path.startsWith('/media/achievement/')).length,0);
