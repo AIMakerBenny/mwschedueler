@@ -614,3 +614,53 @@ body #calendar.section .calendar-topbar-v4 #calendarAgendaToggleV1{display:none!
  #calendarAgendaV1 [data-agenda-time-note]{font-size:10px;color:var(--muted);line-height:1.5;overflow-wrap:anywhere}
  #calendarAgendaV1 .mws-agenda-list-v1{flex:1 1 auto}
 }
+
+/* Pass H: one visual language for the same event across three views.
+   Geometry remains fixed on hover/focus/selection; no animated layout. */
+@media(min-width:1700px){
+ #calendarAgendaV1:not([hidden]){
+   background:linear-gradient(155deg,color-mix(in srgb,var(--panel2) 77%,var(--panel)),var(--panel) 28%,color-mix(in srgb,var(--panel) 86%,var(--bg)))!important;
+   box-shadow:inset 0 1px color-mix(in srgb,var(--text) 24%,transparent),inset 0 0 0 2px #0002,0 0 0 1px #0008,0 10px 28px #0006!important;
+ }
+ #calendarAgendaV1 .mws-agenda-time-v1{
+   border-color:color-mix(in srgb,var(--text) 13%,var(--border));
+   box-shadow:inset 0 2px 7px #0005,0 1px #ffffff12;
+ }
+ #calendarAgendaV1 .mws-agenda-tracks-v1{max-height:116px;gap:3px}
+ #calendarAgendaV1 .mws-agenda-track-v1{
+   height:24px;min-height:24px!important;
+   border-radius:5px!important;
+ }
+ #calendarAgendaV1 .mws-agenda-track-bar-v1{top:6px;height:12px;border-radius:3px}
+ #calendarAgendaV1 .mws-agenda-event-v1{
+   background:linear-gradient(165deg,color-mix(in srgb,var(--agenda-event-color,var(--accent)) 17%,var(--panel2)),var(--panel) 88%)!important;
+   box-shadow:inset 0 1px #ffffff20,0 3px 8px #0005!important;
+   transition:background-color 140ms ease,box-shadow 140ms ease,border-color 140ms ease!important;
+ }
+ #calendarAgendaV1 .mws-agenda-event-v1 strong{font-size:14px}
+ #calendarAgendaV1 .mws-agenda-event-v1.mws-agenda-link-v1,
+ #calendarAgendaV1 .mws-agenda-event-v1.mws-agenda-selected-v1{
+   border-color:var(--agenda-event-color,var(--accent))!important;
+   background:linear-gradient(165deg,color-mix(in srgb,var(--agenda-event-color,var(--accent)) 27%,var(--panel2)),var(--panel))!important;
+   box-shadow:inset 0 1px #ffffff32,0 4px 10px #0006!important;
+ }
+ #calendarAgendaV1 :is(.mws-agenda-track-v1.mws-agenda-link-v1,.mws-agenda-track-v1.mws-agenda-selected-v1){
+   outline:1px solid var(--accent);outline-offset:-1px;
+ }
+ #calendarAgendaV1 :is(.mws-agenda-track-v1.mws-agenda-link-v1,.mws-agenda-track-v1.mws-agenda-selected-v1) .mws-agenda-track-bar-v1{
+   box-shadow:inset 0 1px #ffffff80,0 0 7px color-mix(in srgb,var(--agenda-event-color,var(--accent)) 42%,transparent);
+ }
+ body.mws-premium #calendar.section #calendarMonthPanelV172.mws-agenda-open-v1 #calendarGrid .mini-event[data-evid].mws-agenda-link-v1:not(.event-details-selected-v1){
+   outline:1px solid var(--content-group-color,var(--accent))!important;outline-offset:0!important;
+   box-shadow:0 3px 9px #0007!important;
+   filter:brightness(1.14);
+ }
+ #calendarAgendaV1 :is(button,select):focus-visible{outline:2px solid var(--accent)!important;outline-offset:-2px}
+ #calendarAgendaV1 :is([data-agenda-close],[data-agenda-prev],[data-agenda-next],[data-agenda-today]):hover:not(:disabled){
+   border-color:color-mix(in srgb,var(--accent) 55%,var(--border))!important;
+   background:color-mix(in srgb,var(--accent) 15%,var(--input))!important;
+ }
+ #calendarAgendaV1 :is([data-agenda-close],[data-agenda-prev],[data-agenda-next],[data-agenda-today]):active:not(:disabled){box-shadow:inset 0 2px 5px #0006!important}
+ html[data-mws-motion=reduced] #calendarAgendaV1 .mws-agenda-event-v1{transition:none!important}
+ @media(prefers-reduced-motion:reduce){#calendarAgendaV1 .mws-agenda-event-v1{transition:none!important}}
+}
