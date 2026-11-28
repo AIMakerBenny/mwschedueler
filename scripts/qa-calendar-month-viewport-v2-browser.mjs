@@ -101,7 +101,13 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const badgeCards=[...document.querySelectorAll('#calendarGrid .mini-event[data-evid]')];
  const vrCards=badgeCards.filter(el=>el.querySelector('.calendar-vr-badge-v1'));
  const vrBadgeOnly=vrCards.length===5&&badgeCards.every(el=>Boolean(el.querySelector('.calendar-vr-badge-v1'))===data.events.some(e=>e.id===el.dataset.evid&&!e.restDay&&e.device==='VR'))&&vrCards.every(el=>el.getAttribute('aria-label').includes(' VR '));
- const vrBadgeLayout=vrCards.every(el=>{const badge=el.querySelector('.calendar-vr-badge-v1'),slot=el.querySelector('.mws-steam-slot-v111'),main=el.querySelector('.mini-event-main'),b=badge.getBoundingClientRect(),s=slot.getBoundingClientRect(),m=main.getBoundingClientRect(),style=getComputedStyle(badge);return badge.textContent==='VR'&&b.width===20&&b.height===20&&style.borderRadius==='50%'&&style.pointerEvents==='none'&&b.right<=s.left-2&&m.right<=b.left+1&&Math.abs(centerY(b)-centerY(s))<=1&&Math.abs(centerY(b)-centerY(el.getBoundingClientRect()))<=1});
+ const vrBadgeLayout=vrCards.every(el=>{
+  const badge=el.querySelector('.calendar-vr-badge-v1'),slot=el.querySelector('.mws-steam-slot-v111'),main=el.querySelector('.mini-event-main'),title=el.querySelector('.calendar-card-title-v2'),clock=el.querySelector('.calendar-start-v2'),cell=el.closest('.day'),cs=getComputedStyle(cell);
+  const narrow=cell.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)<215;
+  const b=badge.getBoundingClientRect(),s=slot.getBoundingClientRect(),m=main.getBoundingClientRect(),t=title.getBoundingClientRect(),c=clock.getBoundingClientRect(),style=getComputedStyle(badge);
+  const common=badge.textContent==='VR'&&style.pointerEvents==='none'&&s.width===24&&s.height===24&&m.right<=s.left+1;
+  return common&&(narrow?b.width===19&&b.height===13&&b.right<=s.left+1&&c.right<=b.left+1&&b.bottom<=t.top+2&&t.right>b.left&&m.width>=el.getBoundingClientRect().width-46:b.width===20&&b.height===20&&style.borderRadius==='50%'&&b.right<=s.left-2&&m.right<=b.left+1&&Math.abs(centerY(b)-centerY(s))<=1&&Math.abs(centerY(b)-centerY(el.getBoundingClientRect()))<=1);
+ });
  const groupedCard=$('[data-evid="qa-5-0"]'),groupAccent=getComputedStyle(groupedCard).borderLeftColor!==cardCSS.borderLeftColor&&getComputedStyle(groupedCard).outlineStyle==='none';
  const shadowGutter=Number.parseFloat(getComputedStyle(shortList).paddingInlineStart)>=3&&Number.parseFloat(getComputedStyle(shortList).paddingBottom)>=5;
  const preview=document.createElement('div');preview.id='calendarEventPreview';preview.className='calendar-event-preview open';document.body.append(preview);
