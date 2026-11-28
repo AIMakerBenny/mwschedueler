@@ -199,6 +199,37 @@ try{
    await capture('calendar-detail');
    await browser.evaluate("window.mwsCalendarDetailsV1.close({restoreFocus:false})");
   }
+  if(viewport[0]>=1700){
+   const beforeAgenda=calls.length;
+   const originalEvents=await browser.evaluate("JSON.stringify(activeEvents())");
+   const initialWidth=geom.gridWidth;
+   await browser.evaluate("document.getElementById('calendarAgendaToggleV1').click()");
+   await until(()=>browser.evaluate("!document.getElementById('calendarAgendaV1').hidden"),'Wide calendar agenda opened');
+   const date=geom.labelMetrics.denseDays[0].date;
+   await browser.evaluate("(date=>{const input=document.querySelector('[data-agenda-date]');input.value=date;input.dispatchEvent(new Event('change',{bubbles:true}))})("+JSON.stringify(date)+")");
+   const agenda=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),panel=document.getElementById('calendarAgendaV1'),r=grid.getBoundingClientRect(),p=panel.getBoundingClientRect(),main=document.querySelector('.app>.main').getBoundingClientRect(),date=panel.querySelector('[data-agenda-date]').value,items=[...panel.querySelectorAll('[data-agenda-event]')];return {date,ids:items.map(e=>e.dataset.agendaEvent),expected:activeEvents().filter(e=>e.date===date).map(e=>String(e.id)),gridWidth:r.width,panelWidth:p.width,separate:r.right<=p.left+1,inside:p.right<=main.right+1&&p.bottom<=innerHeight+1,marked:grid.querySelector('.mws-agenda-date-v1')?.dataset.date}})()`);
+   assert(agenda.separate&&agenda.inside&&agenda.marked===date&&agenda.gridWidth<initialWidth&&agenda.panelWidth>=248,JSON.stringify(agenda));
+   assert.deepEqual([...agenda.ids].sort(),[...agenda.expected].sort());assert.equal(agenda.ids.length,3);
+   assert.equal(calls.length,beforeAgenda,'Opening or selecting agenda date must not request data');
+   await capture('calendar-agenda');
+   await browser.evaluate("document.querySelector('#calendarAgendaV1 [data-agenda-event]').click()");
+   await until(()=>browser.evaluate("window.mwsCalendarDetailsV1?.isOpen()===true"),'Agenda opens existing event detail');
+   await capture('calendar-agenda-detail');
+   await browser.evaluate("window.mwsCalendarDetailsV1.close({restoreFocus:false})");
+   await browser.evaluate("document.querySelector('[data-agenda-next]').click()");
+   assert.notEqual(await browser.evaluate("document.querySelector('[data-agenda-date]').value"),date);
+   await browser.evaluate("document.querySelector('[data-agenda-prev]').click()");
+   assert.equal(await browser.evaluate("document.querySelector('[data-agenda-date]').value"),date);
+   await browser.evaluate("document.querySelector('[data-agenda-close]').click()");
+   await until(()=>browser.evaluate("document.getElementById('calendarAgendaV1').hidden"),'Agenda closed');
+   const restored=await browser.evaluate("document.getElementById('calendarGrid').getBoundingClientRect().width");
+   assert(Math.abs(restored-initialWidth)<=1,'Default month width must be restored');
+   assert.equal(await browser.evaluate("JSON.stringify(activeEvents())"),originalEvents,'Agenda must not mutate schedule data');
+   assert.equal(calls.length,beforeAgenda,'Agenda interaction must not request data');
+   geom.agenda={...agenda,restored,requests:calls.length-beforeAgenda};
+  }else{
+   assert(await browser.evaluate("document.getElementById('calendarAgendaV1').hidden&&getComputedStyle(document.getElementById('calendarAgendaToggleV1')).display==='none'"),'Narrow view keeps original calendar');
+  }
   await nav(['dashboard']);await capture('dashboard');
   await nav(['calendar']);await browser.evaluate("document.body.dataset.theme='ocean'");await capture('calendar-ocean');
   assert.equal(errors.length,0,JSON.stringify(errors));
