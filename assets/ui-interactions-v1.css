@@ -166,3 +166,101 @@ body #gameLadder .ladder-full-result-row.winner{border-color:#c9a64d!important}
   body #friendFinder .friend-finder-avatar-v5,body #sniper .avatar{transition:scale var(--mws-ui-card) var(--mws-ui-ease)}
 }
 html[data-mws-motion=reduced] body :is(#dashboard,#contacts,#sniper,#posts,#memos,#friendFinder,#settings,#achievements,#gameLadder,#legacy) :is(.dashboard-notice-item-local,.today-person-card-local,.contact-maintenance-card,.sniper-row,.post-saved-item,.favorite-schedule-card,.ladder-full-result-row,.mws-legacy-link-v1,.friend-finder-avatar-v5,.friend-finder-state-v5,.avatar,input[type=checkbox],input[type=radio]){transition:none!important;scale:none!important}
+
+/* Stage 6: portrait-first directory and applicant workspaces. The directory
+   owns tracks, sizing and hit targets; these rules only paint existing nodes. */
+body.mws-premium :is(#contacts,#friendFinder,#posts){
+  --people-face:color-mix(in srgb,var(--panel) 91%,var(--text));
+  --people-well:color-mix(in srgb,var(--input) 86%,var(--bg));
+  --people-rim:color-mix(in srgb,var(--text) 13%,var(--border));
+  --people-glint:color-mix(in srgb,var(--text) 10%,transparent);
+}
+body.mws-premium #contacts .contact-grid>.contact-card{
+  --person-state:var(--people-rim);
+  background:linear-gradient(145deg,var(--people-face),var(--panel) 45%,color-mix(in srgb,var(--panel) 87%,var(--bg)))!important;
+  border-color:var(--person-state)!important;
+  box-shadow:inset 0 1px var(--people-glint),0 3px 9px #0003!important;
+}
+body.mws-premium #contacts .contact-grid>.contact-card.pending-card{--person-state:color-mix(in srgb,#d8a64b 53%,var(--border))}
+body.mws-premium #contacts .contact-grid>.contact-card.has-upcoming{--person-state:color-mix(in srgb,#37c7a3 50%,var(--border))}
+body.mws-premium #contacts .contact-grid>.contact-card.is-self{--person-state:color-mix(in srgb,#d4ad62 70%,var(--border))}
+body.mws-premium #contacts .contact-grid>.contact-card:is(.is-self,.pending-card,.has-upcoming){
+  box-shadow:inset 0 2px var(--person-state),0 3px 9px #0003!important;
+}
+body.mws-premium #contacts .contact-grid>.contact-card .contact-card-avatar-lg{
+  box-shadow:0 3px 8px #0004,0 0 0 1px var(--people-rim)!important;
+}
+body.mws-premium #contacts .contact-grid>.contact-card .contact-card-tags .chip{
+  background:var(--people-well)!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--border) 78%,transparent);
+}
+body.mws-premium :is(#contacts,#friendFinder,#posts) :is(#contactSearch,#friendFinderSearchV5,.post-applicant-tools>input){
+  background:var(--people-well)!important;
+  box-shadow:inset 0 1px 4px #0003!important;
+}
+body.mws-premium :is(#contacts,#friendFinder,#posts) :is(#contactSearch,#friendFinderSearchV5,.post-applicant-tools>input):focus{
+  border-color:var(--accent)!important;
+  box-shadow:inset 0 1px 4px #0003,0 0 0 2px color-mix(in srgb,var(--accent) 17%,transparent)!important;
+}
+body.mws-premium #friendFinder .friend-finder-card-v5{
+  background:linear-gradient(150deg,var(--people-face),var(--panel) 45%,color-mix(in srgb,var(--panel) 86%,var(--bg)))!important;
+  border-color:var(--people-rim)!important;
+  box-shadow:inset 0 1px var(--people-glint),0 3px 9px #0003!important;
+}
+body.mws-premium #friendFinder .friend-finder-card-v5:is(.live,.mws-friend-live-card-v120){
+  border-color:color-mix(in srgb,#ef4565 62%,var(--border))!important;
+  box-shadow:inset 0 2px #ef4565,0 3px 9px #0003!important;
+}
+body.mws-premium #friendFinder .friend-finder-card-v5 .friend-finder-avatar-v5{
+  box-shadow:0 0 0 1px var(--people-rim),0 3px 8px #0004;
+}
+body.mws-premium #friendFinder .friend-finder-card-v5 .friend-finder-state-v5.live{
+  color:#ff788b;
+  text-shadow:0 0 8px #ef456533;
+}
+body.mws-premium #friendFinder .friend-finder-card-v5 .mws-live-screen-v120{
+  box-shadow:0 4px 12px #0005;
+}
+body.mws-premium #posts.section .post-applicant-grid .post-applicant-card{
+  --person-state:var(--people-rim);
+  background:linear-gradient(145deg,var(--people-face),var(--panel) 45%,color-mix(in srgb,var(--panel) 88%,var(--bg)))!important;
+  border-color:var(--person-state)!important;
+  box-shadow:inset 0 1px var(--people-glint),0 3px 9px #0003!important;
+}
+body.mws-premium #posts.section .post-applicant-grid .post-applicant-card.new-applicant{--person-state:color-mix(in srgb,#3aa9ff 55%,var(--border))}
+body.mws-premium #posts.section .post-applicant-grid .post-applicant-card.gacha{--person-state:color-mix(in srgb,#d18bd9 55%,var(--border))}
+body.mws-premium #posts.section .post-applicant-grid .post-applicant-card.nextchance{--person-state:color-mix(in srgb,#d8a64b 50%,var(--border))}
+body.mws-premium #posts.section .post-applicant-grid .post-applicant-card.selected{--person-state:#37b276}
+body.mws-premium #posts.section .post-applicant-grid .post-applicant-card:is(.new-applicant,.gacha,.nextchance,.selected){
+  box-shadow:inset 0 2px var(--person-state),0 3px 9px #0003!important;
+}
+body.mws-premium #posts.section .post-applicant-card .post-applicant-avatar{
+  box-shadow:0 0 0 1px var(--people-rim),0 3px 8px #0004!important;
+}
+body.mws-premium #posts.section .post-applicant-card .post-applicant-comment{
+  background:var(--people-well)!important;
+  box-shadow:inset 0 1px 4px #0002;
+}
+body.mws-premium #posts.section .post-applicant-card .post-menu-trigger{
+  box-shadow:inset 0 1px var(--people-glint),0 1px 3px #0002!important;
+}
+body.mws-premium #posts.section .post-saved-item.active{
+  background:color-mix(in srgb,var(--accent) 13%,var(--people-well))!important;
+  box-shadow:inset 2px 0 var(--accent),inset 0 1px var(--people-glint)!important;
+}
+/* Keep card rectangles and menu anchors stable even during pointer movement.
+   Status outlines and drag ownership are left to their existing controllers. */
+@media(hover:hover) and (pointer:fine){
+  body.mws-premium #contacts .contact-grid>.contact-card:hover,
+  body.mws-premium #friendFinder .friend-finder-card-v5:not(.live):not(.mws-friend-live-card-v120):hover,
+  body.mws-premium #posts.section .post-applicant-grid .post-applicant-card:hover{
+    background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 7%,var(--people-face)),var(--panel) 65%)!important;
+    box-shadow:inset 0 1px var(--people-glint),inset 0 0 0 1px var(--person-state,var(--people-rim)),0 5px 12px #0004!important;
+    scale:none!important;transform:none!important;
+  }
+  body.mws-premium #contacts .contact-grid>.contact-card:hover .contact-card-avatar-lg,
+  body.mws-premium #posts.section .post-applicant-avatar-link:hover .post-applicant-avatar{
+    box-shadow:0 0 0 1px var(--accent),0 4px 10px #0004!important;
+    scale:none!important;
+  }
+}
