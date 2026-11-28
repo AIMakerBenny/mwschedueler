@@ -5620,7 +5620,6 @@ function renderThemeGrid(){
   const box=document.getElementById('themeGrid');box.innerHTML=THEME_META.map(t=>`<button type="button" class="theme-card ${t.id===data.theme?'active':''}" onclick="applyTheme('${t.id}')"><div class="theme-swatches"><span class="theme-swatch" style="background:${t.bg}"></span><span class="theme-swatch" style="background:${t.panel}"></span><span class="theme-swatch" style="background:${t.accent}"></span></div><div>${esc(t.name)}</div></button>`).join('');
 }
 window.applyTheme=applyTheme;
-const BUILTIN_DEFAULT_BACKGROUND='assets/default-background.png';
 function uiFrameMeta(id=data.uiFrame){
   return UI_FRAME_META.find(frame=>frame.id===normalizeUiFrameId(id))||UI_FRAME_META[0];
 }
@@ -5687,14 +5686,15 @@ function applyNeoTransparency(notify=false){
 window.applyNeoTransparency=applyNeoTransparency;
 
 function applyBackground(){
-  const img=data.backgroundImage||BUILTIN_DEFAULT_BACKGROUND;
+  const img=data.backgroundImage||'';
+  document.body.dataset.backgroundCustom=img?'true':'false';
   const dim=Math.max(0,Math.min(85,Number(data.backgroundDim??45)));
   document.body.style.setProperty('--custom-bg-image',img?`url("${img}")`:'none');
   document.body.style.setProperty('--custom-bg-dim',String(dim/100));
   const preview=document.getElementById('backgroundPreview');
   if(preview){
     preview.style.backgroundImage=img?`linear-gradient(rgba(0,0,0,.18),rgba(0,0,0,.18)),url("${img}")`:'none';
-    preview.textContent='';
+    preview.textContent=img?'':'배경 이미지 없음';
   }
   const slider=document.getElementById('backgroundDim');
   const value=document.getElementById('backgroundDimValue');
@@ -5757,7 +5757,7 @@ document.getElementById('backgroundImageInput').onchange=async e=>{
   e.target.value='';
 };
 document.getElementById('removeBackgroundBtn').onclick=()=>{
-  data.backgroundImage='';mwsSaveDevicePrefs(data);applyBackground();toast('배경 이미지','기본 MAWANG 배경으로 돌아왔습니다');
+  data.backgroundImage='';mwsSaveDevicePrefs(data);applyBackground();toast('배경 이미지','배경 이미지를 제거했습니다');
 };
 document.getElementById('backgroundDim').oninput=e=>{
   data.backgroundDim=Number(e.target.value);
