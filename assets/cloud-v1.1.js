@@ -185,7 +185,11 @@
         const cached=await Promise.all(INITIAL_PARTS.map(part=>checkPartCache('public',part)));
         if(generation===hydrationSeq&&mode===chosen&&cached.every(x=>x.cached&&Number.isInteger(Number(x.cached.version))&&Number(x.cached.version)>0&&ownSave(x.cached,'data'))){
           const preview=freshSkeleton();INITIAL_PARTS.forEach((part,i)=>mergePart(part,cached[i].cached.data,preview));
-          data=preview;normalizeDataShape();window.mwsRenderHydratedCalendarV1('로컬 캐시 · 최신 버전 확인 중',INITIAL_PARTS);
+          data=preview;normalizeDataShape();
+          // Shared calendar parts omit device-local presentation preferences.
+          // Apply them before the first cached paint, just as on the network path.
+          if(typeof mwsApplyDevicePrefs==='function')mwsApplyDevicePrefs(data);
+          window.mwsRenderHydratedCalendarV1('로컬 캐시 · 최신 버전 확인 중',INITIAL_PARTS);
           previewVersions=Object.fromEntries(INITIAL_PARTS.map((part,i)=>[part,Number(cached[i].cached.version)]));
           metric('calendar-local-first-paint',{scope,versions:previewVersions});
           const status=$('syncStatusText');if(status)status.textContent='로컬 일정 · 최신 버전 확인 중';
@@ -228,6 +232,9 @@
       await loadBatch(hydrationParts);
       setLoginError('로그인 완료 · 화면을 준비하는 중입니다.');
       data=next;normalizeDataShape();
+      // Even when the cached preview is reused and rendering is skipped,
+      // retain the device preferences on the authoritative in-memory state.
+      if(typeof mwsApplyDevicePrefs==='function')mwsApplyDevicePrefs(data);
       // Set known legacy derived/default view fields before measuring dirty parts.
       if(chosen==='admin')window.mwsNormalizeLoadedReadDefaultsV3?.(data,loadedParts);
       // Compare edits against the view after legacy defaults are filled. Keep raw D1
