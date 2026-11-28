@@ -377,3 +377,12 @@ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions :is(#saveEventB
    scroll-padding-bottom:12px;
  }
 }
+
+/* Keep text and form inputs clean: grain belongs to the metal header/footer,
+   and the input cavity has a simple machined edge. */
+@media(min-width:901px){
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) #eventModal .mws-event-editor-v6 :is(.event-modal-header,.event-actions){
+  background-size:64px 64px,100% 100%!important;
+  background-repeat:repeat,no-repeat!important;
+ }
+}
