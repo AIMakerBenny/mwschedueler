@@ -10,6 +10,7 @@ import worker from '../src/cf-v111-entry.js';
 import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 import {ROSTER as OP_ROSTER,rosterContactName} from '../assets/operation-m-model-v1.js';
 const operationMQA=process.env.MWS_QA_OPERATION_M==='1';
+const calendarVisualQA=process.env.MWS_QA_CALENDAR_VISUAL==='1';
 
 // Real HTML, browser scripts and Worker route chain; all data and upstream
 // responses are synthetic. Neither Cloudflare nor SOOP is contacted.
@@ -76,6 +77,20 @@ if(operationMQA){
  [...OP_ROSTER,...roles].forEach((name,i)=>{contacts[i].name=name==='리냐_LIN…'?'리냐_LINYA':name==='카노미☆'?'카노':rosterContactName(name)});
  parts.miniGames.operationMV1={links:Object.fromEntries(OP_ROSTER.map((name,i)=>[name,contacts[i].id])),roles:roles.map((_,i)=>contacts[OP_ROSTER.length+i].id)};
 }
+if(calendarVisualQA){
+ const month=day.slice(0,7),last=new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7)),0)).getUTCDate();
+ const categories=[{id:'visual-vr',name:'VR 콘텐츠',color:'#8b72df'},{id:'visual-collab',name:'합방',color:'#4789ce'},{id:'visual-solo',name:'개인 방송',color:'#35ad92'}];
+ parts.core.categories.push(...categories);
+ const titles=['VR 콘텐츠 연습','협동 게임 합방','개인 방송','정기 콘텐츠','저녁 방송','참가자 사전 미팅','장시간 콘텐츠 진행'];
+ for(let d=1;d<=last;d++){
+  if(d%7===0){parts.events.push({id:'visual-rest-'+d,date:month+'-'+String(d).padStart(2,'0'),title:'휴방',restDay:true});continue}
+  if(d%5===0)continue;
+  for(let n=0;n<(d%4===0?3:1);n++){
+   const c=categories[(d+n)%categories.length];
+   parts.events.push({id:'visual-event-'+d+'-'+n,title:titles[(d+n)%titles.length],date:month+'-'+String(d).padStart(2,'0'),categoryId:c.id,color:c.color,start:['12:00','17:00','20:30'][n],end:['16:00','19:30','23:00'][n],device:n===0?'VR':'PC',participants:['qa0','qa1'],checklist:[]});
+  }
+ }
+}
 if(bsandongQA){
  const prior=n=>new Date(Date.now()+9*3600000-n*86400000).toISOString().slice(0,10);
  parts.core.categories.push({id:'qa-bsandong',name:'브산동',color:'#06b6d4'});
@@ -125,8 +140,8 @@ try{
 
  const compareMode=process.env.MWS_QA_CSS_COMPARE==='1';
  if(compareMode)await browser.setReducedMotion(true);
- const viewport=compareMode?String(process.env.MWS_QA_VIEWPORT||'1366,768').split(',').map(Number):firstPaintQA&&process.env.MWS_QA_FIRST_PAINT_WIDE==='1'?[1920,1080]:[1366,768];
- await browser.navigate(base+':'+server.address().port+'/',...viewport,compareMode&&viewport[0]<761);
+ const viewport=(compareMode||calendarVisualQA)?String(process.env.MWS_QA_VIEWPORT||'1366,768').split(',').map(Number):firstPaintQA&&process.env.MWS_QA_FIRST_PAINT_WIDE==='1'?[1920,1080]:[1366,768];
+ await browser.navigate(base+':'+server.address().port+'/',...viewport,(compareMode||calendarVisualQA)&&viewport[0]<761);
  await until(()=>browser.evaluate("(()=>{document.querySelector('#mwsAnnouncementDialog[open] .mws-notice-close')?.click();if(document.body.classList.contains('mws-gated')){document.querySelector('#mwsModePublic')?.click();document.querySelector('#mwsLoginSubmit')?.click()}return !!window.__mwsAppReadyV130&&document.body.dataset.mwsMode==='public'&&!document.body.classList.contains('mws-gated')&&!document.body.classList.contains('mws-app-loading')})()"),'Full app public readiness');
  await until(()=>browser.evaluate('!!window.__mwsMediaPreloadPromiseV1'),'Media preloader scheduled');
  await browser.evaluate('window.__mwsMediaPreloadPromiseV1.then(()=>true)');
@@ -144,7 +159,30 @@ try{
  const routes=['calendar','contacts','dashboard','memos','careerTimeline','achievements','mawangArchive','gameLadder','gameMultiDraw','contentPlanner','toolTier','toolMatrix','toolRelations','settings','calendar'];
  const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,450));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
  let before=calls.length;
- if(operationMQA){
+ if(calendarVisualQA){
+  const captureDir=process.env.MWS_QA_VISUAL_CAPTURE;assert(captureDir,'Capture directory required');
+  const {mkdirSync}=await import('node:fs');mkdirSync(captureDir,{recursive:true});
+  const capture=async label=>{
+   await pause(550);
+   const shot=await browser.captureScreenshot();
+   writeFileSync(path.join(captureDir,label+'-'+viewport[0]+'x'+viewport[1]+'.jpg'),Buffer.from(shot,'base64'));
+  };
+  await nav(['calendar']);
+  await until(()=>browser.evaluate("document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length>=25"),'Representative calendar loaded');
+  await browser.evaluate("document.fonts.ready.then(()=>true)");
+  await capture('calendar');
+  const geom=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),main=document.querySelector('.app>.main'),r=grid.getBoundingClientRect(),m=main.getBoundingClientRect();return {cards:grid.querySelectorAll('.mini-event[data-evid]').length,rootOverflow:document.documentElement.scrollWidth-innerWidth,gridWidth:r.width,mainWidth:m.width,gridHeight:r.height,theme:document.body.dataset.theme,font:getComputedStyle(grid).fontFamily}})()`);
+  assert(geom.cards>=25&&geom.rootOverflow<=2&&geom.gridWidth>0,JSON.stringify(geom));
+  await browser.evaluate("document.querySelector('#calendarGrid .mini-event[data-evid]').click()");
+  await until(()=>browser.evaluate("window.mwsCalendarDetailsV1?.isOpen()===true"),'Calendar detail open');
+  await capture('calendar-detail');
+  await browser.evaluate("window.mwsCalendarDetailsV1.close({restoreFocus:false})");
+  await nav(['dashboard']);await capture('dashboard');
+  await nav(['calendar']);await browser.evaluate("document.body.dataset.theme='light'");await capture('calendar-light');
+  assert.equal(errors.length,0,JSON.stringify(errors));
+  writeFileSync(path.join(captureDir,'geometry-'+viewport[0]+'.json'),JSON.stringify({viewport,geom,requests:summary(calls)},null,2));
+  console.log('CALENDAR_VISUAL_CAPTURE_OK '+JSON.stringify({viewport,geom}));
+ }else if(operationMQA){
   const captureDir=process.env.MWS_OPERATION_M_CAPTURE;
   if(captureDir){const {mkdirSync}=await import('node:fs');mkdirSync(captureDir,{recursive:true})}
   const capture=async(label,w,h)=>{if(!captureDir)return;const shot=await browser.captureScreenshot();writeFileSync(path.join(captureDir,'full-'+label+'-'+w+'x'+h+'.jpg'),Buffer.from(shot,'base64'));if(w===1726&&['overview','agent','roster'].includes(label))console.log('OPERATION_M_FULL_'+label.toUpperCase()+' '+shot)};
