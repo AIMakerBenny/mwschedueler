@@ -2127,7 +2127,7 @@ function renderCalendar(){
         const groupColor=groupColors.get(e.contentGroupId);
         const color=e.restDay?'#e85d75':(groupColor||e.color||category(e.categoryId)?.color||'#64748b');
         const startLabel=e.start&&e.start!=='TBD'?String(e.start).slice(0,5):e.historicalRecord?.basis==='publication'?'공개':e.historicalRecord?.basis==='announcement'?'공지':'미정';
-        const label=e.restDay?'휴방':`<time class="calendar-start-v2">${esc(startLabel)}</time><span class="calendar-card-title-v2">${esc(e.title)}</span>`;
+        const label=e.restDay?'휴방':`<time class="calendar-start-v2" data-clock-state="${startLabel==='미정'?'unknown':startLabel==='공개'||startLabel==='공지'?'record':'known'}">${esc(startLabel)}</time><span class="calendar-card-title-v2">${esc(e.title)}</span>`;
         const isVR=!e.restDay&&e.device==='VR';
         return `<div class="mini-event ${e.restDay?'rest-event':''} ${groupColor?'calendar-content-group-event-v2':''} ${e.restDay?'':'mws-steam-host-v111'}${isVR?' calendar-event-vr-v1':''}"
           draggable="false"

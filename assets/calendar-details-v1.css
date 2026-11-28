@@ -470,3 +470,54 @@ body.mws-premium .event-details-popover-v2 .event-details-section-v1 h3{font-siz
 @media(max-width:360px){
  body.mws-premium .event-details-popover-v2 .calendar-preview-people{grid-template-columns:minmax(0,1fr)!important}
 }
+
+/* Pass N: the monthly card is a compact schedule record.
+   Keep the normal 24px game action and dense-day height. The existing Steam
+   renderer owns linked images and their click behavior; no duplicated image. */
+@media(min-width:901px){
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid]:not(.rest-event) .calendar-card-title-v2{
+   font-weight:650!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid] .calendar-start-v2{
+   font-variant-numeric:tabular-nums;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .calendar-start-v2[data-clock-state=unknown]{
+   color:color-mix(in srgb,var(--text) 65%,#d8a64b)!important;font-style:italic;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111.linked{
+   overflow:hidden!important;outline:1px solid var(--mws-material-edge);outline-offset:-1px;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111.linked img{
+   object-fit:contain!important;background:var(--mws-material-well);
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111:focus-visible{
+   outline:2px solid var(--text)!important;outline-offset:-2px;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event.rest-event{
+   color:color-mix(in srgb,var(--text) 85%,var(--muted))!important;
+ }
+ @media(hover:hover) and (pointer:fine){
+   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111.linked:hover{
+     outline:1px solid var(--accent);outline-offset:-1px;
+   }
+   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111:not(.linked):hover{
+     color:var(--text)!important;opacity:1;outline:1px solid var(--mws-material-edge);outline-offset:-1px;
+   }
+ }
+ /* Wide linked images use a landscape thumbnail, but short date columns
+    retain the original square footprint and full-width second title row. */
+ @container mws-calendar-day (min-width:215px){
+   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4)):has(>.mws-steam-slot-v111.linked img){
+     padding-right:47px!important;
+   }
+   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111.calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4)):has(>.mws-steam-slot-v111.linked img){
+     padding-right:70px!important;
+   }
+   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid]:has(>.mws-steam-slot-v111.linked img)>.calendar-vr-badge-v1{
+     right:45px;
+   }
+   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4))>.mws-steam-slot-v111.linked:has(img){
+     width:36px!important;min-width:36px!important;
+   }
+ }
+}

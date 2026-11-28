@@ -87,7 +87,7 @@ if(calendarVisualQA){
   if(d%5===0)continue;
   for(let n=0;n<(d%4===0?3:1);n++){
    const c=categories[(d+n)%categories.length];
-   parts.events.push({id:'visual-event-'+d+'-'+n,title:titles[(d+n)%titles.length],date:month+'-'+String(d).padStart(2,'0'),categoryId:c.id,color:c.color,start:['12:00','17:00','20:30'][n],end:['16:00','19:30','23:00'][n],device:n===0?'VR':'PC',participants:['qa0','qa1'],checklist:[]});
+   parts.events.push({id:'visual-event-'+d+'-'+n,title:titles[(d+n)%titles.length],date:month+'-'+String(d).padStart(2,'0'),categoryId:c.id,color:c.color,start:['12:00','17:00','20:30'][n],end:['16:00','19:30','23:00'][n],device:n===0?'VR':'PC',participants:['qa0','qa1'],checklist:[],...(d===1&&n===0||d===4&&n===1?{steamGame:{source:'manual',id:'manual:visual-fixture',name:'검증용 게임',platform:'PC',image:'data:image/png;base64,'+png.toString('base64')}}:{})});
   }
  }
 }
@@ -173,6 +173,7 @@ try{
   const scene=await browser.evaluate(`(async()=>{const grid=document.getElementById('calendarGrid'),paint=getComputedStyle(grid),value=paint.getPropertyValue('--calendar-atmosphere-art').trim();if(!value.includes('data:image/png;base64,'))return {present:false};const uri=value.substring(value.indexOf('data:'),value.lastIndexOf('"')),img=new Image();img.src=uri;await img.decode();return {present:true,width:img.naturalWidth,height:img.naturalHeight,bytes:atob(uri.split(',')[1]).length}})()`);
   if(viewport[0]>=901)assert(scene.present&&scene.width===1280&&scene.height===720&&scene.bytes<=240000,JSON.stringify(scene));
   else assert(!scene.present,'Mobile must not render the desktop landscape');
+  if(viewport[0]>=901)await until(()=>browser.evaluate("document.querySelectorAll('#calendarGrid .mws-steam-slot-v111.linked img').length>=2"),'Existing linked game images rendered');
   await capture('calendar');
   const geom=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),main=document.querySelector('.app>.main'),r=grid.getBoundingClientRect(),m=main.getBoundingClientRect();return {cards:grid.querySelectorAll('.mini-event[data-evid]').length,rootOverflow:document.documentElement.scrollWidth-innerWidth,gridWidth:r.width,mainWidth:m.width,gridHeight:r.height,theme:document.body.dataset.theme,font:getComputedStyle(grid).fontFamily}})()`);
   assert(geom.cards>=25&&geom.rootOverflow<=2&&geom.gridWidth>0,JSON.stringify(geom));
@@ -183,6 +184,8 @@ try{
    return {titles:report(titles),vrTitles:report(vr),denseDays:dense.map(el=>{const r=el.getBoundingClientRect(),cards=[...el.querySelectorAll('.mini-event[data-evid]')];return {date:el.closest('.day').dataset.date,fullCards:cards.filter(c=>{const b=c.getBoundingClientRect();return b.height>0&&b.top>=r.top-1&&b.bottom<=r.bottom+1}).length,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight}})};
   })()`);
   if(viewport[0]>=1366){
+   geom.gameSlots=await browser.evaluate(`(async()=>{const slots=[...document.querySelectorAll('#calendarGrid .mws-steam-slot-v111.linked:has(img)')];await Promise.all(slots.map(b=>b.firstElementChild.decode()));return slots.map(b=>{const card=b.closest('.mini-event'),title=card.querySelector('.calendar-card-title-v2'),vr=card.querySelector('.calendar-vr-badge-v1'),r=b.getBoundingClientRect(),t=title.getBoundingClientRect(),v=vr?.getBoundingClientRect(),day=card.closest('.day'),style=getComputedStyle(day),width=day.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);return {id:card.dataset.evid,width:r.width,height:r.height,decoded:b.firstElementChild.naturalWidth>0,titleClear:t.right<=r.left+1,vrClear:!v||v.right<=r.left+1,wide:width>=215,fit:title.scrollWidth<=title.clientWidth+1,label:b.getAttribute('aria-label')}})})()`);
+   assert(geom.gameSlots.length===2&&geom.gameSlots.every(x=>x.decoded&&x.titleClear&&x.vrClear&&x.height>=24&&x.width>=(x.wide?36:24)&&x.fit&&x.label.includes('게임 수정')),'Linked game slot geometry '+JSON.stringify(geom.gameSlots));
    geom.brand=await browser.evaluate(`(()=>{const full=document.querySelector('.sidebar .logo-full'),mini=document.querySelector('.sidebar .logo-mini'),pin=document.getElementById('sidebarPinBtn'),logo=document.querySelector('.sidebar .logo'),f=full.getBoundingClientRect(),p=pin.getBoundingClientRect(),l=logo.getBoundingClientRect(),style=getComputedStyle(full,'::before');return {mark:style.maskImage.includes('data:image/svg+xml'),miniMark:getComputedStyle(mini,'::before').maskImage.includes('data:image/svg+xml'),width:f.width,available:l.width,overlap:Math.max(0,f.right-p.left),wordmarkFits:full.scrollWidth<=full.clientWidth+1,pinVisible:p.width>0}})()`);
    assert(geom.brand.mark&&geom.brand.miniMark&&geom.brand.wordmarkFits&&geom.brand.overlap<=1&&geom.brand.pinVisible,'Brand must fit existing rail without overlap '+JSON.stringify(geom.brand));
    assert(geom.labelMetrics.vrTitles.total>0&&geom.labelMetrics.vrTitles.fullyReadable===geom.labelMetrics.vrTitles.total,'Fixture VR titles clipped '+JSON.stringify(geom.labelMetrics));
