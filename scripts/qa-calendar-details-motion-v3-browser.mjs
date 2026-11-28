@@ -27,31 +27,31 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const ready=()=>new Promise((resolve,reject)=>{const start=performance.now();function next(){if($('#calendarEventDetailsV1').getAnimations().length){resolve();return}if(performance.now()-start>800){reject(Error('Missing prepared drawer animation'));return}requestAnimationFrame(next)}requestAnimationFrame(next)});
  await ready();
  const drawer=$('#calendarEventDetailsV1'),animation=drawer.getAnimations()[0];
- const explicitMotion=Boolean(animation)&&animation.effect.getTiming().duration===150;
- const fadeOnly=animation.effect.getKeyframes().every(frame=>frame.opacity!==undefined&&frame.transform===undefined);
- animation.pause();animation.currentTime=75;await tick();
+ const explicitMotion=Boolean(animation)&&animation.effect.getTiming().duration===240;
+ const compositorOnly=animation.effect.getKeyframes().every(frame=>frame.opacity!==undefined&&frame.translate!==undefined&&frame.transform===undefined&&frame.left===undefined&&frame.top===undefined);
+ animation.pause();animation.currentTime=120;await tick();
  const calendarStaysPut=main.getAnimations().length===0&&Math.abs(main.getBoundingClientRect().width-before.width)<1;
  let resizeCount=0;const resizeObserver=new ResizeObserver(()=>resizeCount++);resizeObserver.observe(main);
- const origin=drawer.getBoundingClientRect();let fixedPosition=true;
- for(const t of [25,50,75,100,125]){animation.currentTime=t;await tick();const r=drawer.getBoundingClientRect();fixedPosition&&=Math.abs(r.left-origin.left)<1&&Math.abs(r.top-origin.top)<1}
+ const origin=[parseFloat(getComputedStyle(drawer).left),parseFloat(getComputedStyle(drawer).top)];let fixedPosition=true,boundedOffset=true;
+ for(const t of [40,80,120,160,200]){animation.currentTime=t;await tick();const r=getComputedStyle(drawer),offset=r.translate==='none'?[0,0]:r.translate.split(' ').map(parseFloat);fixedPosition&&=Math.abs(parseFloat(r.left)-origin[0])<1&&Math.abs(parseFloat(r.top)-origin[1])<1;boundedOffset&&=Math.hypot(...offset)<=10.1}
  const noPerFrameRelayout=resizeCount<=2;resizeObserver.disconnect();
- animation.currentTime=75;await tick();const middle=Number(getComputedStyle(drawer).opacity);
+ animation.currentTime=120;await tick();const middle=Number(getComputedStyle(drawer).opacity);
  const entersThroughIntermediateOpacity=middle>0&&middle<1;
  window.dispatchEvent(new Event('mawang:datachange'));await tick();
  const refreshKeepsMotion=drawer.getAnimations()[0]===animation;
  animation.finish();await tick();
- const finalPosition=getComputedStyle(drawer).transform==='none'&&Number(getComputedStyle(drawer).opacity)===1;
+ const finalPosition=getComputedStyle(drawer).transform==='none'&&getComputedStyle(drawer).translate==='none'&&Number(getComputedStyle(drawer).opacity)===1;
  const detailImage=drawer.querySelector('.calendar-preview-game-v3 img'),hoverImage=$('#calendarEventPreview .calendar-preview-game-v3 img');
  const uploadedImageDecoded=detailImage?.complete&&detailImage.naturalWidth>0&&hoverImage?.complete&&hoverImage.naturalWidth>0;
  const oneGameSection=drawer.querySelectorAll('.calendar-preview-game-v3').length===1;
- $('#background').click();await ready();const exit=drawer.getAnimations()[0];exit.pause();exit.currentTime=55;await tick();
+ $('#background').click();await ready();const exit=drawer.getAnimations()[0];exit.pause();exit.currentTime=70;await tick();
  const leaving=Number(getComputedStyle(drawer).opacity);
- const exitsThroughIntermediateOpacity=leaving>0&&leaving<1&&exit.effect.getTiming().duration===110;
+ const exitsThroughIntermediateOpacity=leaving>0&&leaving<1&&exit.effect.getTiming().duration===140;
  exit.finish();await tick();const backgroundCloses=drawer.hidden&&!window.mwsCalendarDetailsV1.isOpen()&&editorOpens===0;
  $('#qaCard').click();$('#calendarDetailsCloseV1').click();$('#qaCard').click();await ready();
  const reopening=drawer.getAnimations()[0];reopening.finish();await tick();
  const rapidReopenStable=!drawer.hidden&&window.mwsCalendarDetailsV1.isOpen()&&drawer.classList.contains('open');
- $('#result').textContent=JSON.stringify({explicitMotion,fadeOnly,fixedPosition,calendarStaysPut,noPerFrameRelayout,entersThroughIntermediateOpacity,refreshKeepsMotion,finalPosition,uploadedImageDecoded,oneGameSection,exitsThroughIntermediateOpacity,backgroundCloses,rapidReopenStable,noMutation:baseline===JSON.stringify(data)});
+ $('#result').textContent=JSON.stringify({explicitMotion,compositorOnly,fixedPosition,boundedOffset,calendarStaysPut,noPerFrameRelayout,entersThroughIntermediateOpacity,refreshKeepsMotion,finalPosition,uploadedImageDecoded,oneGameSection,exitsThroughIntermediateOpacity,backgroundCloses,rapidReopenStable,noMutation:baseline===JSON.stringify(data)});
 });`;
 function fixture(test){return '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'\nbody{margin:0;padding:16px;background:#101217;color:#eef0f5}.main{padding:12px}#calendarEventPreview{position:static;display:block;visibility:visible;opacity:1;pointer-events:auto;max-width:500px;margin-top:28px}#result{position:fixed;visibility:hidden}</style><body><div class="app"><main class="main"><section id="calendar" class="section active"><h1>캘린더</h1><div id="calendarGrid"><div class="day"><button id="qaCard" class="mini-event" data-evid="qa">10:41 와우 포에버</button><button id="background">달력 바탕</button></div></div><div id="calendarEventPreview"></div></section></main></div><pre id="result">pending</pre><script>'+read('assets/calendar-details-v1.js')+'</script><script>'+setup+(test?checks:'')+'</script></body></html>'}
 if(process.env.MWS_MOTION_FIXTURE){writeFileSync(process.env.MWS_MOTION_FIXTURE,fixture(false));process.exit(0)}
