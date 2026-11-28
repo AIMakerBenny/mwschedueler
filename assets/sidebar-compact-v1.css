@@ -77,3 +77,47 @@ body.mws-premium .sidebar .nav-scroll button[data-tab]:focus-visible,
 }
 @media(prefers-reduced-motion:reduce){html body:not(.sidebar-pinned) .app>.sidebar,html body:not(.sidebar-pinned) .app>.sidebar :is(.nav-scroll>button[data-tab],.nav-label,.logo-full,.logo-mini,.logo small,.sidebar-pin,.nav-game-divider em,#pageTextScaleControlV54,.mws-creator-links){transition:none!important;animation:none!important}}
 html[data-mws-motion=reduced] body:not(.sidebar-pinned) .app>.sidebar,html[data-mws-motion=reduced] body:not(.sidebar-pinned) .app>.sidebar :is(.nav-scroll>button[data-tab],.nav-label,.logo-full,.logo-mini,.logo small,.sidebar-pin,.nav-game-divider em,#pageTextScaleControlV54,.mws-creator-links){transition:none!important}
+
+/* Premium shell / stage 2. Navigation is an instrument rail, not a floating
+   stack of cards. Paint only: the existing rail owner retains width, pointer
+   boundaries, label visibility, group state, and scrolling. */
+@media(min-width:761px){
+  html body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]):not(:has(:is(#gameF1Racing,#operationM,#wardogs).active)) .app>.sidebar{
+    --mws-rail-edge:color-mix(in srgb,var(--text) 14%,var(--border));
+    --mws-rail-face:color-mix(in srgb,var(--sidebar) 93%,var(--text));
+    --mws-rail-glint:color-mix(in srgb,var(--text) 10%,transparent);
+    background:linear-gradient(156deg,var(--mws-rail-face),var(--sidebar) 34%,color-mix(in srgb,var(--sidebar) 80%,var(--bg)))!important;
+    border-color:var(--mws-rail-edge)!important;
+    box-shadow:inset 0 1px var(--mws-rail-glint),inset -1px 0 #0002,5px 0 18px #0002!important;
+  }
+  html body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]):not(:has(:is(#gameF1Racing,#operationM,#wardogs).active)) .app>.sidebar.mws-sidebar-expanded-v2{
+    box-shadow:inset 0 1px var(--mws-rail-glint),inset -1px 0 #0002,8px 0 28px #0005!important;
+  }
+  html body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]):not(:has(:is(#gameF1Racing,#operationM,#wardogs).active)) .app>.sidebar .logo{
+    color:var(--text)!important;
+    text-shadow:0 2px 7px #0004!important;
+  }
+  html body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]):not(:has(:is(#gameF1Racing,#operationM,#wardogs).active)) .app>.sidebar .sidebar-head{
+    box-shadow:inset 0 -1px color-mix(in srgb,var(--border) 75%,transparent);
+  }
+  html body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]):not(:has(:is(#gameF1Racing,#operationM,#wardogs).active)) .app>.sidebar .nav .nav-scroll>button[data-tab]:not(.active){
+    box-shadow:none!important;
+  }
+  html body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]):not(:has(:is(#gameF1Racing,#operationM,#wardogs).active)) .app>.sidebar .nav .nav-scroll>button[data-tab].active{
+    background:linear-gradient(155deg,color-mix(in srgb,var(--accent) 21%,var(--mws-rail-face)),color-mix(in srgb,var(--accent) 8%,var(--sidebar)))!important;
+    box-shadow:inset 2px 0 var(--accent),inset 0 1px var(--mws-rail-glint),inset 0 0 0 1px color-mix(in srgb,var(--accent) 26%,transparent),0 2px 4px #0002!important;
+  }
+  html body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]):not(:has(:is(#gameF1Racing,#operationM,#wardogs).active)) .app>.sidebar .nav .nav-scroll>button[data-tab].active>.nav-icon{
+    color:color-mix(in srgb,var(--accent) 75%,var(--text))!important;
+  }
+  html body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]):not(:has(:is(#gameF1Racing,#operationM,#wardogs).active)) .app>.sidebar .nav .nav-scroll>button[data-tab]:focus-visible{
+    outline-offset:-2px!important;
+  }
+  @media(hover:hover) and (pointer:fine){
+    html body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]):not(:has(:is(#gameF1Racing,#operationM,#wardogs).active)) .app>.sidebar .nav .nav-scroll>button[data-tab]:not(.active):not(:disabled):hover{
+      background:linear-gradient(155deg,color-mix(in srgb,var(--accent) 9%,var(--mws-rail-face)),var(--sidebar))!important;
+      box-shadow:inset 0 1px var(--mws-rail-glint),inset 0 0 0 1px var(--mws-rail-edge)!important;
+      color:var(--text)!important;
+    }
+  }
+}
