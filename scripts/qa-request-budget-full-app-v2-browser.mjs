@@ -307,6 +307,18 @@ try{
    await choose('05');const empty=await inspectState();assert(empty.count===0&&empty.tracks===0&&empty.hidden&&empty.empty,JSON.stringify(empty));await capture('calendar-agenda-empty');
    await choose('07');const rest=await inspectState();assert(rest.count===1&&rest.hidden&&rest.rest&&!rest.empty,JSON.stringify(rest));await capture('calendar-agenda-rest');
    agenda.states={overnight,unknown,empty,rest};
+   // Exercise rapid close/reopen without letting stale animation completions
+   // hide the new panel; check the real month is not continuously resized.
+   const panelMotion=await browser.evaluate(`(async()=>{
+     const panel=document.getElementById('calendarAgendaV1'),toggle=document.getElementById('calendarAgendaToggleV1'),close=panel.querySelector('[data-agenda-close]'),grid=document.getElementById('calendarGrid'),width=()=>grid.getBoundingClientRect().width;
+     const before=width();close.click();
+     const exit={inert:panel.inert,aria:panel.getAttribute('aria-hidden'),closed:toggle.getAttribute('aria-expanded')==='false',animations:panel.getAnimations().map(a=>({duration:a.effect.getTiming().duration,properties:Object.keys(a.effect.getKeyframes()[0]).filter(k=>!['offset','computedOffset','easing','composite'].includes(k))}))};
+     const stable=panel.hidden||Math.abs(width()-before)<1;
+     toggle.click();await new Promise(r=>setTimeout(r,250));
+     return {exit,stable,reopened:!panel.hidden&&!panel.inert&&toggle.getAttribute('aria-expanded')==='true',settled:panel.getAnimations().length===0,restored:Math.abs(width()-before)<1};
+   })()`);
+   assert(panelMotion.exit.inert&&panelMotion.exit.aria==='true'&&panelMotion.exit.closed&&panelMotion.exit.animations.every(a=>a.duration===140&&a.properties.every(k=>k==='opacity'))&&panelMotion.stable&&panelMotion.reopened&&panelMotion.settled&&panelMotion.restored,'Agenda motion '+JSON.stringify(panelMotion));
+   agenda.panelMotion=panelMotion;
    await browser.evaluate("document.querySelector('[data-agenda-close]').click()");
    await until(()=>browser.evaluate("document.getElementById('calendarAgendaV1').hidden"),'Agenda closed');
    assert(await browser.evaluate("!document.querySelector('.mws-agenda-link-v1,.mws-agenda-selected-v1')"),'Closing agenda must clear linked and selected state');

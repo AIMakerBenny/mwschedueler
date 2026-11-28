@@ -777,10 +777,14 @@ body #calendar.section .calendar-topbar-v4 #calendarAgendaToggleV1{display:none!
    outline:1px solid color-mix(in srgb,var(--agenda-event-color,var(--accent)) 60%,var(--text));outline-offset:-1px;
  }
  #calendarAgendaV1 .mws-agenda-empty-v1{background:linear-gradient(160deg,var(--mws-material-well),var(--panel))!important}
- #calendarAgendaV1:not([hidden]){animation:mws-agenda-in-v1 180ms cubic-bezier(.2,.72,.25,1) both}
- @keyframes mws-agenda-in-v1{from{opacity:0;translate:6px 0}to{opacity:1;translate:none}}
- html[data-mws-motion=reduced] #calendarAgendaV1:not([hidden]){animation:none}
- @media(prefers-reduced-motion:reduce){#calendarAgendaV1:not([hidden]){animation:none}}
+ /* The agenda controller owns one interruptible whole-panel opacity motion. */
+ #calendarAgendaV1[inert]{pointer-events:none!important}
+ #calendarAgendaV1 .mws-agenda-event-v1:not(:disabled):active{
+   box-shadow:inset 0 2px 5px #0007!important;transform:none!important;scale:none!important;
+ }
+ #calendarAgendaV1 .mws-agenda-track-v1:not(:disabled):active .mws-agenda-track-bar-v1{
+   box-shadow:inset 0 2px 4px #0007!important;
+ }
 }
 
 /* Align the agenda controls to the compact toolbar, without changing bounds. */

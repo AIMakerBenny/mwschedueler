@@ -529,7 +529,7 @@ body.mws-premium .event-details-popover-v2 .event-details-section-v1 h3{font-siz
 @media(min-width:901px){
  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]{
    --event-ink:var(--content-group-color,var(--accent));
-   transition:background-color 110ms ease,box-shadow 110ms ease!important;
+   transition:background-color 100ms cubic-bezier(.2,.7,.25,1)!important;
  }
  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]:not(.rest-event):has(.calendar-start-v2[data-clock-state=unknown]) .calendar-start-v2{
    color:color-mix(in srgb,var(--text) 62%,#e3b66b)!important;
@@ -555,7 +555,7 @@ body.mws-premium .event-details-popover-v2 .event-details-section-v1 h3{font-siz
   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]:not(.mws-ui-group-highlight):not(.event-details-selected-v1):not(.calendar-group-selected-v2):not(.mws-calendar-event-pointer-dragging-v174):not(.mws-agenda-link-v1):active{
    background:color-mix(in srgb,var(--event-ink) 22%,var(--panel))!important;
    box-shadow:inset 0 2px 5px #0007,inset 0 -1px color-mix(in srgb,var(--text) 13%,transparent),0 1px 2px #0003!important;
-   filter:none!important;
+   filter:none!important;transition-duration:45ms!important;
   }
  }
  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid].event-details-selected-v1:not(.calendar-group-selected-v2):not(.mws-calendar-event-pointer-dragging-v174){
@@ -626,5 +626,15 @@ body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 :is(#evDat
  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) .event-details-popover-v2{
   border-color:var(--mws-calendar-rim)!important;
   box-shadow:inset 0 1px var(--mws-calendar-rim-light),inset 0 -1px var(--mws-calendar-rim-dark),0 6px 14px #0006,0 18px 38px #0009!important;
+ }
+}
+
+/* Pass AA: press feedback never changes card or button geometry. */
+@media(hover:hover) and (pointer:fine){
+ body.mws-premium #calendar.section.active #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111:not(:disabled):active{
+  box-shadow:inset 0 2px 4px #0007!important;transform:none!important;scale:none!important;
+ }
+ body.mws-premium #calendar.section.active #calendarGrid button.calendar-date-number-v3:not(:disabled):active{
+  box-shadow:inset 0 1px 4px #0006!important;transform:none!important;scale:none!important;
  }
 }

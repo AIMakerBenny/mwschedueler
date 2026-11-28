@@ -224,7 +224,7 @@
   if(!grid||!month||!toggle||!panel)return;
   const q=s=>panel.querySelector(s),dateInput=q('[data-agenda-date]'),list=q('[data-agenda-list]'),heading=q('[data-agenda-heading]'),count=q('[data-agenda-count]'),prev=q('[data-agenda-prev]'),next=q('[data-agenda-next]'),todayButton=q('[data-agenda-today]');
   const wide=matchMedia('(min-width:1700px)'),section=month.closest('#calendar');
-  let selected='',opened=false,lastSignature='',dateSignature='',hoverId='',focusId='',linkedNodes=[];
+  let selected='',opened=false,lastSignature='',dateSignature='',hoverId='',focusId='',linkedNodes=[],panelMotion=null,panelGeneration=0;
   const allowed=()=>section?.classList.contains('active')&&wide.matches&&document.body.dataset.deviceMode!=='mobile'&&document.body.dataset.resolution!=='mobile'&&month.classList.contains('active')&&!month.hidden;
   const dates=()=>[...grid.querySelectorAll('.day:not(.out)[data-date]')].map(e=>e.dataset.date);
   const dateToday=()=>typeof todayKST==='function'?todayKST():new Date(Date.now()+9*3600000).toISOString().slice(0,10);
@@ -322,13 +322,19 @@
     return target.dataset.evid||target.dataset.agendaEvent||target.dataset.agendaTrack||'';
   }
   function syncLinks(){
-    for(const node of linkedNodes)node.classList.remove('mws-agenda-link-v1');
-    linkedNodes=[];
-    const id=opened&&(hoverId||focusId);if(!id)return;
-    const items=[...grid.querySelectorAll('.mini-event[data-evid]'),...panel.querySelectorAll('[data-agenda-event],[data-agenda-track]')];
-    linkedNodes=items.filter(node=>(node.dataset.evid||node.dataset.agendaEvent||node.dataset.agendaTrack)===id);
-    if(!linkedNodes.some(node=>panel.contains(node))){linkedNodes=[];return}
-    for(const node of linkedNodes)node.classList.add('mws-agenda-link-v1');
+    const id=opened&&(hoverId||focusId);
+    let next=[];
+    if(id){
+      const items=[...grid.querySelectorAll('.mini-event[data-evid]'),...panel.querySelectorAll('[data-agenda-event],[data-agenda-track]')];
+      next=items.filter(node=>(node.dataset.evid||node.dataset.agendaEvent||node.dataset.agendaTrack)===id);
+      if(!next.some(node=>panel.contains(node)))next=[];
+    }
+    // Keep already linked nodes intact when focus/hover changes within the
+    // same event. Re-rendered nodes are still resolved by real event identity.
+    const oldSet=new Set(linkedNodes),nextSet=new Set(next);
+    for(const node of linkedNodes)if(!nextSet.has(node))node.classList.remove('mws-agenda-link-v1');
+    for(const node of next)if(!oldSet.has(node))node.classList.add('mws-agenda-link-v1');
+    linkedNodes=next;
   }
   for(const surface of [grid,panel]){
     surface.addEventListener('pointerover',e=>{
@@ -348,14 +354,43 @@
       const id=eventId(e.relatedTarget);if(focusId!==id){focusId=id;syncLinks()}
     });
   }
-  function setOpen(value,{focus=false}={}){
-    const nextOpen=!!value&&allowed();if(opened===nextOpen)return;
-    opened=nextOpen;lastSignature='';
-    month.classList.toggle('mws-agenda-open-v1',opened);panel.hidden=!opened;toggle.setAttribute('aria-expanded',String(opened));toggle.title=opened?'일정 목록 닫기':'일정 목록 열기';toggle.setAttribute('aria-label',toggle.title);
-    window.mwsCalendarDetailsV1?.close({restoreFocus:false});
-    if(opened){render();if(focus)dateInput.focus({preventScroll:true})}
-    else{hoverId='';focusId='';syncLinks();mark();if(focus&&allowed())toggle.focus({preventScroll:true})}
+  // One finite animation on the actual panel. Keep grid geometry unchanged
+  // throughout exit, then restore the month once. Never animate grid columns.
+  function animatePanel(open,from,immediate=false){
+    const generation=++panelGeneration;
+    panelMotion?.cancel();panelMotion=null;
+    const finish=()=>{
+      if(generation!==panelGeneration)return;
+      panelMotion?.cancel();panelMotion=null;
+      if(!opened){panel.hidden=true;month.classList.remove('mws-agenda-open-v1')}
+    };
+    if(immediate||!panel.animate||(window.mwsMotionReduced?.()??matchMedia('(prefers-reduced-motion: reduce)').matches)){
+      finish();return;
+    }
+    panelMotion=panel.animate([{opacity:from},{opacity:open?1:0}],{duration:open?180:140,easing:open?'cubic-bezier(.2,.72,.25,1)':'cubic-bezier(.4,0,.65,1)',fill:'both'});
+    panelMotion.finished.then(finish,()=>{});
   }
+  function setOpen(value,{focus=false,immediate=false}={}){
+    const nextOpen=!!value&&allowed();
+    if(opened===nextOpen){
+      if(!nextOpen&&immediate&&!panel.hidden)animatePanel(false,0,true);
+      return;
+    }
+    const from=panel.hidden?0:Number(getComputedStyle(panel).opacity);
+    opened=nextOpen;lastSignature='';
+    toggle.setAttribute('aria-expanded',String(opened));toggle.title=opened?'일정 목록 닫기':'일정 목록 열기';toggle.setAttribute('aria-label',toggle.title);
+    panel.inert=!opened;panel.setAttribute('aria-hidden',String(!opened));
+    window.mwsCalendarDetailsV1?.close({restoreFocus:false});
+    if(opened){
+      month.classList.add('mws-agenda-open-v1');panel.hidden=false;
+      render();animatePanel(true,from,immediate);if(focus)dateInput.focus({preventScroll:true});
+    }else{
+      hoverId='';focusId='';syncLinks();mark();
+      if(focus&&allowed())toggle.focus({preventScroll:true});
+      animatePanel(false,from,immediate||!allowed());
+    }
+  }
+  const enforceAvailability=()=>{if(!allowed()&&(opened||!panel.hidden))setOpen(false,{immediate:true})};
   function selectDate(value){if(!opened||!dates().includes(value))return;const changed=value!==selected;if(changed){hoverId='';focusId=''}selected=value;render();if(changed)list.scrollTop=0}
   function step(n){const days=dates();selectDate(days[days.indexOf(selected)+n])}
   toggle.addEventListener('click',()=>setOpen(!opened));
@@ -370,8 +405,8 @@
   },true);
   panel.addEventListener('keydown',e=>{if(e.key==='Escape'&&!window.mwsCalendarDetailsV1?.isOpen()){e.stopPropagation();setOpen(false,{focus:true})}});
   new MutationObserver(()=>{if(opened)render()}).observe(grid,{childList:true});
-  new MutationObserver(()=>{if(opened&&!allowed())setOpen(false)}).observe(month,{attributes:true,attributeFilter:['class','hidden']});
-  if(section)new MutationObserver(()=>{if(opened&&!allowed())setOpen(false)}).observe(section,{attributes:true,attributeFilter:['class']});
-  new MutationObserver(()=>{if(opened&&!allowed())setOpen(false)}).observe(document.body,{attributes:true,attributeFilter:['data-device-mode','data-resolution']});
-  wide.addEventListener('change',()=>{if(opened&&!allowed())setOpen(false)});
+  new MutationObserver(enforceAvailability).observe(month,{attributes:true,attributeFilter:['class','hidden']});
+  if(section)new MutationObserver(enforceAvailability).observe(section,{attributes:true,attributeFilter:['class']});
+  new MutationObserver(enforceAvailability).observe(document.body,{attributes:true,attributeFilter:['data-device-mode','data-resolution']});
+  wide.addEventListener('change',enforceAvailability);
 })();
