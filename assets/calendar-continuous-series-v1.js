@@ -6,9 +6,10 @@
 (function(root){
   'use strict';
   const DAY_MS=86400000;
-  const BAND_HEIGHT=12;
+  const BAND_HEIGHT=8;
   const BAND_GAP=3;
   let observer=null,frame=0;
+  const interactions=new WeakMap();
   function utcDay(value){
     if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))return null;
     const t=Date.parse(value+'T00:00:00Z');
@@ -101,6 +102,52 @@
     }
     return weeks;
   }
+  // Index the rendered DOM once, not on every pointer movement. No network,
+  // persisted state, polling or extra focusable controls are introduced.
+  function bindInteractions(grid,streakList){
+    const previous=interactions.get(grid);
+    previous?.controller.abort();
+    previous?.clear();
+    const controller=new AbortController(),options={signal:controller.signal};
+    const nodes=new Map(),context=new Map();
+    for(const node of grid.querySelectorAll('[data-mws-ui-group],.calendar-continuous-ribbon-v1[data-group-id]')){
+      const id=node.dataset.mwsUiGroup||node.dataset.groupId;
+      if(!nodes.has(id))nodes.set(id,[]);
+      nodes.get(id).push(node);
+    }
+    for(const segment of streakList){
+      for(const date of segment.dates)context.set(segment.key+'\u0000'+date,segment);
+    }
+    let active='',pointer='',keyboard='';
+    const cardFor=node=>node instanceof Element?node.closest('.mini-event[data-mws-ui-group]'):null;
+    const allowed=()=>!document.body.matches('.mws-calendar-event-pointer-active-v174,.calendar-template-dragging,.calendar-pointer-template-dragging,.calendar-copy-source-dragging')&&!grid.closest('#calendar')?.classList.contains('calendar-group-select-active-v2')&&!document.querySelector('.modal.open')&&!root.mwsCalendarDetailsV1?.isOpen();
+    function paint(id){
+      if(id===active)return;
+      for(const n of nodes.get(active)||[])n.classList.remove('mws-ui-group-highlight');
+      active=id;
+      for(const n of nodes.get(active)||[])n.classList.add('mws-ui-group-highlight');
+    }
+    function clear(){pointer=keyboard='';paint('')}
+    function refresh(){paint(allowed()?(pointer||keyboard):'')}
+    function onPointer(e){
+      if(e.pointerType==='touch'||e.buttons){pointer='';refresh();return}
+      pointer=cardFor(e.target)?.dataset.mwsUiGroup||'';refresh();
+    }
+    grid.addEventListener('pointerover',onPointer,options);
+    grid.addEventListener('pointermove',onPointer,options);
+    grid.addEventListener('pointerleave',()=>{pointer='';refresh()},options);
+    grid.addEventListener('pointercancel',clear,options);
+    grid.addEventListener('dragstart',clear,options);
+    grid.addEventListener('focusin',e=>{keyboard=cardFor(e.target)?.dataset.mwsUiGroup||'';refresh()},options);
+    grid.addEventListener('focusout',e=>{keyboard=cardFor(e.relatedTarget)?.dataset.mwsUiGroup||'';refresh()},options);
+    grid.addEventListener('click',clear,options);
+    grid.addEventListener('keydown',e=>{if(e.key==='Escape'||e.key==='Enter'||e.key===' ')clear()},options);
+    root.addEventListener('blur',clear,options);
+    interactions.set(grid,{controller,clear,context});
+  }
+  function contextFor(grid,event){
+    return interactions.get(grid)?.context.get(String(event?.contentGroupId||'')+'\u0000'+String(event?.date||''))||null;
+  }
   function render(grid,events,groups){
     if(!grid||typeof document==='undefined')return;
     if(observer){observer.disconnect();observer=null}
@@ -109,12 +156,12 @@
     grid.querySelectorAll('.calendar-continuous-spacer-v1').forEach(el=>el.remove());
     grid.classList.remove('calendar-has-continuous-series-v1');
     const cells=[...grid.querySelectorAll('.day[data-date]')];
-    if(!cells.length)return;
+    if(!cells.length){interactions.get(grid)?.controller.abort();interactions.delete(grid);return}
     const dates=cells.map(el=>el.dataset.date);
     // All visible cells contain real event cards, including adjacent-month days.
     // The ribbon must use the same visible date range as those cards.
     const weeks=weekSegments(events,groups,dates);
-    if(!weeks.some(items=>items.length))return;
+    if(!weeks.some(items=>items.length)){bindInteractions(grid,[]);return;}
     grid.classList.add('calendar-has-continuous-series-v1');
     const layer=document.createElement('div');
     layer.className='calendar-continuous-overlay-v1';
@@ -155,7 +202,7 @@
           if(!first||!last||!spacer)continue;
           const left=first.offsetLeft+7;
           const right=last.offsetLeft+last.offsetWidth-7;
-          const top=first.offsetTop+spacer.offsetTop+item.lane*(BAND_HEIGHT+BAND_GAP)+2;
+          const top=first.offsetTop+spacer.offsetTop+item.lane*(BAND_HEIGHT+BAND_GAP)+1;
           item.element.style.left=left+'px';
           item.element.style.top=top+'px';
           item.element.style.width=Math.max(0,right-left)+'px';
@@ -163,6 +210,7 @@
       }
     }
     position();
+    bindInteractions(grid,streaks(events,groups));
     if(typeof ResizeObserver==='function'){
       observer=new ResizeObserver(()=>{
         if(frame)return;
@@ -172,5 +220,5 @@
       for(let week=0;week<weeks.length;week++)if(cells[week*7])observer.observe(cells[week*7]);
     }
   }
-  root.mwsCalendarContinuousSeriesV1=Object.freeze({streaks,weekSegments,render,safeColor,groupsById});
+  root.mwsCalendarContinuousSeriesV1=Object.freeze({streaks,weekSegments,render,safeColor,groupsById,contextFor});
 })(typeof window!=='undefined'?window:globalThis);

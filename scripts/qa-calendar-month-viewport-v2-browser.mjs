@@ -88,15 +88,15 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const pageScrollCanChain=[shortList,crowdedList,emptyList].every(node=>getComputedStyle(node).overscrollBehaviorY==='auto');
  const ordinaryCard=$('[data-evid="qa-26-0"]');
  const cardCSS=getComputedStyle(ordinaryCard);
- const matteCard=cardCSS.backgroundImage==='none'&&cardCSS.boxShadow!=='none'&&!cardCSS.boxShadow.includes('inset')&&cardCSS.transform==='none'&&cardCSS.borderLeftWidth==='3px'&&cardCSS.borderTopWidth==='0px'&&cardCSS.borderRightWidth==='0px';
+ const matteCard=cardCSS.backgroundImage.includes('linear-gradient')&&cardCSS.boxShadow!=='none'&&cardCSS.boxShadow.includes('inset')&&cardCSS.transform==='none'&&cardCSS.borderLeftWidth==='2px'&&cardCSS.borderTopWidth==='0px'&&cardCSS.borderRightWidth==='0px';
  const ribbonCSS=getComputedStyle($('.calendar-continuous-ribbon-v1'));
  const ribbonClean=ribbonCSS.boxShadow==='none'&&ribbonCSS.backgroundImage==='none'&&ribbonCSS.height==='8px';
  const eventMain=ordinaryCard.querySelector('.mini-event-main'),eventTime=ordinaryCard.querySelector('time'),eventTitle=ordinaryCard.querySelector('.calendar-card-title-v2'),eventSlot=ordinaryCard.querySelector('.mws-steam-slot-v111');
  const day=ordinaryCard.closest('.day'),dayStyle=getComputedStyle(day),contentWidth=day.clientWidth-parseFloat(dayStyle.paddingLeft)-parseFloat(dayStyle.paddingRight);
  const timeBox=eventTime.getBoundingClientRect(),titleBox=eventTitle.getBoundingClientRect(),slotBox=eventSlot.getBoundingClientRect(),mainBox=eventMain.getBoundingClientRect();
- const wide=contentWidth>=215,adaptiveCard=wide?getComputedStyle(eventMain).flexDirection==='row'&&titleBox.left>=timeBox.right&&Math.abs(timeBox.top-titleBox.top)<=3:getComputedStyle(eventMain).flexDirection==='column'&&titleBox.top>=timeBox.bottom;
+ const adaptiveCard=getComputedStyle(eventMain).display==='grid'&&titleBox.bottom<=timeBox.top+1&&Math.abs(titleBox.left-timeBox.left)<=1&&titleBox.width>0&&timeBox.height>0&&parseFloat(getComputedStyle(eventTitle).fontSize)>parseFloat(getComputedStyle(eventTime).fontSize);
  const readableCard=eventTime.textContent==='13:55'&&eventTitle.textContent==='와우 포에버'&&Number(getComputedStyle(eventTime).fontWeight)<Number(getComputedStyle(eventTitle).fontWeight)&&getComputedStyle(eventTime).color!==getComputedStyle(eventTitle).color&&mainBox.right<=slotBox.left+1&&slotBox.width===24&&slotBox.height===24&&Math.abs(centerY(slotBox)-centerY(ordinaryCard.getBoundingClientRect()))<=1;
- const dateOffsets=[...document.querySelectorAll('#calendarGrid .day')].map(d=>{const box=d.getBoundingClientRect(),num=d.querySelector('.calendar-date-number-v3').getBoundingClientRect();return Math.abs(num.left+num.width/2-(box.left+box.width/2))});
+ const dateOffsets=[...document.querySelectorAll('#calendarGrid .day')].map(d=>{const box=d.getBoundingClientRect(),num=d.querySelector('.calendar-date-number-v3').getBoundingClientRect();return Math.abs(num.left-box.left-parseFloat(getComputedStyle(d).paddingLeft)-2)});
  const fixedDateAlignment=dateOffsets.every(offset=>offset<=1)&&!$('.day[data-date="2026-11-18"] .calendar-day-more-v2').hidden;
  const badgeCards=[...document.querySelectorAll('#calendarGrid .mini-event[data-evid]')];
  const vrCards=badgeCards.filter(el=>el.querySelector('.calendar-vr-badge-v1'));
@@ -104,14 +104,14 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const vrBadgeGeometry=vrCards.map(el=>{
   const badge=el.querySelector('.calendar-vr-badge-v1'),slot=el.querySelector('.mws-steam-slot-v111'),main=el.querySelector('.mini-event-main'),title=el.querySelector('.calendar-card-title-v2'),clock=el.querySelector('.calendar-start-v2'),cell=el.closest('.day'),cs=getComputedStyle(cell);
   const narrow=cell.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)<215;
-  const b=badge.getBoundingClientRect(),s=slot.getBoundingClientRect(),m=main.getBoundingClientRect(),t=title.getBoundingClientRect(),c=clock.getBoundingClientRect(),style=getComputedStyle(badge);
+  const b=badge.getBoundingClientRect(),s=slot.getBoundingClientRect(),m=main.getBoundingClientRect(),t=title.getBoundingClientRect(),clockRange=document.createRange();clockRange.selectNodeContents(clock);const c=clockRange.getBoundingClientRect(),style=getComputedStyle(badge);
   const common=badge.textContent==='VR'&&style.pointerEvents==='none'&&s.width===24&&s.height===24&&m.right<=s.left+1;
-  const ok=common&&(narrow?b.width===19&&b.height===12&&b.right<=s.left+1&&c.right<=b.left+1&&b.bottom<=t.top+2&&Math.abs(t.width-m.width)<=1&&m.width>=el.getBoundingClientRect().width-46:b.width===20&&b.height===20&&style.borderRadius==='50%'&&b.right<=s.left-2&&m.right<=b.left+1&&Math.abs(centerY(b)-centerY(s))<=1&&Math.abs(centerY(b)-centerY(el.getBoundingClientRect()))<=1);
+  const ok=common&&b.width>=16&&b.height>=10&&b.right<=s.left+1&&c.right<=b.left+1&&b.top>=t.bottom-1&&b.bottom<=el.getBoundingClientRect().bottom+1&&Math.abs(t.width-m.width)<=1;
   return {id:el.dataset.evid,narrow,ok,common,card:el.getBoundingClientRect().width,main:m.width,title:t.width,clockRight:c.right,badgeLeft:b.left,badgeBottom:b.bottom,titleTop:t.top,badgeRight:b.right,slotLeft:s.left,badgeHeight:b.height};
  });
  const vrBadgeLayout=vrBadgeGeometry.every(x=>x.ok);
  const groupedCard=$('[data-evid="qa-5-0"]'),groupAccent=getComputedStyle(groupedCard).borderLeftColor!==cardCSS.borderLeftColor&&getComputedStyle(groupedCard).outlineStyle==='none';
- const shadowGutter=Number.parseFloat(getComputedStyle(shortList).paddingInlineStart)>=3&&Number.parseFloat(getComputedStyle(shortList).paddingBottom)>=5;
+ const shadowGutter=Number.parseFloat(getComputedStyle(shortList).paddingInlineStart)>=2&&Number.parseFloat(getComputedStyle(shortList).paddingBottom)>=3;
  const preview=document.createElement('div');preview.id='calendarEventPreview';preview.className='calendar-event-preview open';document.body.append(preview);
  const alpha=color=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d');ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return ctx.getImageData(0,0,1,1).data[3]};
  const previewCSS=getComputedStyle(preview);
@@ -119,14 +119,14 @@ window.addEventListener('DOMContentLoaded',async()=>{
  preview.remove();
  $('[data-evid="qa-18-0"]').click();await tick();
  const popoverCSS=getComputedStyle($('#calendarEventDetailsV1'));
- const translucentPopover=alpha(popoverCSS.backgroundColor)>=223&&alpha(popoverCSS.backgroundColor)<=225&&popoverCSS.backdropFilter==='none'&&popoverCSS.opacity==='1'&&popoverCSS.boxShadow!=='none';
+ const opaquePopover=alpha(popoverCSS.backgroundColor)===255&&popoverCSS.backdropFilter==='none'&&popoverCSS.opacity==='1'&&popoverCSS.boxShadow!=='none';
  const gridPaint=getComputedStyle($('#calendarGrid')),dayPaint=getComputedStyle($('.day:not(.out)'));
  const noForcedScene=!gridPaint.backgroundImage.includes('url(')&&!$('#calendarGrid').hasAttribute('data-calendar-scene')&&!gridPaint.getPropertyValue('--calendar-atmosphere-art').trim();
- const opticalGrid=gridPaint.backgroundColor==='rgb(18, 26, 38)'&&gridPaint.backgroundImage.includes('radial-gradient')&&gridPaint.backgroundImage.includes('linear-gradient')&&dayPaint.backgroundColor==='rgba(12, 14, 18, 0.32)'&&dayPaint.backgroundImage.includes('linear-gradient');
+ const opticalGrid=!gridPaint.backgroundImage.includes('url(')&&dayPaint.backgroundImage.includes('linear-gradient')&&alpha(dayPaint.backgroundColor)===255&&parseFloat(dayPaint.borderRightWidth)===0&&parseFloat(dayPaint.borderBottomWidth)===0&&dayPaint.boxShadow.includes('inset');
  // Use an actual supported alternate theme; wait for its paint to settle.
  const originalTheme=document.body.dataset.theme;document.body.dataset.theme='ocean';await new Promise(r=>setTimeout(r,300));
  const altGrid=getComputedStyle($('#calendarGrid')),altDay=getComputedStyle($('.day:not(.out)'));
- const alternateOpaque=!altGrid.backgroundImage.includes('data:image/png;base64,')&&!altGrid.backgroundImage.includes('data:image/jpeg;base64,')&&altDay.backgroundColor.startsWith('rgb(')&&getComputedStyle(document.body).getPropertyValue('--accent').trim()==='#22b8cf';
+ const alternateOpaque=!altGrid.backgroundImage.includes('data:image/png;base64,')&&!altGrid.backgroundImage.includes('data:image/jpeg;base64,')&&alpha(altDay.backgroundColor)===255&&getComputedStyle(document.body).getPropertyValue('--accent').trim()==='#22b8cf';
  document.body.dataset.theme=originalTheme;await new Promise(r=>setTimeout(r,300));
  const panelPushes=Math.abs(r('#calendarGrid').width-closedWidth)<1&&getComputedStyle($('.app>.main')).transform==='none';
  const popup=r('#calendarEventDetailsV1'),card=r('[data-evid="qa-18-0"]');
@@ -162,7 +162,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const noRootOverflow=document.documentElement.scrollWidth<=innerWidth;
  const months=[new Date(2026,1,1),new Date(2026,7,1)];let otherMonthsFit=true;
  for(const date of months){calDate=date;renderCalendar();await tick();otherMonthsFit&&=r('#calendarGrid').bottom<=innerHeight-10&&document.querySelectorAll('.day:not(.out)').length===new Date(date.getFullYear(),date.getMonth()+1,0).getDate()}
- document.getElementById('result').textContent=JSON.stringify({monthFits,visibleMonth,monthNoScroll,toolbarIcons,quickSearchFits,centeredAdd,singleHeader,headerNoOverlap,headerClickable,trayInitiallyClosed,trayOpensWithoutResize,trayDragPassThrough,trayCloses,trayNativeDrop,trayPointerDrop,startTimeVisible,clockHidden,shortListDoesNotFillBlankSpace,emptyListDoesNotCaptureBlankSpace,crowdedListStillScrolls,crowdedListMoves,hoverExpands,hoverTracksFixed,hoverRevealsCard,hoverCollapses,hoverShortUnchanged,pageScrollCanChain,matteCard,ribbonClean,adaptiveCard,readableCard,fixedDateAlignment,vrBadgeOnly,vrBadgeLayout,groupAccent,shadowGutter,translucentPreview,translucentPopover,noForcedScene,opticalGrid,alternateOpaque,panelPushes,saturdayVisible,participantRailClear,ribbonsKept,openMonthFits,outsideCloses,crowdedDayAccessible,dayToDetails,escapeCloses,rapidDetailReopen,detailExitSettled,noMutation,noRootOverflow,otherMonthsFit,headerGeometry,vrBadgeGeometry});
+ document.getElementById('result').textContent=JSON.stringify({monthFits,visibleMonth,monthNoScroll,toolbarIcons,quickSearchFits,centeredAdd,singleHeader,headerNoOverlap,headerClickable,trayInitiallyClosed,trayOpensWithoutResize,trayDragPassThrough,trayCloses,trayNativeDrop,trayPointerDrop,startTimeVisible,clockHidden,shortListDoesNotFillBlankSpace,emptyListDoesNotCaptureBlankSpace,crowdedListStillScrolls,crowdedListMoves,hoverExpands,hoverTracksFixed,hoverRevealsCard,hoverCollapses,hoverShortUnchanged,pageScrollCanChain,matteCard,ribbonClean,adaptiveCard,readableCard,fixedDateAlignment,vrBadgeOnly,vrBadgeLayout,groupAccent,shadowGutter,translucentPreview,opaquePopover,noForcedScene,opticalGrid,alternateOpaque,panelPushes,saturdayVisible,participantRailClear,ribbonsKept,openMonthFits,outsideCloses,crowdedDayAccessible,dayToDetails,escapeCloses,rapidDetailReopen,detailExitSettled,noMutation,noRootOverflow,otherMonthsFit,headerGeometry,vrBadgeGeometry});
 });`;
 export function fixture({test=true}={}){return '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+(test?'\n.event-details-drawer-v1,body:has(#calendar.section.active) .app>.main:has(#calendar.section.active){transition:none!important}':'')+'\n.app{display:grid;grid-template-columns:180px minmax(0,1fr)}.calendar-head{display:grid;grid-template-columns:repeat(7,1fr)}#result{position:fixed;bottom:0;visibility:hidden}</style><body data-theme="neon" class="mws-premium sidebar-pinned" data-resolution="fhd"><div class="app"><aside class="sidebar">MAWANG<br>캘린더</aside><main class="main">'+globalTop+'<section id="calendar" class="section active">'+top+'<div class="calendar-responsive-scroll-v1"><div class="calendar-head">'+['일','월','화','수','목','금','토'].map(s=>'<span>'+s+'</span>').join('')+'</div><div id="calendarGrid" class="calendar"></div></div>'+copyTray+'</section></main></div><pre id="result">pending</pre><script>'+read('assets/calendar-continuous-series-v1.js')+'</script><script>'+read('assets/calendar-details-v1.js')+'</script><script>'+read('assets/calendar-day-expand-v1.js')+'</script><script>'+bootstrap+(test?checks:'')+'</script></body></html>'}
 if(process.env.MWS_MONTH_FIXTURE){writeFileSync(process.env.MWS_MONTH_FIXTURE,fixture({test:false}));process.exit(0)}

@@ -1275,10 +1275,7 @@ function calendarPreviewHTML(e){
   const cat=category(e.categoryId),linkedGroup=data.contentGroups?.find(g=>g.id===e.contentGroupId);
   const color=e.restDay?'#e85d75':(linkedGroup?.color||e.color||cat?.color||'#64748b');
   if(e.restDay){
-    return `<div class="space">
-      <div class="calendar-preview-title">휴방</div>
-      <span class="chip" style="border-color:${color}">휴방</span>
-    </div>
+    return `${detail?'<div class="mws-detail-heading-v2"><span class="chip">휴방</span></div>':`<div class="space"><div class="calendar-preview-title">휴방</div><span class="chip" style="border-color:${color}">휴방</span></div>`}
     ${detail?`<div class="event-meta mws-detail-time-v1"><span class="mws-detail-date-v1">${formatDateWeekday(e.date)}</span><strong class="mws-detail-clock-v1">하루 종일</strong></div>`:`<div class="event-meta"><span>${formatDateWeekday(e.date)}</span><span>하루 종일</span></div>`}`;
   }
   const people=eventParticipantRows(e);
@@ -1286,21 +1283,22 @@ function calendarPreviewHTML(e){
   const broadcastDuration=window.mwsCalendarBroadcastDurationV1?.label(e.start,e.end)||'';
   const clock=val=>/^([01]\d|2[0-3]):[0-5]\d$/.test(String(val||'').trim())?String(val).trim():'';
   const start=clock(e.start),end=clock(e.end),overnight=!!(start&&end&&end<start);
+  const groupContext=linkedGroup?window.mwsCalendarContinuousSeriesV1?.contextFor(document.getElementById('calendarGrid'),e):null;
+  const rangeLabel=groupContext?.totalDays>1?formatDateWeekday(groupContext.start)+' ~ '+formatDateWeekday(groupContext.end)+' · '+groupContext.totalDays+'일 연속':'';
+  const groupRange=rangeLabel?`<span class="mws-group-range-v2">${esc(rangeLabel)}</span>`:'';
   const detailTime=detail?`<div class="event-meta mws-detail-time-v1">
     <span class="mws-detail-date-v1">${formatDateWeekday(e.date)}</span>
     <strong class="mws-detail-clock-v1">${start?esc(start):'시간 미정'}${start&&end?` <span aria-hidden="true">–</span> ${esc(end)}`:''}</strong>
     <div class="mws-detail-time-foot-v1">${broadcastDuration?`<span class="calendar-preview-broadcast-duration-v1">${esc(broadcastDuration)}</span>`:start?`<span>${end?'시간 합계 미확정':'종료 시간 미정'}</span>`:''}${overnight?'<span class="mws-detail-nextday-v1">다음 날 종료</span>':''}</div>
-    ${linkedGroup?`<span class="calendar-preview-content-group-v2" style="border-color:${color}">${esc(linkedGroup.name)}</span>`:''}
+    ${linkedGroup?`<span class="calendar-preview-content-group-v2" style="border-color:${color}">${esc(linkedGroup.name)}</span>`:''}${groupRange}
   </div>`:'';
-  return `<div class="space" style="align-items:flex-start">
-    <div class="calendar-preview-title">${esc(e.title)}</div>
-    <div class="row">${deviceChip(e)}${cat?`<span class="chip" style="border-color:${color}">${esc(cat.name)}</span>`:''}</div>
-  </div>
+  const chips=`${deviceChip(e)}${cat?`<span class="chip" style="border-color:${color}">${esc(cat.name)}</span>`:''}`;
+  return `${detail?`<div class="mws-detail-heading-v2">${chips}</div>`:`<div class="space" style="align-items:flex-start"><div class="calendar-preview-title">${esc(e.title)}</div><div class="row">${chips}</div></div>`}
   ${detail?detailTime:`<div class="event-meta">
     <span>${formatDateWeekday(e.date)}</span>
     ${e.start==='TBD'?'':`<span>${formatTimeKorean(e.start)}${e.end&&e.end!=='TBD'?` - ${formatTimeKorean(e.end)}`:''}</span>`}
     ${broadcastDuration?`<span class="calendar-preview-broadcast-duration-v1">${esc(broadcastDuration)}</span>`:''}
-    ${linkedGroup?`<span class="calendar-preview-content-group-v2" style="border-color:${color}">${esc(linkedGroup.name)}</span>`:''}
+    ${linkedGroup?`<span class="calendar-preview-content-group-v2" style="border-color:${color}">${esc(linkedGroup.name)}</span>`:''}${groupRange}
   </div>`}
   ${gamePreview}
   <div class="reminder-section" style="margin-top:10px;padding-top:9px">
@@ -2121,13 +2119,13 @@ function renderCalendar(){
       const at=a.start==='TBD'?'99:99':(a.start||'99:99'),bt=b.start==='TBD'?'99:99':(b.start||'99:99');
       return at.localeCompare(bt)
     });
-    out+=`<div class="day ${inMonth?'':'out'} ${today?'today':''} ${dow===0?'sun':''} ${dow===6?'sat':''}" data-date="${ds}">
+    out+=`<div class="day ${inMonth?'':'out'} ${today?'today':''} ${dow===0?'sun':''} ${dow===6?'sat':''}" data-date="${ds}" data-calendar-density="${evs.length>=3?'dense':evs.length?'normal':'empty'}">
       <div class="daynum"><button type="button" class="calendar-date-number-v3" data-calendar-people-date="${ds}" aria-label="${ds} 오늘 함께한 사람 보기 및 수정">${d.getDate()}</button></div>
       <div class="calendar-day-events-v2" tabindex="0" aria-label="${ds} 일정 ${evs.length}개">${evs.map(e=>{
         const groupColor=groupColors.get(e.contentGroupId);
         const color=e.restDay?'#e85d75':(groupColor||e.color||category(e.categoryId)?.color||'#64748b');
         const startLabel=e.start&&e.start!=='TBD'?String(e.start).slice(0,5):e.historicalRecord?.basis==='publication'?'공개':e.historicalRecord?.basis==='announcement'?'공지':'미정';
-        const label=e.restDay?'휴방':`<time class="calendar-start-v2" data-clock-state="${startLabel==='미정'?'unknown':startLabel==='공개'||startLabel==='공지'?'record':'known'}">${esc(startLabel)}</time><span class="calendar-card-title-v2">${esc(e.title)}</span>`;
+        const label=e.restDay?'<span class="calendar-card-title-v2">휴방</span>':`<span class="calendar-card-title-v2">${esc(e.title)}</span><time class="calendar-start-v2" data-clock-state="${startLabel==='미정'?'unknown':startLabel==='공개'||startLabel==='공지'?'record':'known'}">${esc(startLabel)}</time>`;
         const isVR=!e.restDay&&e.device==='VR';
         return `<div class="mini-event ${e.restDay?'rest-event':''} ${groupColor?'calendar-content-group-event-v2':''} ${e.restDay?'':'mws-steam-host-v111'}${isVR?' calendar-event-vr-v1':''}"
           draggable="false"
@@ -2141,6 +2139,7 @@ function renderCalendar(){
       }).join('')}</div>
     </div>`;
   }
+  document.getElementById('calendarGrid').classList.add('calendar-redesign-v1');
   const grid=document.getElementById('calendarGrid');grid.innerHTML=out;
   // Record actual month DOM replacements, bounded to the first few renders.
   // This makes startup regressions observable on cold and repeat navigation.
@@ -2237,26 +2236,16 @@ function renderCalendar(){
     };
   });
   window.mwsCalendarContentGroupsV2?.refreshCalendarSelection();
-  let highlightedGroup='',highlightedNodes=[];
-  const highlightGroup=id=>{
-    if(highlightedGroup===id)return;
-    highlightedNodes.forEach(node=>node.classList.remove('mws-ui-group-highlight'));
-    highlightedGroup=id;highlightedNodes=[];
-    if(!id)return;
-    highlightedNodes=[...grid.querySelectorAll('[data-mws-ui-group],.calendar-continuous-ribbon-v1[data-group-id]')].filter(node=>(node.dataset.mwsUiGroup||node.dataset.groupId)===id);
-    highlightedNodes.forEach(node=>node.classList.add('mws-ui-group-highlight'));
-  };
   const pointerPreview=e=>{
     lastCalendarPreviewPointerV2={x:e.clientX,y:e.clientY};
-    if(calendarPointerEventDragV174?.dragging||document.querySelector('.modal.open')||window.mwsCalendarDetailsV1?.isOpen()){highlightGroup('');return}
+    if(calendarPointerEventDragV174?.dragging||document.querySelector('.modal.open')||window.mwsCalendarDetailsV1?.isOpen()){return}
     const node=e.target?.closest?.('.mini-event[data-evid]');
-    highlightGroup(e.pointerType==='touch'?'':node?.dataset.mwsUiGroup||'');
     if(node&&grid.contains(node))showCalendarEventPreview(node.dataset.evid,e.clientX,e.clientY);
     else hideCalendarEventPreview();
   };
   grid.onpointermove=pointerPreview;
   grid.onpointerover=pointerPreview;
-  grid.onpointerleave=()=>{highlightGroup('');hideCalendarEventPreview()};
+  grid.onpointerleave=()=>{hideCalendarEventPreview()};
   if(lastCalendarPreviewPointerV2){
     const {x,y}=lastCalendarPreviewPointerV2;
     requestAnimationFrame(()=>{

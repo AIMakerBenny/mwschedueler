@@ -31,6 +31,12 @@ jobs:
             label: ultrawide
           - viewport: '390,844'
             label: mobile
+          - viewport: '768,1024'
+            label: tablet
+          - viewport: '3440,1440'
+            label: ultrawide-qhd
+          - viewport: '3840,2160'
+            label: uhd
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -48,7 +54,23 @@ jobs:
           sudo apt-get install -y fonts-noto-cjk
           fc-match :lang=ko
           fc-list :lang=ko | grep -q 'Noto Sans CJK'
+      - name: Checkout exact production baseline
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: baseline
+      - name: Capture baseline with identical synthetic fixtures
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        working-directory: baseline
+        env:
+          MWS_QA_CALENDAR_VISUAL: '1'
+          MWS_QA_VIEWPORT: ${{ matrix.viewport }}
+          MWS_QA_VISUAL_CAPTURE: ../baseline-visual
+        run: node scripts/qa-request-budget-full-app-v2-browser.mjs
       - name: Capture actual application with isolated synthetic fixtures
+        if: always()
         env:
           MWS_QA_CALENDAR_VISUAL: '1'
           MWS_QA_VIEWPORT: ${{ matrix.viewport }}
@@ -58,5 +80,7 @@ jobs:
         if: always()
         with:
           name: premium-calendar-visual-${{ matrix.label }}
-          path: visual-captures/
+          path: |
+            visual-captures/
+            baseline-visual/
           if-no-files-found: error

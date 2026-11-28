@@ -94,7 +94,7 @@
     drawer.id='calendarEventDetailsV1';drawer.className='event-details-popover-v2';drawer.hidden=true;drawer.inert=true;
     drawer.setAttribute('role','dialog');drawer.setAttribute('aria-modal','false');
     drawer.setAttribute('aria-label','일정 상세');drawer.setAttribute('aria-hidden','true');
-    drawer.innerHTML='<header class="event-details-head-v1"><button type="button" class="event-details-action-v2" id="calendarDetailsEditV1" aria-label="일정 수정" title="수정"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4.5-1 11-11a2.8 2.8 0 0 0-4-4l-11 11L4 20Z"/></svg></button><button type="button" class="event-details-action-v2" id="calendarDetailsCloseV1" aria-label="일정 상세 닫기" title="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="event-details-body-v1" id="calendarDetailsBodyV1"></div>';
+    drawer.innerHTML='<header class="event-details-head-v1"><h2 class="mws-detail-header-title-v2" id="calendarDetailsHeaderTitleV2" hidden></h2><button type="button" class="event-details-action-v2" id="calendarDetailsEditV1" aria-label="일정 수정" title="수정"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5 4 4M4 20l4.5-1 11-11a2.8 2.8 0 0 0-4-4l-11 11L4 20Z"/></svg><span class="mws-detail-edit-label-v2">수정</span></button><button type="button" class="event-details-action-v2" id="calendarDetailsCloseV1" aria-label="일정 상세 닫기" title="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header><div class="event-details-body-v1" id="calendarDetailsBodyV1"></div>';
     document.body.append(drawer);
     drawer.addEventListener('click',event=>{const button=event.target.closest('[data-detail-event-v2]');if(button)root.openCalendarEventDetailsV1?.(button.dataset.detailEventV2)});
     document.addEventListener('click',event=>{
@@ -135,6 +135,9 @@
       for(const image of $('calendarDetailsBodyV1').querySelectorAll('img'))image.decoding='async';
       renderedHTML=details.html;
     }
+    const headerTitle=$('calendarDetailsHeaderTitleV2');
+    headerTitle.hidden=!$('calendarDetailsBodyV1').querySelector('.mws-detail-heading-v2');
+    headerTitle.textContent=String(details.title||'일정');
     $('calendarDetailsBodyV1').scrollTop=scroll;
     $('calendarDetailsEditV1').hidden=typeof details.onEdit!=='function';
     drawer.inert=false;drawer.hidden=false;drawer.setAttribute('aria-hidden','false');markSelected(details.id);

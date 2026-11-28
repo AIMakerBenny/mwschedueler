@@ -21,12 +21,12 @@
   position:absolute;
   display:flex;
   align-items:center;
-  height:12px;
+  height:8px;
   padding:0;
-  border:1px solid color-mix(in srgb,var(--series-color) 70%,white);
+  border:0;
   border-radius:6px;
-  background:linear-gradient(90deg,var(--series-color),color-mix(in srgb,var(--series-color) 82%,#101923));
-  box-shadow:0 2px 8px rgba(0,0,0,.22);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--series-color) 74%,var(--panel)),color-mix(in srgb,var(--series-color) 48%,var(--panel)));
+  box-shadow:none;
   overflow:hidden;
   white-space:nowrap;
   color:#fff;
