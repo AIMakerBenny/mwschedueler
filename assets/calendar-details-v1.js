@@ -65,22 +65,27 @@
     document.querySelectorAll('#calendarGrid .mini-event[data-evid]').forEach(node=>{
       const selected=node.dataset.evid===id;
       node.classList.toggle('event-details-selected-v1',selected);
-      node.setAttribute('aria-expanded',String(selected));
+      if(node.getAttribute('aria-expanded')!==String(selected))node.setAttribute('aria-expanded',String(selected));
     });
     document.querySelectorAll('#calendarAgendaV1 :is([data-agenda-event],[data-agenda-track])').forEach(node=>{
       const selected=(node.dataset.agendaEvent||node.dataset.agendaTrack)===id;
       node.classList.toggle('mws-agenda-selected-v1',selected);
-      node.setAttribute('aria-expanded',String(selected));
+      if(node.getAttribute('aria-expanded')!==String(selected))node.setAttribute('aria-expanded',String(selected));
     });
   }
   function close({restoreFocus=true}={}){
     if(!drawer||!current)return;
     const from=Number(getComputedStyle(drawer).opacity);
+    const wasInside=drawer.contains(document.activeElement)||document.activeElement===document.body;
     drawer.inert=true;drawer.classList.remove('open');
     drawer.setAttribute('aria-hidden','true');
     current=null;markSelected('');
     playMotion(false,from,()=>{
-      if(!current){drawer.hidden=true;anchor=null;if(restoreFocus&&previousFocus?.isConnected)previousFocus.focus({preventScroll:true})}
+      if(!current){
+        drawer.hidden=true;anchor=null;
+        // A late completion must not take focus from a different control.
+        if(restoreFocus&&wasInside&&previousFocus?.isConnected&&(document.activeElement===document.body||drawer.contains(document.activeElement)))previousFocus.focus({preventScroll:true});
+      }
     });
   }
   function ensure(){
@@ -137,7 +142,10 @@
     drawer.style.setProperty('--event-detail-color',details.color||anchor?.style.getPropertyValue('--content-group-color')||'var(--accent)');
     place();
     if(opening){
-      playMotion(true,from,()=>{$('calendarDetailsCloseV1').focus({preventScroll:true})});
+      const focusAtOpen=document.activeElement;
+      playMotion(true,from,()=>{
+        if(document.activeElement===focusAtOpen||document.activeElement===document.body)$('calendarDetailsCloseV1').focus({preventScroll:true});
+      });
     }
   }
   root.mwsCalendarDetailsV1=Object.freeze({open,close,isOpen:()=>Boolean(current),currentId:()=>current?String(current.id):''});

@@ -39,15 +39,26 @@ try{
       result.push(await measure(()=>card.click(),true));await tick();await tick();
       result.push(await measure(()=>$('#calendarDetailsCloseV1').click(),false));await tick();await tick();
     }
-    return {cards:grid.querySelectorAll('.mini-event').length,ribbons:grid.querySelectorAll('.calendar-continuous-ribbon-v1').length,result};
+    // Focus moves deliberately during real transitions; delayed callbacks must
+    // not steal it. Exercise an interrupted close/reopen on the same shell.
+    const external=document.createElement('button');external.textContent='QA focus target';document.body.append(external);
+    card.click();external.focus({preventScroll:true});await new Promise(r=>setTimeout(r,300));
+    const openFocus=document.activeElement===external;
+    $('#calendarDetailsCloseV1').focus({preventScroll:true});$('#calendarDetailsCloseV1').click();external.focus({preventScroll:true});await new Promise(r=>setTimeout(r,190));
+    const closeFocus=document.activeElement===external&&drawer.hidden;
+    card.click();await tick();$('#calendarDetailsCloseV1').click();await tick();card.click();await new Promise(r=>setTimeout(r,300));
+    const reopened=!drawer.hidden&&window.mwsCalendarDetailsV1.isOpen()&&drawer.getAnimations().length===0;
+    $('#calendarDetailsCloseV1').click();await new Promise(r=>setTimeout(r,190));external.remove();
+    return {cards:grid.querySelectorAll('.mini-event').length,ribbons:grid.querySelectorAll('.calendar-continuous-ribbon-v1').length,result,interruption:{openFocus,closeFocus,reopened}};
   })()`;
   for(const [width,height] of [[1366,768],[1920,1080],[2560,1440],[2560,1080]]){
     await browser.navigate(pathToFileURL(fixture).href+'?size='+width+'x'+height,width,height);
-    const {cards,ribbons,result}=await browser.evaluate(frameTest);
+    const {cards,ribbons,result,interruption}=await browser.evaluate(frameTest);
+    assert(Object.values(interruption).every(Boolean),'Interrupted detail focus '+JSON.stringify(interruption));
     assert(cards>=40&&ribbons>=3,'Realistic month fixture required');
     for(const [i,sample] of result.entries()){
       assert(sample.settled&&sample.stableWidth&&sample.stablePosition&&sample.compositorOnly&&sample.boundedMotion&&sample.offsetMonotonic&&sample.monotonic&&sample.duration===(i%2?140:240)&&sample.frames>=1,JSON.stringify(sample));
     }
-    console.log('CALENDAR_POPOVER_STABLE_V2',width,height,JSON.stringify({cards,ribbons,result}));
+    console.log('CALENDAR_POPOVER_STABLE_V2',width,height,JSON.stringify({cards,ribbons,result,interruption}));
   }
 }finally{await browser?.close();rmSync(dir,{recursive:true,force:true})}
