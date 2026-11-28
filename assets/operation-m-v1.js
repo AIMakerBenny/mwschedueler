@@ -15,7 +15,7 @@ let draftRun=null,draftRender=false;
 const draftLater=(run,ms,fn)=>{run.timers.push(setTimeout(()=>{if(draftRun===run&&root.classList.contains('active'))fn()},ms))};
 function clearRankMotion(){clearTimeout(rankTimer);rankTimer=0;cancelAnimationFrame(rankClock);rankClock=0;rankEffects.forEach(a=>a.cancel());rankEffects=[];rankCompletion=null;root.querySelectorAll('.op-rank-beam').forEach(x=>x.remove())}
 // Absolute offsets on a common clock. No chained holds or per-tier speed differences.
-const MOTION=Object.freeze({shuffle:1700,draw:470,flipStart:250,flip:440,rankEnd:1160,flightStart:780,flight:380,portraitStart:0,portraitEnd:250,materialStart:0,nameStart:0,badgeStart:0});
+const MOTION=Object.freeze({shuffle:3000,draw:470,flipStart:250,flip:440,rankEnd:1160,flightStart:780,flight:380,portraitStart:0,portraitEnd:250,materialStart:0,nameStart:0,badgeStart:0});
 function onTimeline(node,frames,opts,origin,collection){
   const a=node.animate(frames,{fill:'both',...opts});collection.push(a);
   if(origin!=null)a.startTime=origin;
@@ -527,12 +527,14 @@ function shuffleDeck(){
     const side=i%2?1:-1,depth=(i-(queue.length-1)/2)*1.8;const stackOrder=i%2?Math.floor(i/2)+Math.ceil(queue.length/2):Math.floor(i/2);
     deckAnimate(c,[
       {offset:0,zIndex:String(i+1),transform:'translate(-50%,-50%) translate('+(-dx+depth)+'px,'+(-dy-i*.65)+'px) scale(.88)',opacity:1},
-      {offset:.22,transform:'translate(-50%,-50%) translate('+depth+'px,'+(-i*.9)+'px) rotate('+depth*.3+'deg)'},
-      {offset:.45,zIndex:String(stackOrder+1),transform:'translate(-50%,-50%) translate('+(side*groupWidth)+'px,'+(-i*.7)+'px) rotate('+(-side*23)+'deg)'},
-      {offset:.69,zIndex:String(i+1),transform:'translate(-50%,-50%) translate('+(-side*groupWidth*.62)+'px,'+(side*height*.19-i*.9)+'px) rotate('+(side*17)+'deg)'},
-      {offset:.85,transform:'translate(-50%,-50%) translate('+depth*.3+'px,'+(-i*.7)+'px) rotate('+depth*.2+'deg)'},
+      {offset:.14,transform:'translate(-50%,-50%) translate('+depth+'px,'+(-i*.9)+'px) rotate('+depth*.3+'deg)'},
+      {offset:.30,zIndex:String(stackOrder+1),transform:'translate(-50%,-50%) translate('+(side*groupWidth)+'px,'+(-i*.7)+'px) rotate('+(-side*23)+'deg)'},
+      {offset:.46,zIndex:String(i+1),transform:'translate(-50%,-50%) translate('+(-side*groupWidth*.62)+'px,'+(side*height*.19-i*.9)+'px) rotate('+(side*17)+'deg)'},
+      {offset:.59,transform:'translate(-50%,-50%) translate('+depth*.3+'px,'+(-i*.7)+'px) rotate('+depth*.2+'deg)'},
+      {offset:.73,zIndex:String(queue.length-i),transform:'translate(-50%,-50%) translate('+(side*groupWidth*.78)+'px,'+(-side*height*.13-i*.7)+'px) rotate('+(-side*16)+'deg)'},
+      {offset:.86,zIndex:String(stackOrder+1),transform:'translate(-50%,-50%) translate('+depth*.18+'px,'+(-i*.65)+'px) rotate('+depth*.12+'deg)'},
       {offset:1,transform:'translate(-50%,-50%) translate('+(-dx+depth*.22)+'px,'+(-dy-i*.65)+'px) scale(.88)'}
-    ],{duration:1550,delay:Math.min(i*8,120),easing:'cubic-bezier(.32,.04,.3,1)',fill:'both'});
+    ],{duration:MOTION.shuffle-150,delay:Math.min(i*8,120),easing:'linear',fill:'both'});
   });
   deckWait(MOTION.shuffle,epoch,()=>finishShuffle(epoch));
 }
