@@ -317,3 +317,49 @@ body.mws-premium .event-details-popover-v2 .event-details-section-v1{
 body.mws-premium .event-details-popover-v2 .calendar-preview-person .avatar{
   box-shadow:0 0 0 1px color-mix(in srgb,var(--text) 12%,var(--border)),0 2px 5px #0003;
 }
+
+/* Visual pass C: make the existing controls occupy the time row, not the
+   title row. Keep the 24px game hit target and wide-cell layout unchanged. */
+@media(min-width:901px){
+ @container mws-calendar-day (max-width:214px){
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111.calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4)){
+     padding-right:35px!important;
+   }
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4)) .calendar-start-v2{
+     max-width:calc(100% - 23px);
+   }
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4))>.calendar-vr-badge-v1{
+     top:3px;right:35px;transform:none;width:19px;height:13px;border-radius:4px;
+     font-size:8px;line-height:1;
+   }
+   /* A dense day retains both time and title; only vertical dead space is
+      reduced. Dates with a long list still use their own scroll/expand path. */
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .calendar-day-events-v2:has(>.mini-event[data-evid]~.mini-event[data-evid]~.mini-event[data-evid])>.mini-event[data-evid]:not(.rest-event):not(:has(.calendar-event-drag-handle-v4)){
+     margin-block:1px!important;padding-block:2px!important;min-height:30px!important;
+   }
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .calendar-day-events-v2:has(>.mini-event[data-evid]~.mini-event[data-evid]~.mini-event[data-evid])>.mini-event[data-evid]:not(.rest-event) .mini-event-main{
+     gap:0;
+   }
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .calendar-day-events-v2:has(>.mini-event[data-evid]~.mini-event[data-evid]~.mini-event[data-evid])>.mini-event[data-evid]:not(.rest-event) :is(.calendar-start-v2,.calendar-card-title-v2){
+     line-height:1.15!important;min-height:1.15em;
+   }
+ }
+ /* Separate view selection, period navigation and data operations without
+    adding a second toolbar row or moving any clickable bounds. */
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(.calendar-toolbar>.row,.calendar-jump,.calendar-group-toolbar-v2){
+   border-radius:9px;
+   background:linear-gradient(180deg,color-mix(in srgb,var(--panel2) 45%,transparent),color-mix(in srgb,var(--bg) 44%,transparent));
+   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--text) 9%,transparent),inset 0 2px 5px #0003;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-jump select{
+   background-color:color-mix(in srgb,var(--panel) 90%,var(--text))!important;
+   font-variant-numeric:tabular-nums;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-quick-search-v174{
+   box-shadow:inset 0 1px 4px #0005,0 0 0 1px color-mix(in srgb,var(--text) 9%,transparent);
+   border-radius:8px;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(button,select,input):focus-visible{
+   outline:2px solid var(--accent)!important;outline-offset:-2px;
+ }
+}
