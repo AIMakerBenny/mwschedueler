@@ -1275,10 +1275,7 @@ function calendarPreviewHTML(e){
   const cat=category(e.categoryId),linkedGroup=data.contentGroups?.find(g=>g.id===e.contentGroupId);
   const color=e.restDay?'#e85d75':(linkedGroup?.color||e.color||cat?.color||'#64748b');
   if(e.restDay){
-    return `<div class="space">
-      <div class="calendar-preview-title">휴방</div>
-      <span class="chip" style="border-color:${color}">휴방</span>
-    </div>
+    return `${detail?'<div class="mws-detail-heading-v2"><span class="chip">휴방</span></div>':`<div class="space"><div class="calendar-preview-title">휴방</div><span class="chip" style="border-color:${color}">휴방</span></div>`}
     ${detail?`<div class="event-meta mws-detail-time-v1"><span class="mws-detail-date-v1">${formatDateWeekday(e.date)}</span><strong class="mws-detail-clock-v1">하루 종일</strong></div>`:`<div class="event-meta"><span>${formatDateWeekday(e.date)}</span><span>하루 종일</span></div>`}`;
   }
   const people=eventParticipantRows(e);
@@ -1292,10 +1289,8 @@ function calendarPreviewHTML(e){
     <div class="mws-detail-time-foot-v1">${broadcastDuration?`<span class="calendar-preview-broadcast-duration-v1">${esc(broadcastDuration)}</span>`:start?`<span>${end?'시간 합계 미확정':'종료 시간 미정'}</span>`:''}${overnight?'<span class="mws-detail-nextday-v1">다음 날 종료</span>':''}</div>
     ${linkedGroup?`<span class="calendar-preview-content-group-v2" style="border-color:${color}">${esc(linkedGroup.name)}</span>`:''}
   </div>`:'';
-  return `<div class="space" style="align-items:flex-start">
-    <div class="calendar-preview-title">${esc(e.title)}</div>
-    <div class="row">${deviceChip(e)}${cat?`<span class="chip" style="border-color:${color}">${esc(cat.name)}</span>`:''}</div>
-  </div>
+  const chips=`${deviceChip(e)}${cat?`<span class="chip" style="border-color:${color}">${esc(cat.name)}</span>`:''}`;
+  return `${detail?`<div class="mws-detail-heading-v2">${chips}</div>`:`<div class="space" style="align-items:flex-start"><div class="calendar-preview-title">${esc(e.title)}</div><div class="row">${chips}</div></div>`}
   ${detail?detailTime:`<div class="event-meta">
     <span>${formatDateWeekday(e.date)}</span>
     ${e.start==='TBD'?'':`<span>${formatTimeKorean(e.start)}${e.end&&e.end!=='TBD'?` - ${formatTimeKorean(e.end)}`:''}</span>`}

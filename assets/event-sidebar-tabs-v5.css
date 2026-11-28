@@ -386,3 +386,17 @@ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions :is(#saveEventB
   background-repeat:repeat,no-repeat!important;
  }
 }
+
+/* Two compact sibling controls: category and recurrence. Their natural DOM
+   order is also the keyboard order; narrower editors retain one column. */
+@media(min-width:1100px){
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #eventModal .mws-event-editor-v6 .event-info-panel>.formgrid{
+  grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)!important;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #eventModal .mws-event-editor-v6 .event-info-panel>.formgrid>:is(.event-category-field-v2,.event-repeat-field-v2){
+  grid-column:auto!important;align-self:start;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #eventModal .mws-event-editor-v6 .event-repeat-field-v2 .repeat-launch-button{
+  min-height:var(--editor-control);width:100%;display:flex;justify-content:space-between;align-items:center;
+ }
+}

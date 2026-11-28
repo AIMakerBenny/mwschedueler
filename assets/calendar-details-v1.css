@@ -599,7 +599,7 @@ body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 :is(#evDat
   width:100%;min-width:0;max-height:none!important;overflow:hidden!important;
  }
  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid] .calendar-card-title-v2{
-  grid-row:1;width:100%;min-height:0;font-size:calc(12px * var(--ui-text-scale,1))!important;line-height:1.25!important;font-weight:700!important;
+  grid-row:1;width:100%;min-height:0;font-size:calc(12px * var(--ui-text-scale,1))!important;line-height:1.15!important;font-weight:700!important;
   white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
  }
  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid] .calendar-start-v2{
@@ -617,7 +617,7 @@ body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 :is(#evDat
   background:transparent!important;box-shadow:none!important;border:0!important;font-size:12px!important;
  }
  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid]>.calendar-vr-badge-v1{
-  inset:auto 30px 3px auto!important;width:17px;height:11px;transform:none;border-radius:3px;font-size:8px;border:0;
+  inset:auto 30px 0px auto!important;width:17px;height:11px;transform:none;border-radius:3px;font-size:8px;border:0;
  }
  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid][data-calendar-game-reserved=true]>.calendar-vr-badge-v1{right:4px!important}
  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid]:not([data-calendar-game-reserved=true]) .calendar-start-v2{padding-right:0}
@@ -785,4 +785,59 @@ body:has(#calendar.section.active) .event-details-popover-v2 .event-details-acti
  body[data-background-custom=true]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day:not(.drag-over):not(.template-drag-over){
   background:color-mix(in srgb,var(--cal-well) 72%,transparent)!important;
  }
+}
+
+/* Expanded lists retain the same internal box as their collapsed originals.
+   A mouse entering a busy day must not resize the card under the pointer. */
+@media(min-width:901px){
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .calendar-day-events-v2.mws-day-list-expand-v1{
+  padding:1px 2px 3px!important;scrollbar-width:thin!important;scrollbar-gutter:stable;
+ }
+}
+/* Detail document v2: title lives in the fixed header, metadata and game
+   are compact rows, while participants and notes retain readable space. */
+body .event-details-popover-v2:has(.mws-detail-heading-v2){
+ width:min(488px,calc(100% - 24px));
+}
+body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) .event-details-head-v1{
+ display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:start;
+ gap:8px;padding:15px 16px 10px;
+ border-bottom:1px solid color-mix(in srgb,var(--text) 8%,transparent);
+}
+body .event-details-popover-v2 .mws-detail-header-title-v2{
+ margin:0;min-width:0;padding:2px 0 2px 12px;
+ border-inline-start:3px solid var(--event-detail-color,var(--accent));
+ font-size:clamp(17px,2vw,23px);font-weight:750;line-height:1.28;letter-spacing:-.025em;overflow-wrap:anywhere;
+}
+body .event-details-popover-v2 .mws-detail-header-title-v2[hidden]{display:none!important}
+body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) #calendarDetailsEditV1:not([hidden]){
+ width:auto;min-width:64px;height:34px;display:flex;align-items:center;justify-content:center;gap:5px;padding:0 9px;font-size:12px;font-weight:700;
+}
+body .event-details-popover-v2 #calendarDetailsEditV1 .mws-detail-edit-label-v2{display:none}
+body .event-details-popover-v2:has(.mws-detail-heading-v2) #calendarDetailsEditV1 .mws-detail-edit-label-v2{display:inline}
+body .event-details-popover-v2:has(.mws-detail-heading-v2) .event-details-body-v1{padding:12px 16px 16px}
+body .event-details-popover-v2 .mws-detail-heading-v2{display:flex;gap:6px;flex-wrap:wrap;align-items:center;min-height:0}
+body .event-details-popover-v2 .mws-detail-heading-v2:empty{display:none}
+body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) .mws-detail-time-v1{margin:8px 0 12px!important;gap:4px;padding:12px 14px}
+body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) .mws-detail-clock-v1{font-size:26px;line-height:1.25}
+body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) .calendar-preview-game-v3{
+ margin:0 0 12px;padding:5px;background:var(--mws-material-raised);border-radius:9px;
+}
+body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) .event-details-game-v1:has(img){
+ display:grid;grid-template-columns:minmax(0,112px) minmax(0,1fr);gap:10px;align-items:center;
+}
+body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) .event-details-game-v1 img{
+ width:100%;height:auto;aspect-ratio:460/215;border-radius:5px;object-fit:contain;
+}
+body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) .event-details-game-v1>span{padding:4px 6px 4px 0}
+body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) .calendar-preview-person{
+ min-height:48px;grid-template-columns:34px minmax(0,1fr);padding:5px!important;gap:8px!important;
+}
+body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) .calendar-preview-person .avatar{width:34px!important;height:34px!important;border-radius:6px!important}
+@media(max-width:420px){
+ body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) .event-details-head-v1{padding:12px;gap:5px}
+ body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) .event-details-body-v1{padding:10px 12px 14px}
+ body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) #calendarDetailsEditV1:not([hidden]){min-width:34px;width:34px;padding:0}
+ body .event-details-popover-v2:has(.mws-detail-heading-v2) #calendarDetailsEditV1 .mws-detail-edit-label-v2{display:none}
+ body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) .calendar-preview-people{grid-template-columns:minmax(0,1fr)!important}
 }
