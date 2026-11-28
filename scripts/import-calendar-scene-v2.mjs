@@ -32,11 +32,14 @@ export function checkImportedScene(write=false){
   const out=css.replace(re,'--calendar-atmosphere-art:url("data:image/jpeg;base64,'+b.toString('base64')+'")');
   const index=readFileSync(indexFile,'utf8'),link=/workspace-clean-v1\.css[^"]+/;
   assert(link.test(index),'Stylesheet link missing');
-  const next=index.replace(link,v=>v.replace(/&sceneV2=[a-f0-9]+/g,'')+'&sceneV2='+sha(out).slice(0,12));
+  const grid=/<div\b[^>]*\bid="calendarGrid"[^>]*>/;
+  assert(grid.test(index),'Calendar grid markup missing');
+  const next=index.replace(link,v=>v.replace(/&sceneV2=[a-f0-9]+/g,'')+'&sceneV2='+sha(out).slice(0,12)).replace(grid,v=>v.replace(/\sdata-calendar-scene="[^"]*"/g,'').replace(/>$/,' data-calendar-scene="photo">'));
   writeFileSync(cssFile,out);writeFileSync(indexFile,next);
  }else{
   assert(m[0].includes('data:image/jpeg;'),'Imported image not embedded');
   assert(Buffer.from(m[1],'base64').equals(b),'Embedded image differs from approved source');
+  assert(/<div\b[^>]*\bid="calendarGrid"[^>]*\bdata-calendar-scene="photo"/.test(readFileSync(indexFile,'utf8')),'Photographic scene grading marker missing');
  }
  console.log('CALENDAR_IMPORTED_SCENE_OK',1280,720,b.length,approved);
 }

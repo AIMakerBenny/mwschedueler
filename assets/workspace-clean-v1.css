@@ -514,6 +514,11 @@ html[data-mws-motion=reduced] #dashboard .dashboard-stats-bar-v1{animation:none}
     background-repeat:no-repeat!important;
     background-color:#0c0e12!important;
   }
+  /* The imported artwork uses a dedicated exposure layer; the fallback PNG
+     retains the original reflection. No duplicate image or overlay element. */
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar[data-calendar-scene=photo]{
+    --mws-calendar-reflection:radial-gradient(ellipse at 17% 6%,#adcde917,transparent 59%),linear-gradient(156deg,#09111d30 0%,#09111d45 33%,#080e1945 68%,#080d1858 100%);
+  }
   body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out):not(.drag-over):not(.template-drag-over){
     background:var(--mws-calendar-glass) rgba(12,14,18,.32)!important;
     border-color:#9db7cf30!important;

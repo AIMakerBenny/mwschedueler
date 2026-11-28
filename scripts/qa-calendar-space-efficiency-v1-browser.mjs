@@ -2,7 +2,8 @@
    Local fixture only: no authenticated user data, no Cloudflare API writes. */
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
-import {spawnSync} from 'node:child_process';
+import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
+import {pathToFileURL} from 'node:url';
 import path from 'node:path';
 import os from 'node:os';
 
@@ -25,9 +26,7 @@ const styles=[
 const inline=[...html.matchAll(/<style(?:\s[^>]*)?>([\s\S]*?)<\/style>/gi)].map(m=>m[1]).join('\n');
 const frame=file('assets/ui-frame-presets.css');
 const compact=file('assets/calendar-space-efficiency-v1.css');
-const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser']
-  .map(name=>spawnSync('which',[name],{encoding:'utf8'})).find(result=>result.status===0)?.stdout.trim();
-assert(chrome,'Chromium is required');
+
 
 const measure=()=>{
   const q=s=>document.querySelector(s),rect=x=>x.getBoundingClientRect();
@@ -77,7 +76,9 @@ function testPage(){
   });
 }
 const folder=mkdtempSync(path.join(os.tmpdir(),'mws-compact-calendar-'));
+let browser;
 try{
+  browser=await launchCalendarBrowser(folder);
   for(const [width,height,pinned] of [
     [1366,768,true],[1920,1080,true],[2560,1440,true],
     [1366,768,false],[1920,1080,false],[2560,1440,false]
@@ -95,20 +96,15 @@ try{
       '<section id="calendar" class="section active"><div class="calendar-topbar-v4">'+
       '<div class="calendar-toolbar">캘린더 보기 이전 오늘 다음 2026년 11월</div></div>'+
       '<div id="calendarGrid" class="calendar">'+days+'</div></section></main></div>'+
-      '<pre id="qa-result">pending</pre><script>const measure=('+measure.toString()+');('+testPage.toString()+')()</script></body></html>';
-    const filename=path.join(folder,'case.html');
+      '<pre id="qa-result">pending</pre></body></html>';
+    const filename=path.join(folder,'case-'+width+'-'+height+'-'+pinned+'.html');
     writeFileSync(filename,fixture);
-    const run=spawnSync(chrome,['--headless=new','--no-sandbox','--disable-gpu',
-      '--disable-dev-shm-usage','--no-first-run','--disable-background-networking',
-      '--virtual-time-budget=1000','--window-size='+width+','+height,'--dump-dom','file://'+filename],
-      {encoding:'utf8',timeout:20000,maxBuffer:15*1024*1024});
-    assert.equal(run.status,0,'Browser failure '+width+' '+run.stderr.slice(-700));
-    const match=run.stdout.match(/<pre id="qa-result">([^<]+)<\/pre>/);
-    assert(match,'Geometry result missing: '+run.stdout.slice(-600));
-    const result=JSON.parse(match[1].replaceAll('&quot;','"').replaceAll('&gt;','>').replaceAll('&lt;','<'));
+    await browser.navigate(pathToFileURL(filename).href,width,height);
+    const result=await browser.evaluate('(async()=>{await document.fonts.ready;const measure=('+measure.toString()+');('+testPage.toString()+')();return JSON.parse(document.getElementById("qa-result").textContent)})()');
+    assert(result&&result.after.viewport===width,'Geometry result missing or viewport mismatch');
     assert(result.ok,'Compact layout collision '+width+' pin '+pinned+': '+JSON.stringify(result));
     console.log('CALENDAR_SPACE_EFFICIENCY_V1_OK',width,height,'pinned',pinned,
       JSON.stringify({sidebar:result.after.sideWidth,gained:result.gained,dayGain:result.dayGain,
         topbar:result.after.topbarHeight,logoSafe:result.logoSafe}));
   }
-}finally{rmSync(folder,{recursive:true,force:true})}
+}finally{await browser?.close();rmSync(folder,{recursive:true,force:true})}
