@@ -2131,7 +2131,7 @@ function renderCalendar(){
         const isVR=!e.restDay&&e.device==='VR';
         return `<div class="mini-event ${e.restDay?'rest-event':''} ${groupColor?'calendar-content-group-event-v2':''} ${e.restDay?'':'mws-steam-host-v111'}${isVR?' calendar-event-vr-v1':''}"
           draggable="false"
-          data-evid="${e.id}" ${groupColor&&!e.restDay?`data-mws-ui-group="${esc(e.contentGroupId)}"`:''} tabindex="0" aria-label="${esc(e.restDay?'휴방':e.title)}${isVR?' VR':''} 상세 보기"
+          data-evid="${e.id}" ${!e.restDay&&e.steamGame?'data-calendar-game-reserved="true"':''} ${groupColor&&!e.restDay?`data-mws-ui-group="${esc(e.contentGroupId)}"`:''} tabindex="0" aria-label="${esc(e.restDay?'휴방':e.title)}${isVR?' VR':''} 상세 보기"
           style="border-left:4px solid ${color};background:${rgba(color,.18)};--content-group-color:${color}"
           onclick="handleCalendarMiniEventClick(event,'${e.id}')">
           <span class="mini-event-main">${label}</span>
