@@ -15,7 +15,7 @@ const render=part(app,'function calendarSearchShiftDateV172','function setCalend
 const init=part(app,'function initCalendarSearchV172','function initCalendarViewTabsV172');
 const view=part(app,'function setCalendarViewModeV172','function initCalendarSearchV172');
 const tabs=part(app,'function initCalendarViewTabsV172','window.setCalendarViewModeV172=');
-const topbar=part(index,'<div class="calendar-topbar-v4">','        <div class="toolbar calendar-toolbar">')+'</div>';
+const topbar='<div class="calendar-topbar-v4">'+part(index,'<div class="calendar-view-tabs-v172"','        <div class="calendar-group-toolbar-v2">')+'</div>';
 const preview=part(app,'function calendarGamePreviewV3','window.mwsCalendarGamePreviewV3');
 const markup=part(index,'<div id="calendarSearchPanelV172"','    </section>').replace('data-calendar-view-panel="search" hidden','data-calendar-view-panel="search"');
 const styles=['app-core.css','mawang-premium-v1621.css','device-ui.css','ui-frame-presets.css','workspace-clean-v1.css','calendar-toolbar-v4.css','calendar-search-v173.css'].map(p=>read('assets/'+p)).join('\n');

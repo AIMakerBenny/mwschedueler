@@ -138,7 +138,7 @@
     grid.addEventListener('pointerleave',()=>{pointer='';refresh()},options);
     grid.addEventListener('pointercancel',clear,options);
     grid.addEventListener('dragstart',clear,options);
-    grid.addEventListener('focusin',e=>{keyboard=e.target.matches(':focus-visible')?cardFor(e.target)?.dataset.mwsUiGroup||'':'';refresh()},options);
+    grid.addEventListener('focusin',e=>{keyboard=cardFor(e.target)?.dataset.mwsUiGroup||'';refresh()},options);
     grid.addEventListener('focusout',e=>{keyboard=cardFor(e.relatedTarget)?.dataset.mwsUiGroup||'';refresh()},options);
     grid.addEventListener('click',clear,options);
     grid.addEventListener('keydown',e=>{if(e.key==='Escape'||e.key==='Enter'||e.key===' ')clear()},options);
