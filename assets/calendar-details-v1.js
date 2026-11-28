@@ -45,12 +45,20 @@
   }
   function playMotion(open,from,finish){
     const generation=++motionGeneration;
+    // Read the current composited offset before cancelling an interrupted motion.
+    // The fixed anchor's left/top and measured layout dimensions never animate.
+    const previousOffset=motion?getComputedStyle(drawer).translate:null;
     motion?.cancel();motion=null;
     const complete=()=>{if(generation!==motionGeneration)return;motion?.cancel();motion=null;finish?.()};
     // Standalone calendar pages and browser fixtures may load before the
     // workspace preference controller. Respect OS motion in that case only.
     if(!drawer.animate||(root.mwsMotionReduced?.()??root.matchMedia?.('(prefers-reduced-motion: reduce)').matches)){complete();return}
-    motion=drawer.animate([{opacity:from},{opacity:open?1:0}],{duration:open?150:110,easing:'ease-out',fill:'both'});
+    const source=anchor?.getBoundingClientRect(),panel=drawer.getBoundingClientRect();
+    const x=source&&panel.left>=source.right-1?-10:source&&panel.right<=source.left+1?10:0;
+    const y=x?0:source&&panel.bottom<=source.top+1?8:-8;
+    const offset=x+'px '+y+'px';
+    const start=previousOffset&&previousOffset!=='none'?previousOffset:open?offset:'0px 0px';
+    motion=drawer.animate([{opacity:from,translate:start},{opacity:open?1:0,translate:open?'0px 0px':offset}],{duration:open?240:140,easing:open?'cubic-bezier(.2,.75,.25,1)':'ease-in',fill:'both'});
     motion.finished.then(complete,()=>{});
   }
   function markSelected(id){
@@ -65,9 +73,9 @@
     const from=Number(getComputedStyle(drawer).opacity);
     drawer.inert=true;drawer.classList.remove('open');
     drawer.setAttribute('aria-hidden','true');
-    current=null;anchor=null;markSelected('');
+    current=null;markSelected('');
     playMotion(false,from,()=>{
-      if(!current){drawer.hidden=true;if(restoreFocus&&previousFocus?.isConnected)previousFocus.focus({preventScroll:true})}
+      if(!current){drawer.hidden=true;anchor=null;if(restoreFocus&&previousFocus?.isConnected)previousFocus.focus({preventScroll:true})}
     });
   }
   function ensure(){
