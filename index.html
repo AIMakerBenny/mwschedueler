@@ -1066,6 +1066,31 @@ body.mws-premium #mwsAccessGate .mws-login-title{font-size:22px!important;margin
       <button type="button" class="secondary small" onclick="setTab('calendar')">캘린더 보기</button>
     </div>
 
+    <section class="card dashboard-statistics-v1" id="dashboardScheduleStatsV1" aria-labelledby="dashboardStatsTitleV1" hidden>
+      <div class="dashboard-stats-head-v1">
+        <h3 id="dashboardStatsTitleV1">지난 방송·콘텐츠 일정</h3>
+        <div class="dashboard-stats-controls-v1">
+          <div class="dashboard-stats-metric-v1" role="group" aria-label="그래프 지표">
+            <button type="button" class="secondary" data-stats-metric="minutes" aria-pressed="true">시간</button>
+            <button type="button" class="secondary" data-stats-metric="count" aria-pressed="false">일정 수</button>
+          </div>
+          <select id="dashboardStatsRangeV1" aria-label="통계 기간"><option value="7">7일</option><option value="14">14일</option><option value="30" selected>30일</option></select>
+        </div>
+      </div>
+      <div class="dashboard-stats-totals-v1">
+        <div><span>등록 시간 합계</span><strong id="dashboardStatsMinutesV1">—</strong></div>
+        <div><span>등록 일정</span><strong id="dashboardStatsCountV1">—</strong></div>
+        <div><span>일정 등록일</span><strong id="dashboardStatsDaysV1">—</strong></div>
+        <div><span>시간 미확정</span><strong id="dashboardStatsUnknownV1">—</strong></div>
+      </div>
+      <div class="dashboard-stats-chart-wrap-v1">
+        <div class="dashboard-stats-axis-v1" aria-hidden="true"><span id="dashboardStatsMaxV1"></span><span>0</span></div>
+        <div id="dashboardStatsChartV1" class="dashboard-stats-chart-v1" role="group" aria-label="일별 일정 통계"></div>
+      </div>
+      <div id="dashboardStatsDayV1" class="dashboard-stats-day-v1" aria-live="polite"></div>
+      <div class="dashboard-stats-note-v1">오늘 이전의 등록 일정 기준 · 휴방 및 비방 제외 · 실제 송출 기록 아님. 자정 이후 시간은 시작일에 포함되며 겹친 일정도 합산합니다.</div>
+    </section>
+
     <div class="dashboard-insights-v55 dashboard-insights-local">
       <div class="card dashboard-insight-card-v55 dashboard-notice-card-local">
         <div class="space dashboard-insight-head-v55">
@@ -3346,7 +3371,7 @@ body.mws-premium #mwsAccessGate .mws-login-title{font-size:22px!important;margin
 <div id="miniGameCelebration" class="mini-game-celebration" aria-hidden="true" onclick="closeMiniGameCelebration()"><div class="celebration-glow"></div><div id="celebrationConfetti" class="celebration-confetti"></div><div class="celebration-card"><div id="celebrationKicker" class="celebration-kicker">WINNER</div><div id="celebrationAvatar" class="celebration-avatar"></div><div id="celebrationText" class="celebration-text">당첨</div><div class="celebration-sub">화면을 클릭하면 닫힙니다</div></div></div>
 <div id="toast" class="toast"></div>
 
-<script src="assets/calendar-broadcast-duration-v1.js?v=1"></script>
+<script src="assets/calendar-broadcast-duration-v1.js?v=1&stats=a805a847f8e9"></script>
 <script src="assets/calendar-continuous-series-v1.js?v=3"></script>
 <script src="assets/calendar-timeline-v1.js?v=4"></script>
 <script src="assets/calendar-people-view-v1.js?v=2"></script>
@@ -4736,12 +4761,65 @@ body.mws-premium #mwsAccessGate .mws-login-title{font-size:22px!important;margin
   function v55ApplicantKey(c){return String(c?.userId||c?.sourceUserId||c?.authorId||c?.contactId||c?.name||c?.id||'').trim().toLowerCase()}
   function v55Status(c){const s=String(c?.status||'pending').toLowerCase();return s==='excluded'?'nextchance':s}
   function v55Set(id,value){const el=document.getElementById(id);if(el)el.textContent=value}
+  /* Dashboard statistics: local read-only view of the already hydrated events. */
+  let statsMetricV1='minutes',statsSelectedV1='',statsSignatureV1='',statsRowsV1=[];
+  const statsRootV1=document.getElementById('dashboardScheduleStatsV1');
+  const statsRangeV1=document.getElementById('dashboardStatsRangeV1');
+  const statsTimeV1=n=>Math.floor(n/60)+'시간 '+n%60+'분';
+  function selectStatsDayV1(date){
+    const row=statsRowsV1.find(d=>d.date===date);if(!row)return;
+    statsSelectedV1=date;
+    for(const button of statsRootV1.querySelectorAll('[data-stats-date]'))button.setAttribute('aria-pressed',String(button.dataset.statsDate===date));
+    const label=row.count?row.date+' · '+row.count+'개 일정 · '+(row.count===row.unknown?'시간 계산 불가':statsTimeV1(row.minutes))+(row.unknown?' · 시간 미확정 '+row.unknown+'개':''):row.date+' · 등록된 일정 없음';
+    v55Set('dashboardStatsDayV1',label);
+  }
+  function renderScheduleStatsV1(events,today){
+    if(!statsRootV1||!statsRangeV1||!document.getElementById('dashboard')?.classList.contains('active')||!document.getElementById('dashboardOverviewMode')?.classList.contains('active'))return;
+    const result=window.mwsDashboardScheduleStatsV1?.summarize(events,today,Number(statsRangeV1.value));
+    if(!result){statsRootV1.hidden=true;return}
+    statsRootV1.hidden=false;
+    const signature=JSON.stringify([statsMetricV1,result]);
+    if(signature===statsSignatureV1)return;
+    statsSignatureV1=signature;statsRowsV1=result.days;
+    const metric=(id,value)=>{const el=document.getElementById(id);if(window.mwsUiInteractionsV1)window.mwsUiInteractionsV1.metric(el,value);else if(el)el.textContent=value};
+    metric('dashboardStatsMinutesV1',result.count===result.unknown?'—':statsTimeV1(result.minutes));
+    metric('dashboardStatsCountV1',result.count+'개');
+    metric('dashboardStatsDaysV1',result.activeDays+'일');
+    metric('dashboardStatsUnknownV1',result.unknown+'개');
+    const chart=document.getElementById('dashboardStatsChartV1');
+    const max=Math.max(0,...result.days.map(d=>d[statsMetricV1]));
+    v55Set('dashboardStatsMaxV1',statsMetricV1==='minutes'?statsTimeV1(max):max+'개');
+    const previousFocus=document.activeElement?.dataset?.statsDate;
+    const frag=document.createDocumentFragment();
+    result.days.forEach((d,i)=>{
+      const button=document.createElement('button');button.type='button';button.className='dashboard-stats-column-v1';button.dataset.statsDate=d.date;
+      button.dataset.unknown=String(d.unknown>0);button.dataset.empty=String(d.count===0);
+      const desc=d.date+' · 일정 '+d.count+'개 · '+(d.count===d.unknown?'시간 계산 불가':statsTimeV1(d.minutes))+' · 시간 미확정 '+d.unknown+'개';
+      button.title=desc;button.setAttribute('aria-label',desc);
+      const track=document.createElement('span');track.className='dashboard-stats-track-v1';track.setAttribute('aria-hidden','true');
+      const bar=document.createElement('span');bar.className='dashboard-stats-bar-v1';bar.style.setProperty('--stats-bar-ratio',String(max?d[statsMetricV1]/max:0));
+      const label=document.createElement('span');label.className='dashboard-stats-date-v1';label.setAttribute('aria-hidden','true');label.textContent=result.days.length<=14||i===0||i===result.days.length-1||i%5===0?d.date.slice(5).replace('-','/'):'';
+      track.append(bar);button.append(track,label);frag.append(button);
+    });
+    chart.style.setProperty('--stats-days',String(result.days.length));chart.replaceChildren(frag);
+    for(const button of statsRootV1.querySelectorAll('[data-stats-metric]'))button.setAttribute('aria-pressed',String(button.dataset.statsMetric===statsMetricV1));
+    selectStatsDayV1(statsRowsV1.some(d=>d.date===statsSelectedV1)?statsSelectedV1:statsRowsV1[statsRowsV1.length-1].date);
+    if(previousFocus)for(const button of chart.children)if(button.dataset.statsDate===previousFocus)button.focus({preventScroll:true});
+  }
+  function refreshScheduleStatsV1(){renderScheduleStatsV1(data?.events,todayKST())}
+  statsRangeV1?.addEventListener('change',refreshScheduleStatsV1);
+  statsRootV1?.addEventListener('click',event=>{
+    const metric=event.target.closest('[data-stats-metric]'),day=event.target.closest('[data-stats-date]');
+    if(metric&&['minutes','count'].includes(metric.dataset.statsMetric)){statsMetricV1=metric.dataset.statsMetric;refreshScheduleStatsV1()}
+    if(day)selectStatsDayV1(day.dataset.statsDate);
+  });
   function renderDashboardInsightsV55(){
     const today=(typeof todayKST==='function')?todayKST():new Date().toISOString().slice(0,10);
     const todayDate=new Date(today+'T12:00:00');
     const weekEndDate=new Date(todayDate);weekEndDate.setDate(weekEndDate.getDate()+6);
     const weekEnd=(typeof ymd==='function')?ymd(weekEndDate):weekEndDate.toISOString().slice(0,10);
     const allEvents=Array.isArray(data?.events)?data.events:[];
+    renderScheduleStatsV1(allEvents,today);
     const near=allEvents.filter(e=>String(e?.date||'')>=today&&String(e?.date||'')<=weekEnd).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.start||'').localeCompare(String(b.start||'')));
     const todayRows=near.filter(e=>e.date===today);
     v55Set('dashboardWeekBadgeV55',`${near.length}개`);
