@@ -578,7 +578,10 @@ body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 :is(#evDat
  }
  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .calendar-day-events-v2:not(.mws-day-list-expand-v1){
   scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--text) 24%,transparent) transparent;
-  margin-inline:-2px;padding:1px 2px 3px;overscroll-behavior-y:contain;
+  margin-inline:-2px;padding:1px 2px 3px;overscroll-behavior-y:auto;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .calendar-day-events-v2:empty{
+  padding:0!important;margin:0!important;min-height:0!important;height:0!important;pointer-events:none;
  }
  /* The cover is the left-hand leading object, not an accessory appended
     after the title. Unlinked game controls use the lower right metadata row. */
