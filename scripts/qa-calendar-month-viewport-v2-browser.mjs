@@ -114,10 +114,11 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const translucentPopover=alpha(popoverCSS.backgroundColor)>=223&&alpha(popoverCSS.backgroundColor)<=225&&popoverCSS.backdropFilter==='none'&&popoverCSS.opacity==='1'&&popoverCSS.boxShadow!=='none';
  const gridPaint=getComputedStyle($('#calendarGrid')),dayPaint=getComputedStyle($('.day:not(.out)'));
  const atmosphericGrid=gridPaint.backgroundColor==='rgb(12, 14, 18)'&&gridPaint.backgroundImage.includes('data:image/svg+xml')&&gridPaint.backgroundSize.includes('cover')&&dayPaint.backgroundColor==='rgba(12, 14, 18, 0.48)'&&dayPaint.backgroundImage.includes('linear-gradient');
- // A light theme retains an opaque date surface and has no landscape asset.
- const originalTheme=document.body.dataset.theme;document.body.dataset.theme='light';
- const alternateOpaque=!getComputedStyle($('#calendarGrid')).backgroundImage.includes('data:image/svg+xml')&&!getComputedStyle($('.day:not(.out)')).backgroundColor.startsWith('rgba(');
- document.body.dataset.theme=originalTheme;
+ // Use an actual supported alternate theme; wait for its paint to settle.
+ const originalTheme=document.body.dataset.theme;document.body.dataset.theme='ocean';await new Promise(r=>setTimeout(r,300));
+ const altGrid=getComputedStyle($('#calendarGrid')),altDay=getComputedStyle($('.day:not(.out)'));
+ const alternateOpaque=!altGrid.backgroundImage.includes('data:image/svg+xml')&&altDay.backgroundColor.startsWith('rgb(')&&getComputedStyle(document.body).getPropertyValue('--accent').trim()==='#22b8cf';
+ document.body.dataset.theme=originalTheme;await new Promise(r=>setTimeout(r,300));
  const panelPushes=Math.abs(r('#calendarGrid').width-closedWidth)<1&&getComputedStyle($('.app>.main')).transform==='none';
  const popup=r('#calendarEventDetailsV1'),card=r('[data-evid="qa-18-0"]');
  const saturdayVisible=popup.left>=11&&popup.right<=innerWidth-11&&popup.top>=11&&popup.bottom<=innerHeight-11&&(popup.right<=card.left||popup.left>=card.right);
