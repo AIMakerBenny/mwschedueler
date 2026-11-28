@@ -14,7 +14,7 @@ if(!chrome)throw new Error('Chrome is required for continuous calendar UI geomet
 const engine=readFileSync(new URL('../assets/calendar-continuous-series-v1.js',import.meta.url),'utf8');
 const css=readFileSync(new URL('../assets/calendar-continuous-series-v1.css',import.meta.url),'utf8');
 const dates=Array.from({length:42},(_,i)=>new Date(Date.UTC(2026,10,1+i)).toISOString().slice(0,10));
-const days=dates.map((d,i)=>`<div class="day ${d.startsWith('2026-11')?'':'out'}" data-date="${d}"><div class="daynum">${i+1}</div><div class="mini-event">방송 일정</div></div>`).join('');
+const days=dates.map((d,i)=>`<div class="day ${d.startsWith('2026-11')?'':'out'}" data-date="${d}"><div class="daynum">${i+1}</div><div class="mini-event" tabindex="0" ${i>=4&&i<=11?'data-mws-ui-group="wow"':i===25||i>=32&&i<=34?'data-mws-ui-group="draft"':''}>방송 일정</div></div>`).join('');
 const events=['05','06','07','08','09','10','11','12'].map(day=>({
   title:'와우 포에버 '+day,contentGroupId:'wow',categoryId:'gaming',color:'#0f8c95',
   date:'2026-11-'+day,restDay:false
@@ -46,8 +46,25 @@ const ok=bars.length===4 && bars.slice(0,2).every(b=>b.dataset.groupId==='wow' &
   getComputedStyle(bars[0]).pointerEvents==='none' &&
   cells.every(c=>!!c.querySelector('.mini-event')) &&
   cells[4].querySelector('.daynum').getBoundingClientRect().bottom<r1.top;
+const groupCard=first.querySelector('.mini-event'),other=cells[25].querySelector('.mini-event');
+const dims=()=>[...grid.querySelectorAll('.mini-event,.calendar-continuous-ribbon-v1')].map(n=>[n.offsetLeft,n.offsetTop,n.offsetWidth,n.offsetHeight]);
+const before=JSON.stringify(dims());
+groupCard.dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));
+const active=[...grid.querySelectorAll('.mws-ui-group-highlight')];
+const pointerLinked=active.length===10&&active.every(n=>(n.dataset.mwsUiGroup||n.dataset.groupId)==='wow');
+groupCard.dispatchEvent(new PointerEvent('pointerleave',{bubbles:true,pointerType:'mouse'}));
+grid.dispatchEvent(new PointerEvent('pointerleave',{pointerType:'mouse'}));
+const pointerCleared=!grid.querySelector('.mws-ui-group-highlight');
+groupCard.focus();
+const keyboardLinked=grid.querySelectorAll('.mws-ui-group-highlight').length===10;
+other.focus();
+const switched=[...grid.querySelectorAll('.mws-ui-group-highlight')].every(n=>(n.dataset.mwsUiGroup||n.dataset.groupId)==='draft')&&grid.querySelectorAll('.mws-ui-group-highlight').length===6;
+grid.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+const cleared=!grid.querySelector('.mws-ui-group-highlight');
+const context=window.mwsCalendarContinuousSeriesV1.contextFor(grid,events[0]);
+const interaction=pointerLinked&&pointerCleared&&keyboardLinked&&switched&&cleared&&before===JSON.stringify(dims())&&context?.totalDays===8;
 document.getElementById('qa-result').textContent=JSON.stringify({
-  ok,bars:bars.length,
+  ok:ok&&interaction,interaction,pointerLinked,pointerCleared,keyboardLinked,switched,cleared,bars:bars.length,
   groups:bars.map(b=>b.dataset.groupId),
   leftDiff:r1.left-(c1.left+7),rightDiff:r1.right-(c7.right-7),
   nextLeftDiff:r2.left-(c8.left+7),nextRightDiff:r2.right-(c12.right-7),

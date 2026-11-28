@@ -1283,11 +1283,14 @@ function calendarPreviewHTML(e){
   const broadcastDuration=window.mwsCalendarBroadcastDurationV1?.label(e.start,e.end)||'';
   const clock=val=>/^([01]\d|2[0-3]):[0-5]\d$/.test(String(val||'').trim())?String(val).trim():'';
   const start=clock(e.start),end=clock(e.end),overnight=!!(start&&end&&end<start);
+  const groupContext=linkedGroup?window.mwsCalendarContinuousSeriesV1?.contextFor(document.getElementById('calendarGrid'),e):null;
+  const rangeLabel=groupContext?.totalDays>1?formatDateWeekday(groupContext.start)+' ~ '+formatDateWeekday(groupContext.end)+' · '+groupContext.totalDays+'일 연속':'';
+  const groupRange=rangeLabel?`<span class="mws-group-range-v2">${esc(rangeLabel)}</span>`:'';
   const detailTime=detail?`<div class="event-meta mws-detail-time-v1">
     <span class="mws-detail-date-v1">${formatDateWeekday(e.date)}</span>
     <strong class="mws-detail-clock-v1">${start?esc(start):'시간 미정'}${start&&end?` <span aria-hidden="true">–</span> ${esc(end)}`:''}</strong>
     <div class="mws-detail-time-foot-v1">${broadcastDuration?`<span class="calendar-preview-broadcast-duration-v1">${esc(broadcastDuration)}</span>`:start?`<span>${end?'시간 합계 미확정':'종료 시간 미정'}</span>`:''}${overnight?'<span class="mws-detail-nextday-v1">다음 날 종료</span>':''}</div>
-    ${linkedGroup?`<span class="calendar-preview-content-group-v2" style="border-color:${color}">${esc(linkedGroup.name)}</span>`:''}
+    ${linkedGroup?`<span class="calendar-preview-content-group-v2" style="border-color:${color}">${esc(linkedGroup.name)}</span>`:''}${groupRange}
   </div>`:'';
   const chips=`${deviceChip(e)}${cat?`<span class="chip" style="border-color:${color}">${esc(cat.name)}</span>`:''}`;
   return `${detail?`<div class="mws-detail-heading-v2">${chips}</div>`:`<div class="space" style="align-items:flex-start"><div class="calendar-preview-title">${esc(e.title)}</div><div class="row">${chips}</div></div>`}
@@ -1295,7 +1298,7 @@ function calendarPreviewHTML(e){
     <span>${formatDateWeekday(e.date)}</span>
     ${e.start==='TBD'?'':`<span>${formatTimeKorean(e.start)}${e.end&&e.end!=='TBD'?` - ${formatTimeKorean(e.end)}`:''}</span>`}
     ${broadcastDuration?`<span class="calendar-preview-broadcast-duration-v1">${esc(broadcastDuration)}</span>`:''}
-    ${linkedGroup?`<span class="calendar-preview-content-group-v2" style="border-color:${color}">${esc(linkedGroup.name)}</span>`:''}
+    ${linkedGroup?`<span class="calendar-preview-content-group-v2" style="border-color:${color}">${esc(linkedGroup.name)}</span>`:''}${groupRange}
   </div>`}
   ${gamePreview}
   <div class="reminder-section" style="margin-top:10px;padding-top:9px">
@@ -2233,26 +2236,16 @@ function renderCalendar(){
     };
   });
   window.mwsCalendarContentGroupsV2?.refreshCalendarSelection();
-  let highlightedGroup='',highlightedNodes=[];
-  const highlightGroup=id=>{
-    if(highlightedGroup===id)return;
-    highlightedNodes.forEach(node=>node.classList.remove('mws-ui-group-highlight'));
-    highlightedGroup=id;highlightedNodes=[];
-    if(!id)return;
-    highlightedNodes=[...grid.querySelectorAll('[data-mws-ui-group],.calendar-continuous-ribbon-v1[data-group-id]')].filter(node=>(node.dataset.mwsUiGroup||node.dataset.groupId)===id);
-    highlightedNodes.forEach(node=>node.classList.add('mws-ui-group-highlight'));
-  };
   const pointerPreview=e=>{
     lastCalendarPreviewPointerV2={x:e.clientX,y:e.clientY};
-    if(calendarPointerEventDragV174?.dragging||document.querySelector('.modal.open')||window.mwsCalendarDetailsV1?.isOpen()){highlightGroup('');return}
+    if(calendarPointerEventDragV174?.dragging||document.querySelector('.modal.open')||window.mwsCalendarDetailsV1?.isOpen()){return}
     const node=e.target?.closest?.('.mini-event[data-evid]');
-    highlightGroup(e.pointerType==='touch'?'':node?.dataset.mwsUiGroup||'');
     if(node&&grid.contains(node))showCalendarEventPreview(node.dataset.evid,e.clientX,e.clientY);
     else hideCalendarEventPreview();
   };
   grid.onpointermove=pointerPreview;
   grid.onpointerover=pointerPreview;
-  grid.onpointerleave=()=>{highlightGroup('');hideCalendarEventPreview()};
+  grid.onpointerleave=()=>{hideCalendarEventPreview()};
   if(lastCalendarPreviewPointerV2){
     const {x,y}=lastCalendarPreviewPointerV2;
     requestAnimationFrame(()=>{

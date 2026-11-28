@@ -802,7 +802,7 @@ body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2) .sidebar-save-v
 <link rel="stylesheet" href="assets/calendar-space-efficiency-v1.css?v=1&ui-regression=20261126">
 <link rel="stylesheet" href="assets/contact-card-readable-layout-v1.css?v=1">
 <link rel="stylesheet" href="assets/workspace-clean-v1.css?v=10&passI=7bb22ae9dd33&scene=2&passK=5f1e519ca6c7&passL=71a994b6a048&passO=0874b415f552&passQ=f94699309f0e&passR=9e8ec0e62274&passS=10e5fb1c9106&passT=566bf927839f&passU=f1bc84fbe307&passW=388f8155435d&passX=6e287572bdc6&passY=88dfd6a543e0&passZ=114c342e6549&passAA=f8ce75a42376&passAB=aec07387179f&passAC=9d51033bd156&passAD=4acbf531300e&sceneV2=06a7e5292180&passAF=302abf227108&passAG=90a6b875123d&stage39=1&calendar-redesign=1">
-<link rel="stylesheet" href="assets/calendar-details-v1.css?v=22&editor-layout=7&passI=b5c85e77ffc2&passK=80d0c7f3e3cb&passL=b72b172962aa&passN=8b2445d176ca&passP=317e5e9dbae5&passU=001c09ddc80c&passV=c6d878d43ee9&passW=218883e7c404&passX=7d1dc0fd09e2&passZ=ac3cffbf6431&passAA=92e47bd7e9be&passAB=1528972cb6d0&passAC=c38370e9deae&calendar-redesign=5">
+<link rel="stylesheet" href="assets/calendar-details-v1.css?v=22&editor-layout=7&passI=b5c85e77ffc2&passK=80d0c7f3e3cb&passL=b72b172962aa&passN=8b2445d176ca&passP=317e5e9dbae5&passU=001c09ddc80c&passV=c6d878d43ee9&passW=218883e7c404&passX=7d1dc0fd09e2&passZ=ac3cffbf6431&passAA=92e47bd7e9be&passAB=1528972cb6d0&passAC=c38370e9deae&calendar-redesign=6">
 <link rel="stylesheet" href="assets/posts-responsive-layout-v2.css?v=2">
 <link rel="stylesheet" data-mws-post-login-style="mobile-calendar-v130" href="assets/mobile-calendar-v130.css?v=1.3.0-mobile-calendar-viewport-p29-layout-v2&passI=4a3a0bf99bb7&passAB=4a47b831ca93&wallpaper43=1&calendar-redesign=3">
 <link rel="stylesheet" href="assets/achievement-exhibition-v1.css?v=5&clean=a11ce1a04765">
@@ -1144,13 +1144,6 @@ body.mws-premium #mwsAccessGate .mws-login-title{font-size:22px!important;margin
 
 <section id="calendar" class="section active">
       <div class="calendar-topbar-v4">
-      <div class="calendar-view-tabs-v172" role="tablist" aria-label="캘린더 보기">
-        <button type="button" class="secondary calendar-view-tab-v172 active" data-calendar-view-tab="month" role="tab" aria-selected="true" title="캘린더" aria-label="캘린더">캘린더</button>
-        <button type="button" class="secondary calendar-view-tab-v172" data-calendar-view-tab="timeline" role="tab" aria-selected="false" aria-controls="calendarTimelinePanelV1" title="게임" aria-label="게임">게임</button>
-        <button type="button" class="secondary calendar-view-tab-v172" data-calendar-view-tab="people" role="tab" aria-selected="false" aria-controls="calendarPeoplePanelV1" title="오늘 만난 사람" aria-label="오늘 만난 사람">인물</button>
-        <button type="button" class="secondary calendar-view-tab-v172" data-calendar-view-tab="search" role="tab" aria-selected="false" title="검색" aria-label="검색">검색</button>
-      </div>
-      <div class="calendar-quick-search-v174" role="search" aria-label="캘린더 빠른 검색"><input id="calendarQuickSearchV174" type="search" autocomplete="off" placeholder="일정 검색" aria-label="일정, 게임, 참가자 검색" aria-controls="calendarSearchPanelV172"><button type="button" id="calendarQuickSearchClearV174" aria-label="검색어 지우기" title="검색어 지우기" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
         <div class="toolbar calendar-toolbar">
           <div class="row">
             <button class="secondary" id="prevMonth" title="이전 달" aria-label="이전 달">이전</button>
@@ -1171,6 +1164,13 @@ body.mws-premium #mwsAccessGate .mws-login-title{font-size:22px!important;margin
             <div class="big calendar-month-label" id="monthLabel"></div>
           </div>
         </div>
+      <div class="calendar-view-tabs-v172" role="tablist" aria-label="캘린더 보기">
+        <button type="button" class="secondary calendar-view-tab-v172 active" data-calendar-view-tab="month" role="tab" aria-selected="true" title="캘린더" aria-label="캘린더">캘린더</button>
+        <button type="button" class="secondary calendar-view-tab-v172" data-calendar-view-tab="timeline" role="tab" aria-selected="false" aria-controls="calendarTimelinePanelV1" title="게임" aria-label="게임">게임</button>
+        <button type="button" class="secondary calendar-view-tab-v172" data-calendar-view-tab="people" role="tab" aria-selected="false" aria-controls="calendarPeoplePanelV1" title="오늘 만난 사람" aria-label="오늘 만난 사람">인물</button>
+        <button type="button" class="secondary calendar-view-tab-v172" data-calendar-view-tab="search" role="tab" aria-selected="false" title="검색" aria-label="검색">검색</button>
+      </div>
+      <div class="calendar-quick-search-v174" role="search" aria-label="캘린더 빠른 검색"><input id="calendarQuickSearchV174" type="search" autocomplete="off" placeholder="일정 검색" aria-label="일정, 게임, 참가자 검색" aria-controls="calendarSearchPanelV172"><button type="button" id="calendarQuickSearchClearV174" aria-label="검색어 지우기" title="검색어 지우기" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
         <div class="calendar-group-toolbar-v2">
           <details id="calendarHistoricalMonthV1" class="calendar-historical-month-v1" hidden><summary>일자 미상 <span data-history-count></span></summary><div class="calendar-historical-popover-v1" data-history-list></div></details>
           <button class="secondary" type="button" id="calendarGroupToggleV2" aria-pressed="false" title="여러 일정을 하나의 콘텐츠 그룹에 연결">그룹 묶기</button>
@@ -3387,14 +3387,14 @@ body.mws-premium #mwsAccessGate .mws-login-title{font-size:22px!important;margin
 <div id="toast" class="toast"></div>
 
 <script src="assets/calendar-broadcast-duration-v1.js?v=1&stats=9f4e8ff5c7e0"></script>
-<script src="assets/calendar-continuous-series-v1.js?v=3&calendar-redesign=1"></script>
+<script src="assets/calendar-continuous-series-v1.js?v=3&calendar-redesign=6"></script>
 <script src="assets/calendar-timeline-v1.js?v=4"></script>
 <script src="assets/calendar-people-view-v1.js?v=2"></script>
 <script src="assets/contact-frequency-v1.js?v=2"></script>
 <script src="assets/career-activities-data-v1.js?v=2"></script>
 <script src="assets/calendar-historical-v1.js?v=1"></script>
 <script src="assets/bsandong-v1.js?v=2"></script>
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=2&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1&post-layout-v3=1&career=1&clipboard-people=1&dashboardnav=3&ui-interactions=2&contentapplications=1&peopleview=2&contact-frequency=2&historical-calendar=1&mawang-archive=1&request-budget=12&request-v3-stage4=1&media-batch-v5=1&unified-media-v51=1&bsandong=1&club-link=2&editor-layout=7&passL=180bda5c5e3e&passM=cff64d07c2e0&passN=e86102a6a2c3&passP=6554fc85dd57&stage39=1&calendar-redesign=5"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=2&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1&post-layout-v3=1&career=1&clipboard-people=1&dashboardnav=3&ui-interactions=2&contentapplications=1&peopleview=2&contact-frequency=2&historical-calendar=1&mawang-archive=1&request-budget=12&request-v3-stage4=1&media-batch-v5=1&unified-media-v51=1&bsandong=1&club-link=2&editor-layout=7&passL=180bda5c5e3e&passM=cff64d07c2e0&passN=e86102a6a2c3&passP=6554fc85dd57&stage39=1&calendar-redesign=6"></script>
 <script src="assets/calendar-content-groups-v2.js?v=7-save-contract-bulk&proof=1&club=2"></script>
 <script src="assets/event-sidebar-tabs-v5.js?v=7&editor=20261126"></script>
 <script src="assets/calendar-move-guard-v4.js?v=1&quietmoves=1"></script>

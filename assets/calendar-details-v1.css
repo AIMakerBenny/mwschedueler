@@ -543,7 +543,7 @@ body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 :is(#evDat
 #calendarGrid.calendar.calendar-redesign-v1{
  --cal-well:color-mix(in srgb,var(--panel) 84%,var(--bg));
  --cal-raised:color-mix(in srgb,var(--panel) 91%,var(--text));
- --cal-seam:color-mix(in srgb,var(--text) 7%,transparent);
+ --cal-seam:color-mix(in srgb,var(--text) 4%,transparent);
  --cal-highlight:color-mix(in srgb,var(--text) 14%,transparent);
  --cal-depth:0 1px 2px #0003,0 3px 5px #0002;
 }
@@ -589,7 +589,7 @@ body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 :is(#evDat
   display:grid!important;position:relative!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto!important;
   min-height:32px!important;height:auto!important;margin:2px 0!important;padding:3px 6px!important;
   border:0!important;border-left:2px solid var(--content-group-color,var(--accent))!important;border-radius:8px!important;
-  background:linear-gradient(160deg,var(--cal-highlight),transparent 48%),color-mix(in srgb,var(--cal-raised) 91%,var(--content-group-color,var(--accent)))!important;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--content-group-color,var(--accent)) 17%,var(--cal-raised)),transparent 72%),linear-gradient(180deg,var(--cal-highlight),transparent 45%),color-mix(in srgb,var(--cal-raised) 91%,var(--content-group-color,var(--accent)))!important;
   box-shadow:inset 0 1px var(--cal-highlight),var(--cal-depth)!important;
   transition:transform 105ms ease-out,box-shadow 120ms ease-out,background-color 120ms ease-out!important;
   overflow:hidden!important;flex-shrink:0;
@@ -840,4 +840,29 @@ body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) .calendar
  body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) #calendarDetailsEditV1:not([hidden]){min-width:34px;width:34px;padding:0}
  body .event-details-popover-v2:has(.mws-detail-heading-v2) #calendarDetailsEditV1 .mws-detail-edit-label-v2{display:none}
  body.mws-premium .event-details-popover-v2:has(.mws-detail-heading-v2) .calendar-preview-people{grid-template-columns:minmax(0,1fr)!important}
+}
+
+/* Group focus is one shared visual state across separate titles and weeks.
+   Paint only: no row expansion, scaling or per-card animation loop. */
+body #calendar.section.active #calendarGrid.calendar-redesign-v1 .mini-event[data-mws-ui-group].mws-ui-group-highlight:not(.calendar-group-selected-v2):not(.event-details-selected-v1){
+ background:linear-gradient(145deg,color-mix(in srgb,var(--content-group-color,var(--accent)) 34%,var(--cal-raised)),transparent 85%),var(--cal-raised)!important;
+ outline:1px solid color-mix(in srgb,var(--content-group-color,var(--accent)) 82%,var(--text))!important;outline-offset:-1px;
+}
+body #calendar.section.active #calendarGrid.calendar-redesign-v1 .calendar-continuous-ribbon-v1.mws-ui-group-highlight{
+ background:color-mix(in srgb,var(--series-color) 84%,var(--text))!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--series-color) 45%,transparent)!important;
+}
+.mws-group-range-v2{display:block;font-size:11px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+@media(min-width:1050px){
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-toolbar{
+  flex:0 0 auto!important;gap:2px!important;justify-content:flex-start;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-toolbar>.row{
+  border-radius:8px 0 0 8px!important;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-jump{
+  border-radius:0 8px 8px 0!important;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-quick-search-v174{
+  flex:1 1 100px;min-width:85px;max-width:240px;
+ }
 }
