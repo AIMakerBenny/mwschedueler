@@ -218,9 +218,22 @@ try{
    for(const track of timeInstrument.tracks){const e=timeInstrument.expected.find(x=>x.id===track.id);assert(e&&Math.abs(track.left-e.start/14.4)<.01&&Math.abs(track.width-(e.end-e.start)/14.4)<.01)}
    assert(timeInstrument.listHeight>200,JSON.stringify(timeInstrument));
    agenda.timeInstrument=timeInstrument;
+   const linkCheck=await browser.evaluate(`(()=>{
+     const panel=document.getElementById('calendarAgendaV1'),track=panel.querySelector('[data-agenda-track]'),id=track.dataset.agendaTrack,card=[...panel.querySelectorAll('[data-agenda-event]')].find(x=>x.dataset.agendaEvent===id),grid=[...document.querySelectorAll('#calendarGrid .mini-event[data-evid]')].find(x=>x.dataset.evid===id),nodes=[track,card,grid],rects=()=>nodes.map(n=>{const r=n.getBoundingClientRect();return [r.x,r.y,r.width,r.height]}),before=JSON.stringify(rects());
+     const linked=()=>nodes.every(n=>n.classList.contains('mws-agenda-link-v1'));
+     track.dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));const hover=linked(),stable=JSON.stringify(rects())===before;
+     track.dispatchEvent(new PointerEvent('pointerout',{bubbles:true,pointerType:'mouse',relatedTarget:panel.querySelector('[data-agenda-date]')}));const cleared=nodes.every(n=>!n.classList.contains('mws-agenda-link-v1'));
+     card.focus({preventScroll:true});const focus=linked();card.blur();
+     return {hover,stable,cleared,focus,hitHeight:track.getBoundingClientRect().height};
+   })()`);
+   assert(linkCheck.hover&&linkCheck.stable&&linkCheck.cleared&&linkCheck.focus&&linkCheck.hitHeight>=24,JSON.stringify(linkCheck));
+   agenda.linkCheck=linkCheck;
    await capture('calendar-agenda');
    await browser.evaluate("document.querySelector('#calendarAgendaV1 [data-agenda-track]').click()");
    await until(()=>browser.evaluate("window.mwsCalendarDetailsV1?.isOpen()===true"),'Time bar opens actual event detail');
+   const detailSelected=await browser.evaluate(`(()=>{const track=document.querySelector('#calendarAgendaV1 [data-agenda-track]'),id=track.dataset.agendaTrack,card=[...document.querySelectorAll('#calendarAgendaV1 [data-agenda-event]')].find(x=>x.dataset.agendaEvent===id),grid=[...document.querySelectorAll('#calendarGrid [data-evid]')].find(x=>x.dataset.evid===id);return window.mwsCalendarDetailsV1.currentId()===id&&[track,card].every(n=>n.classList.contains('mws-agenda-selected-v1')&&n.getAttribute('aria-expanded')==='true')&&grid.classList.contains('event-details-selected-v1')})()`);
+   assert(detailSelected,'Detail selection must highlight the matching event in all three views');
+   agenda.detailSelected=detailSelected;
    await browser.evaluate("window.mwsCalendarDetailsV1.close({restoreFocus:false})");
    await browser.evaluate("document.querySelector('#calendarAgendaV1 [data-agenda-event]').click()");
    await until(()=>browser.evaluate("window.mwsCalendarDetailsV1?.isOpen()===true"),'Agenda opens existing event detail');
@@ -232,6 +245,7 @@ try{
    assert.equal(await browser.evaluate("document.querySelector('[data-agenda-date]').value"),date);
    await browser.evaluate("document.querySelector('[data-agenda-close]').click()");
    await until(()=>browser.evaluate("document.getElementById('calendarAgendaV1').hidden"),'Agenda closed');
+   assert(await browser.evaluate("!document.querySelector('.mws-agenda-link-v1,.mws-agenda-selected-v1')"),'Closing agenda must clear linked and selected state');
    const restored=await browser.evaluate("document.getElementById('calendarGrid').getBoundingClientRect().width");
    assert(Math.abs(restored-initialWidth)<=1,'Default month width must be restored');
    assert.equal(await browser.evaluate("JSON.stringify(activeEvents())"),originalEvents,'Agenda must not mutate schedule data');
