@@ -277,3 +277,396 @@ body #calendar.section #calendarGrid .mini-event[data-evid]>.calendar-vr-badge-v
     body #calendar.section #calendarGrid .calendar-day-more-v2{right:13px;font-size:9px!important;padding-inline:2px!important}
   }
 }
+
+/* Premium detail instrument. Translucency remains 88%, without expensive
+   backdrop sampling. The header/body move together under the WAAPI owner. */
+body.mws-premium .event-details-popover-v2{
+  border-color:color-mix(in srgb,var(--event-detail-color,var(--accent)) 22%,var(--border));
+  background-color:var(--calendar-detail-glass-v4);
+  background-image:linear-gradient(155deg,var(--mws-material-light),transparent 38%);
+  box-shadow:var(--mws-material-depth),0 24px 54px #0008;
+}
+body.mws-premium .event-details-popover-v2 .event-details-head-v1{
+  background:linear-gradient(180deg,#ffffff08,transparent);
+}
+body.mws-premium .event-details-popover-v2.open .event-details-body-v1{
+  animation:none!important;
+}
+body.mws-premium .event-details-popover-v2 .event-details-action-v2{
+  background:color-mix(in srgb,var(--panel2) 32%,transparent)!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--text) 9%,transparent)!important;
+}
+body.mws-premium .event-details-popover-v2 .event-details-action-v2:focus-visible{
+  outline:2px solid var(--accent);outline-offset:-2px;
+}
+@media(hover:hover) and (pointer:fine){
+  body.mws-premium .event-details-popover-v2 .event-details-action-v2:hover{
+    background:color-mix(in srgb,var(--accent) 17%,var(--panel))!important;
+    box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 45%,transparent)!important;
+  }
+}
+body.mws-premium .event-details-popover-v2 .event-details-action-v2:active{
+  box-shadow:inset 0 2px 5px #0005!important;
+}
+body.mws-premium .event-details-popover-v2 .calendar-preview-title::before{
+  box-shadow:inset 0 1px #ffffff50,0 2px 6px color-mix(in srgb,var(--event-detail-color,var(--accent)) 25%,transparent);
+}
+body.mws-premium .event-details-popover-v2 .event-details-section-v1{
+  border-top-color:var(--mws-material-edge);
+}
+body.mws-premium .event-details-popover-v2 .calendar-preview-person .avatar{
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--text) 12%,var(--border)),0 2px 5px #0003;
+}
+
+/* Visual pass C: make the existing controls occupy the time row, not the
+   title row. Keep the 24px game hit target and wide-cell layout unchanged. */
+@media(min-width:901px){
+ @container mws-calendar-day (width < 215px){
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111.calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4)){
+     padding-right:35px!important;
+   }
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4)) .calendar-start-v2{
+     max-width:calc(100% - 23px);
+   }
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4))>.calendar-vr-badge-v1{
+     top:3px;right:35px;transform:none;width:19px;height:12px;border-radius:4px;
+     font-size:8px;line-height:1;
+   }
+   /* A full-width title track also provides predictable ellipsis and
+      measurable geometry for short titles. The time row is independent. */
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid]:not(:has(.calendar-event-drag-handle-v4)) .calendar-card-title-v2{
+     align-self:stretch;width:100%;
+   }
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .calendar-day-events-v2:has(>.mini-event[data-evid]~.mini-event[data-evid]~.mini-event[data-evid])>.mini-event[data-evid].calendar-event-vr-v1>.calendar-vr-badge-v1{
+     top:1px;
+   }
+   /* A dense day retains both time and title; only vertical dead space is
+      reduced. Dates with a long list still use their own scroll/expand path. */
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .calendar-day-events-v2:has(>.mini-event[data-evid]~.mini-event[data-evid]~.mini-event[data-evid])>.mini-event[data-evid]:not(.rest-event):not(:has(.calendar-event-drag-handle-v4)){
+     margin-block:0!important;padding-block:1px!important;min-height:28px!important;
+   }
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .calendar-day-events-v2:has(>.mini-event[data-evid]~.mini-event[data-evid]~.mini-event[data-evid])>.mini-event[data-evid]:not(.rest-event) .mini-event-main{
+     gap:0;
+   }
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .calendar-day-events-v2:has(>.mini-event[data-evid]~.mini-event[data-evid]~.mini-event[data-evid])>.mini-event[data-evid]:not(.rest-event) :is(.calendar-start-v2,.calendar-card-title-v2){
+     line-height:1.15!important;min-height:1.15em;
+   }
+ }
+ /* Separate view selection, period navigation and data operations without
+    adding a second toolbar row or moving any clickable bounds. */
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(.calendar-toolbar>.row,.calendar-jump,.calendar-group-toolbar-v2){
+   border-radius:9px;
+   background:var(--mws-material-well);
+   box-shadow:var(--mws-material-inset);
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-jump select{
+   background-color:color-mix(in srgb,var(--panel) 90%,var(--text))!important;
+   font-variant-numeric:tabular-nums;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-quick-search-v174{
+   box-shadow:inset 0 1px 4px #0005,0 0 0 1px color-mix(in srgb,var(--text) 9%,transparent);
+   border-radius:8px;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(button,select,input):focus-visible{
+   outline:2px solid var(--accent)!important;outline-offset:-2px;
+ }
+}
+
+/* Pass I: persistent operation states are distinct from hover. No new
+   wrapper, padding, width or transform changes in the compact toolbar. */
+@media(min-width:901px){
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(.calendar-group-toolbar-v2 button,.calendar-view-tab-v172)[aria-pressed=true],
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(.calendar-group-toolbar-v2 button,.calendar-view-tab-v172)[aria-expanded=true],
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-view-tab-v172[aria-selected=true]{
+   background:var(--mws-material-selected)!important;
+   box-shadow:inset 0 1px var(--mws-material-light),inset 0 -2px var(--accent)!important;
+   color:var(--text)!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 button:disabled{
+   opacity:.5;box-shadow:none!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 button:not(:disabled):active{
+   transform:none!important;scale:none!important;box-shadow:var(--mws-material-inset)!important;
+ }
+}
+
+/* Pass K: distinguish the command clusters from the landscape.
+   Keep original 32px hit targets, subgrid and single-line header. */
+@media(min-width:1050px){
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(.calendar-view-tabs-v172,.calendar-toolbar>.row,.calendar-jump,.calendar-group-toolbar-v2){
+   background:var(--mws-material-well)!important;
+   box-shadow:var(--mws-material-inset)!important;
+   border-radius:9px!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-quick-search-v174{
+   background:var(--mws-material-well)!important;
+   box-shadow:var(--mws-material-inset)!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-jump select{
+   background:var(--mws-material-raised)!important;
+   box-shadow:inset 0 1px var(--mws-material-light)!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 button:not([aria-selected=true]):not([aria-pressed=true]):not([aria-expanded=true]):not(:disabled):not(.drag-over):hover{
+   color:var(--text)!important;background:var(--mws-material-raised)!important;
+   box-shadow:inset 0 1px var(--mws-material-light),0 0 0 1px var(--mws-material-edge)!important;
+ }
+}
+
+/* Pass L: a readable detail document, not a scaled-up calendar tile.
+   Keep the established 88% shell alpha and whole-frame WAAPI animation.
+   The legacy hover preview and mobile day sheet retain their own layout. */
+body.mws-premium .event-details-popover-v2{
+  background-image:linear-gradient(155deg,color-mix(in srgb,var(--text) 11%,transparent),transparent 22%,color-mix(in srgb,var(--bg) 18%,transparent))!important;
+  border-radius:17px;
+  box-shadow:inset 0 1px var(--mws-material-light),inset 0 -1px #0005,0 4px 10px #0006,0 16px 38px #0009!important;
+}
+body.mws-premium .event-details-popover-v2 .event-details-body-v1{
+  padding:4px 18px 18px 18px;scrollbar-color:var(--mws-material-edge) transparent;
+}
+body.mws-premium .event-details-popover-v2 .event-details-body-v1 .calendar-preview-title{
+  padding-inline-start:21px;font-size:22px!important;line-height:1.35!important;letter-spacing:-.025em;font-weight:760;
+  overflow-wrap:anywhere;
+}
+body.mws-premium .event-details-popover-v2 .calendar-preview-title::before{left:0;top:.43em;width:11px;height:11px}
+body.mws-premium .event-details-popover-v2 .event-details-body-v1>.space:first-child{gap:6px}
+body.mws-premium .event-details-popover-v2 .mws-detail-time-v1{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:5px;
+  padding:11px 13px;margin:12px 0 10px!important;
+  background:linear-gradient(165deg,color-mix(in srgb,var(--panel) 91%,var(--text)),var(--mws-material-well) 32%,var(--mws-material-well));border-radius:10px;
+  box-shadow:inset 0 1px 4px #0005,inset 2px 0 var(--event-detail-color,var(--accent)),inset 0 -1px var(--mws-material-light);line-height:1.4;
+}
+body.mws-premium .event-details-popover-v2 .mws-detail-date-v1{font-size:12px;color:var(--muted)}
+body.mws-premium .event-details-popover-v2 .mws-detail-clock-v1{
+  font-size:21px;font-weight:740;font-variant-numeric:tabular-nums;letter-spacing:-.025em;color:var(--text);
+}
+body.mws-premium .event-details-popover-v2 .mws-detail-clock-v1 span{font-weight:400;color:var(--muted)}
+body.mws-premium .event-details-popover-v2 .mws-detail-time-foot-v1{display:flex;gap:6px 10px;align-items:center;flex-wrap:wrap;font-size:12px}
+body.mws-premium .event-details-popover-v2 .mws-detail-time-foot-v1:empty{display:none}
+body.mws-premium .event-details-popover-v2 .mws-detail-nextday-v1{color:var(--text);border:1px solid var(--mws-material-edge);border-radius:4px;padding:1px 5px}
+body.mws-premium .event-details-popover-v2 .calendar-preview-game-v3{
+  margin:10px 0;padding:0;overflow:hidden;border:1px solid var(--mws-material-edge);border-radius:10px;background:var(--mws-material-raised)
+}
+body.mws-premium .event-details-popover-v2 .event-details-game-v1{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:0;font-size:14px;
+}
+body.mws-premium .event-details-popover-v2 .event-details-game-v1 img{
+  width:100%;height:auto;aspect-ratio:460/215;object-fit:contain;border-radius:0;background:var(--mws-material-well);
+}
+body.mws-premium .event-details-popover-v2 .event-details-game-v1>span{padding:9px 12px;overflow-wrap:anywhere}
+body.mws-premium .event-details-popover-v2 .calendar-preview-people{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;margin-top:7px!important;
+}
+body.mws-premium .event-details-popover-v2 .calendar-preview-person{
+  display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:8px!important;
+  min-height:60px;padding:7px!important;border-radius:8px!important;
+  background:var(--mws-material-raised);border-color:var(--mws-material-edge);box-shadow:inset 0 1px var(--mws-material-light),0 2px 4px #0003;
+}
+body.mws-premium .event-details-popover-v2 .calendar-preview-person .avatar{width:44px!important;height:44px!important;border-radius:8px!important}
+body.mws-premium .event-details-popover-v2 .calendar-preview-person-name{
+  font-size:13px!important;line-height:1.35;font-weight:700!important;white-space:normal!important;overflow-wrap:anywhere;
+}
+body.mws-premium .event-details-popover-v2 .calendar-preview-person .status-badge{margin-top:3px!important;padding:2px 5px!important;font-size:10px!important;max-width:100%;white-space:normal}
+body.mws-premium .event-details-popover-v2 .event-details-section-v1{margin-top:12px;padding-top:11px}
+body.mws-premium .event-details-popover-v2 .event-details-section-v1 h3{font-size:12px;font-weight:700;color:var(--text)}
+@media(max-width:360px){
+ body.mws-premium .event-details-popover-v2 .calendar-preview-people{grid-template-columns:minmax(0,1fr)!important}
+}
+
+/* Pass N: the monthly card is a compact schedule record.
+   Keep the normal 24px game action and dense-day height. The existing Steam
+   renderer owns linked images and their click behavior; no duplicated image. */
+@media(min-width:901px){
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid]:not(.rest-event) .calendar-card-title-v2{
+   font-weight:650!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid] .calendar-start-v2{
+   font-variant-numeric:tabular-nums;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .calendar-start-v2[data-clock-state=unknown]{
+   color:color-mix(in srgb,var(--text) 65%,#d8a64b)!important;font-style:italic;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111.linked{
+   overflow:hidden!important;outline:1px solid var(--mws-material-edge);outline-offset:-1px;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111.linked img{
+   object-fit:contain!important;background:var(--mws-material-well);
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111:focus-visible{
+   outline:2px solid var(--text)!important;outline-offset:-2px;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event.rest-event{
+   color:color-mix(in srgb,var(--text) 85%,var(--muted))!important;
+ }
+ @media(hover:hover) and (pointer:fine){
+   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111.linked:hover{
+     outline:1px solid var(--accent);outline-offset:-1px;
+   }
+   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111:not(.linked):hover{
+     color:var(--text)!important;opacity:1;outline:1px solid var(--mws-material-edge);outline-offset:-1px;
+   }
+ }
+ /* Wide linked images use a landscape thumbnail, but short date columns
+    retain the original square footprint and full-width second title row. */
+ @container mws-calendar-day (min-width:215px){
+   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4))[data-calendar-game-reserved=true]{
+     padding-right:47px!important;
+   }
+   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111.calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4))[data-calendar-game-reserved=true]{
+     padding-right:70px!important;
+   }
+   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid][data-calendar-game-reserved=true]>.calendar-vr-badge-v1{
+     right:45px;
+   }
+   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4))[data-calendar-game-reserved=true]>.mws-steam-slot-v111{
+     width:36px!important;min-width:36px!important;
+   }
+ }
+}
+
+/* Pass U: matte schedule instruments with separate physical interaction
+   states. Paint inside the existing card bounds; no scale, translate, layout
+   changes, blur, extra DOM, timers, or new image resources. */
+@media(min-width:901px){
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]{
+   --event-ink:var(--content-group-color,var(--accent));
+   transition:background-color 100ms cubic-bezier(.2,.7,.25,1)!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]:not(.rest-event):has(.calendar-start-v2[data-clock-state=unknown]) .calendar-start-v2{
+   color:color-mix(in srgb,var(--text) 62%,#e3b66b)!important;
+   font-style:italic;
+   text-decoration:underline dotted;
+   text-underline-offset:2px;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid].rest-event{
+   background:color-mix(in srgb,var(--panel) 88%,var(--event-ink))!important;
+   color:color-mix(in srgb,var(--text) 86%,var(--muted))!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111.linked{
+   outline:1px solid color-mix(in srgb,var(--event-ink) 35%,var(--mws-material-edge));outline-offset:-1px;
+   box-shadow:0 1px 3px #0005;
+ }
+ @media(hover:hover) and (pointer:fine){
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]:not(.mws-ui-group-highlight):not(.event-details-selected-v1):not(.calendar-group-selected-v2):not(.mws-calendar-event-pointer-dragging-v174):not(.mws-agenda-link-v1):hover{
+   outline:1px solid color-mix(in srgb,var(--event-ink) 55%,var(--text))!important;outline-offset:-1px;
+   background:color-mix(in srgb,var(--event-ink) 31%,var(--panel))!important;
+   box-shadow:inset 0 1px color-mix(in srgb,var(--text) 18%,transparent),inset 0 -1px #0004,0 2px 4px #0005,0 4px 8px #0004!important;
+   filter:none!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]:not(.mws-ui-group-highlight):not(.event-details-selected-v1):not(.calendar-group-selected-v2):not(.mws-calendar-event-pointer-dragging-v174):not(.mws-agenda-link-v1):active{
+   background:color-mix(in srgb,var(--event-ink) 22%,var(--panel))!important;
+   box-shadow:inset 0 2px 5px #0007,inset 0 -1px color-mix(in srgb,var(--text) 13%,transparent),0 1px 2px #0003!important;
+   filter:none!important;transition-duration:45ms!important;
+  }
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid].event-details-selected-v1:not(.calendar-group-selected-v2):not(.mws-calendar-event-pointer-dragging-v174){
+   background:color-mix(in srgb,var(--event-ink) 35%,var(--panel))!important;
+   outline:1px solid color-mix(in srgb,var(--event-ink) 60%,var(--text))!important;outline-offset:-1px;
+   box-shadow:inset 0 1px color-mix(in srgb,var(--text) 24%,transparent),inset 0 -2px color-mix(in srgb,var(--event-ink) 50%,transparent),0 3px 6px #0005!important;
+   filter:none!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid].calendar-group-selected-v2:not(.mws-calendar-event-pointer-dragging-v174){
+   outline:2px solid #f8fafc!important;outline-offset:-2px;
+   background:color-mix(in srgb,var(--event-ink) 36%,var(--panel))!important;
+   box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--event-ink) 45%,transparent),0 3px 6px #0005!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid].mws-calendar-event-pointer-dragging-v174{
+   outline:1px dashed color-mix(in srgb,var(--event-ink) 55%,var(--text))!important;outline-offset:-1px;
+   box-shadow:inset 0 2px 6px #0006!important;transition:none!important;
+ }
+ body.mws-premium #calendar.section.active #calendarGrid .mini-event[data-evid]:focus-visible{outline:2px solid var(--accent)!important;outline-offset:-2px}
+}
+html[data-mws-motion=reduced] body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]{transition:none!important}
+@media(prefers-reduced-motion:reduce){body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]{transition:none!important}}
+
+
+/* Pass V: detail document shares the calendar housing's light direction.
+   Keep the existing shell opacity and scroll geometry. */
+body.mws-premium .event-details-popover-v2 .event-details-head-v1{
+ background:linear-gradient(180deg,color-mix(in srgb,var(--text) 6%,transparent),transparent);
+}
+body.mws-premium .event-details-popover-v2 .event-details-action-v2:not([hidden]){
+ border-radius:9px!important;background:var(--mws-material-raised)!important;
+ box-shadow:inset 0 1px var(--mws-material-light),0 2px 4px #0003!important;
+}
+body.mws-premium .event-details-popover-v2 #calendarDetailsEditV1{
+ color:var(--text);box-shadow:inset 0 1px var(--mws-material-light),inset 0 -2px var(--event-detail-color,var(--accent)),0 2px 4px #0003!important;
+}
+body.mws-premium .event-details-popover-v2 .event-details-action-v2:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+body.mws-premium .event-details-popover-v2 .event-details-action-v2:not(:disabled):active{box-shadow:var(--mws-material-inset)!important}
+body.mws-premium .event-details-popover-v2 .calendar-preview-person .avatar{box-shadow:0 1px 4px #0005;outline:1px solid var(--mws-material-edge);outline-offset:-1px}
+body.mws-premium .event-details-popover-v2 .calendar-preview-person .status-badge{font-variant-numeric:tabular-nums;box-shadow:inset 0 1px #ffffff12}
+body.mws-premium .event-details-popover-v2 .event-details-section-v1{border-top-color:var(--mws-material-edge)}
+body.mws-premium .event-details-popover-v2 .event-details-text-v1{color:var(--text);line-height:1.7;overflow-wrap:anywhere}
+@media(hover:hover) and (pointer:fine){
+ body.mws-premium .event-details-popover-v2 .event-details-action-v2:not(:disabled):hover{
+  color:var(--text);background:var(--mws-material-selected)!important;box-shadow:var(--mws-material-depth)!important;
+ }
+}
+
+/* Calendar editor date controls: override the shared field surface by its
+   actual control IDs, keeping the existing picker behavior and geometry. */
+body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 :is(#evDateDisplay,#evStartDisplay,#evEndDisplay){
+ background:linear-gradient(165deg,var(--editor-metal),var(--editor-well) 60%)!important;
+ box-shadow:inset 0 1px var(--editor-glint),inset 0 -1px #0004!important;
+}
+
+/* Match detail action surfaces to calendar toolbar, preserve 88% glass. */
+@media(min-width:901px){
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) .event-details-popover-v2 .event-details-action-v2:not([hidden]){
+   background:var(--mws-calendar-metal-control)!important;
+ }
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) .event-details-popover-v2 .mws-detail-date-v1{
+   color:color-mix(in srgb,var(--text) 78%,var(--muted));
+ }
+}
+
+/* Pass Z: the floating glass shares the calendar's light-facing rim.
+   Preserve the established 88% alpha and single-object entrance. */
+@media(min-width:901px){
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) .event-details-popover-v2{
+  border-color:var(--mws-calendar-rim)!important;
+  box-shadow:inset 0 1px var(--mws-calendar-rim-light),inset 0 -1px var(--mws-calendar-rim-dark),0 6px 14px #0006,0 18px 38px #0009!important;
+ }
+}
+
+/* Pass AA: press feedback never changes card or button geometry. */
+@media(hover:hover) and (pointer:fine){
+ body.mws-premium #calendar.section.active #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111:not(:disabled):active{
+  box-shadow:inset 0 2px 4px #0007!important;transform:none!important;scale:none!important;
+ }
+ body.mws-premium #calendar.section.active #calendarGrid button.calendar-date-number-v3:not(:disabled):active{
+  box-shadow:inset 0 1px 4px #0006!important;transform:none!important;scale:none!important;
+ }
+}
+
+/* Pass AB: use genuine spare room on tall high-resolution displays.
+   Keep the compact 1366/FHD and short ultrawide card contract untouched. */
+@media(min-width:2200px) and (min-height:1200px){
+ @container mws-calendar-day (min-width:235px){
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid] .calendar-card-title-v2{
+    font-size:calc(14px * var(--ui-text-scale,1))!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid] .calendar-start-v2{
+    font-size:calc(12px * var(--ui-text-scale,1))!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4))[data-calendar-game-reserved=true]{
+    padding-right:53px!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111.calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4))[data-calendar-game-reserved=true]{
+    padding-right:76px!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid][data-calendar-game-reserved=true]>.calendar-vr-badge-v1{
+    right:51px;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4))[data-calendar-game-reserved=true]>.mws-steam-slot-v111{
+    width:42px!important;min-width:42px!important;
+  }
+ }
+}
+
+/* Recessed date/time instrument: painted bevels only, no changed dimensions. */
+@media(min-width:901px){
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) .event-details-popover-v2 .mws-detail-time-v1{
+  box-shadow:inset 0 2px 5px #0007,inset 0 -1px var(--mws-calendar-rim-light),inset 2px 0 var(--event-detail-color,var(--accent))!important;
+ }
+}

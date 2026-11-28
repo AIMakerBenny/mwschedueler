@@ -45,29 +45,47 @@
   }
   function playMotion(open,from,finish){
     const generation=++motionGeneration;
+    // Read the current composited offset before cancelling an interrupted motion.
+    // The fixed anchor's left/top and measured layout dimensions never animate.
+    const previousOffset=motion?getComputedStyle(drawer).translate:null;
     motion?.cancel();motion=null;
     const complete=()=>{if(generation!==motionGeneration)return;motion?.cancel();motion=null;finish?.()};
     // Standalone calendar pages and browser fixtures may load before the
     // workspace preference controller. Respect OS motion in that case only.
     if(!drawer.animate||(root.mwsMotionReduced?.()??root.matchMedia?.('(prefers-reduced-motion: reduce)').matches)){complete();return}
-    motion=drawer.animate([{opacity:from},{opacity:open?1:0}],{duration:open?150:110,easing:'ease-out',fill:'both'});
+    const source=anchor?.getBoundingClientRect(),panel=drawer.getBoundingClientRect();
+    const x=source&&panel.left>=source.right-1?-8:source&&panel.right<=source.left+1?8:0;
+    const y=x?0:source&&panel.bottom<=source.top+1?6:-6;
+    const offset=x+'px '+y+'px';
+    const start=previousOffset&&previousOffset!=='none'?previousOffset:open?offset:'0px 0px';
+    motion=drawer.animate([{opacity:from,translate:start},{opacity:open?1:0,translate:open?'0px 0px':offset}],{duration:open?240:140,easing:open?'cubic-bezier(.18,.72,.25,1)':'cubic-bezier(.4,0,.65,1)',fill:'both'});
     motion.finished.then(complete,()=>{});
   }
   function markSelected(id){
     document.querySelectorAll('#calendarGrid .mini-event[data-evid]').forEach(node=>{
       const selected=node.dataset.evid===id;
       node.classList.toggle('event-details-selected-v1',selected);
-      node.setAttribute('aria-expanded',String(selected));
+      if(node.getAttribute('aria-expanded')!==String(selected))node.setAttribute('aria-expanded',String(selected));
+    });
+    document.querySelectorAll('#calendarAgendaV1 :is([data-agenda-event],[data-agenda-track])').forEach(node=>{
+      const selected=(node.dataset.agendaEvent||node.dataset.agendaTrack)===id;
+      node.classList.toggle('mws-agenda-selected-v1',selected);
+      if(node.getAttribute('aria-expanded')!==String(selected))node.setAttribute('aria-expanded',String(selected));
     });
   }
   function close({restoreFocus=true}={}){
     if(!drawer||!current)return;
     const from=Number(getComputedStyle(drawer).opacity);
+    const wasInside=drawer.contains(document.activeElement)||document.activeElement===document.body;
     drawer.inert=true;drawer.classList.remove('open');
     drawer.setAttribute('aria-hidden','true');
-    current=null;anchor=null;markSelected('');
+    current=null;markSelected('');
     playMotion(false,from,()=>{
-      if(!current){drawer.hidden=true;if(restoreFocus&&previousFocus?.isConnected)previousFocus.focus({preventScroll:true})}
+      if(!current){
+        drawer.hidden=true;anchor=null;
+        // A late completion must not take focus from a different control.
+        if(restoreFocus&&wasInside&&previousFocus?.isConnected&&(document.activeElement===document.body||drawer.contains(document.activeElement)))previousFocus.focus({preventScroll:true});
+      }
     });
   }
   function ensure(){
@@ -80,7 +98,7 @@
     document.body.append(drawer);
     drawer.addEventListener('click',event=>{const button=event.target.closest('[data-detail-event-v2]');if(button)root.openCalendarEventDetailsV1?.(button.dataset.detailEventV2)});
     document.addEventListener('click',event=>{
-      if(!current||drawer.contains(event.target)||event.target.closest('.mini-event[data-evid],.calendar-day-more-v2,[data-cp-event],.modal.open'))return;
+      if(!current||drawer.contains(event.target)||event.target.closest('.mini-event[data-evid],.calendar-day-more-v2,[data-cp-event],#calendarAgendaV1 [data-agenda-event],#calendarAgendaV1 [data-agenda-track],.modal.open'))return;
       const calendarBackground=event.target.closest('#calendarGrid');
       close({restoreFocus:false});
       // Dismissing the panel must not also create a new schedule.
@@ -124,10 +142,13 @@
     drawer.style.setProperty('--event-detail-color',details.color||anchor?.style.getPropertyValue('--content-group-color')||'var(--accent)');
     place();
     if(opening){
-      playMotion(true,from,()=>{$('calendarDetailsCloseV1').focus({preventScroll:true})});
+      const focusAtOpen=document.activeElement;
+      playMotion(true,from,()=>{
+        if(document.activeElement===focusAtOpen||document.activeElement===document.body)$('calendarDetailsCloseV1').focus({preventScroll:true});
+      });
     }
   }
-  root.mwsCalendarDetailsV1=Object.freeze({open,close,isOpen:()=>Boolean(current)});
+  root.mwsCalendarDetailsV1=Object.freeze({open,close,isOpen:()=>Boolean(current),currentId:()=>current?String(current.id):''});
   // Mount the hidden popover shell once, so opening only populates content.
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensure,{once:true});else ensure();
 
@@ -203,3 +224,201 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initCopyTrayV4,{once:true});else initCopyTrayV4();
 
 })(window);
+
+/* Optional wide-screen agenda; one live calendar dataset, no fetch or save.
+   Default month geometry is untouched. The existing event popover owns details. */
+(()=>{
+  const grid=document.getElementById('calendarGrid'),month=document.getElementById('calendarMonthPanelV172'),toggle=document.getElementById('calendarAgendaToggleV1'),panel=document.getElementById('calendarAgendaV1');
+  if(!grid||!month||!toggle||!panel)return;
+  const q=s=>panel.querySelector(s),dateInput=q('[data-agenda-date]'),list=q('[data-agenda-list]'),heading=q('[data-agenda-heading]'),count=q('[data-agenda-count]'),prev=q('[data-agenda-prev]'),next=q('[data-agenda-next]'),todayButton=q('[data-agenda-today]');
+  const wide=matchMedia('(min-width:1700px)'),section=month.closest('#calendar');
+  let selected='',opened=false,lastSignature='',dateSignature='',hoverId='',focusId='',linkedNodes=[],panelMotion=null,panelGeneration=0;
+  const allowed=()=>section?.classList.contains('active')&&wide.matches&&document.body.dataset.deviceMode!=='mobile'&&document.body.dataset.resolution!=='mobile'&&month.classList.contains('active')&&!month.hidden;
+  const dates=()=>[...grid.querySelectorAll('.day:not(.out)[data-date]')].map(e=>e.dataset.date);
+  const dateToday=()=>typeof todayKST==='function'?todayKST():new Date(Date.now()+9*3600000).toISOString().slice(0,10);
+  function mark(){
+    for(const node of grid.querySelectorAll('.mws-agenda-date-v1'))node.classList.remove('mws-agenda-date-v1');
+    if(opened)for(const day of grid.querySelectorAll('.day[data-date]'))if(day.dataset.date===selected)day.classList.add('mws-agenda-date-v1');
+  }
+  function timeLabel(e){
+    if(e.restDay)return '휴방';
+    const format=t=>/^([01]\d|2[0-3]):[0-5]\d$/.test(String(t||''))?String(t):'';
+    const start=format(e.start),end=format(e.end);
+    return start&&end?start+' - '+end:start||'시간 미정';
+  }
+  function render(){
+    if(!opened||!allowed())return;
+    const days=dates();if(!days.length)return;
+    const today=dateToday();
+    if(!days.includes(selected))selected=days.includes(today)?today:days[0];
+    const dayKey=days.join(',');
+    if(dayKey!==dateSignature){
+      dateSignature=dayKey;
+      const options=document.createDocumentFragment(),format=new Intl.DateTimeFormat('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short',timeZone:'UTC'});
+      for(const day of days){const option=document.createElement('option');option.value=day;option.textContent=format.format(new Date(day+'T00:00:00Z'));options.append(option)}
+      dateInput.replaceChildren(options);
+    }
+    dateInput.value=selected;
+    prev.disabled=selected===days[0];next.disabled=selected===days.at(-1);todayButton.disabled=!days.includes(today)||selected===today;
+    const items=(typeof activeEvents==='function'?activeEvents():[]).filter(e=>e.date===selected).slice().sort((a,b)=>Number(!!b.restDay)-Number(!!a.restDay)||String(a.start||'99:99').replace('TBD','99:99').localeCompare(String(b.start||'99:99').replace('TBD','99:99')));
+    const colors=new Map([...grid.querySelectorAll('.mini-event[data-evid]')].map(el=>[el.dataset.evid,el.style.getPropertyValue('--content-group-color')]));
+    const view=items.map(e=>({id:String(e.id),title:e.restDay?'휴방':String(e.title||'제목 없음'),time:timeLabel(e),device:e.restDay?'':String(e.device||''),people:Array.isArray(e.participants)?e.participants.length:0,color:colors.get(String(e.id))||'',rest:!!e.restDay}));
+    heading.textContent=new Intl.DateTimeFormat('ko-KR',{month:'long',day:'numeric',weekday:'long',timeZone:'UTC'}).format(new Date(selected+'T00:00:00Z'));
+    count.textContent=items.length+'개 일정';
+    mark();
+    const time=window.mwsCalendarAgendaTimeV1?.summarize(items);
+    const sig=JSON.stringify([selected,view,time]);if(sig===lastSignature){syncLinks();return}lastSignature=sig;
+    renderTime(time,view);
+    const focused=list.contains(document.activeElement)?document.activeElement.dataset.agendaEvent:'',scrollTop=list.scrollTop;
+    const fragment=document.createDocumentFragment();
+    const timeById=new Map((time?.entries||[]).map(entry=>[entry.id,entry]));
+    for(const item of view){
+      const button=document.createElement('button');button.type='button';button.className='mws-agenda-event-v1';button.dataset.agendaEvent=item.id;
+      if(item.rest)button.dataset.agendaState='rest';else if(!timeById.has(item.id))button.dataset.agendaState='unknown';
+      button.setAttribute('aria-haspopup','dialog');
+      const isSelected=window.mwsCalendarDetailsV1?.currentId()===item.id;
+      button.setAttribute('aria-expanded',String(isSelected));button.classList.toggle('mws-agenda-selected-v1',isSelected);
+      if(/^#[0-9a-f]{3,8}$/i.test(item.color))button.style.setProperty('--agenda-event-color',item.color);
+      const meta=document.createElement('span');meta.className='mws-agenda-event-meta-v1';
+      const clock=document.createElement('time');clock.textContent=item.time;meta.append(clock);
+      if(item.device){const device=document.createElement('span');device.textContent=item.device;meta.append(device)}
+      const title=document.createElement('strong');title.textContent=item.title;
+      button.append(meta,title);
+      const info=document.createElement('span');info.className='mws-agenda-card-foot-v1';
+      if(!item.rest&&item.people){const people=document.createElement('small');people.textContent='참가자 '+item.people+'명';info.append(people)}
+      if(!item.rest&&time){const entry=timeById.get(item.id);if(entry){const duration=document.createElement('small');duration.className='mws-agenda-card-duration-v1';duration.textContent=Math.floor(entry.duration/60)+'시간 '+entry.duration%60+'분';info.append(duration)}if(!entry||entry.spill){const flag=document.createElement('small');flag.className='mws-agenda-time-flag-v1';flag.textContent=entry?'다음 날 종료':'시간 합계 미정';info.append(flag)}}
+      if(info.childElementCount)button.append(info);
+      fragment.append(button);
+    }
+    if(!view.length){const empty=document.createElement('div');empty.className='mws-agenda-empty-v1';const icon=document.createElement('span');icon.className='mws-agenda-empty-icon-v1';icon.setAttribute('aria-hidden','true');const label=document.createElement('strong');label.textContent='등록된 일정 없음';empty.append(icon,label);fragment.append(empty)}
+    list.replaceChildren(fragment);list.scrollTop=scrollTop;syncLinks();
+    if(focused)[...list.querySelectorAll('[data-agenda-event]')].find(el=>el.dataset.agendaEvent===focused)?.focus({preventScroll:true});
+  }
+  function renderTime(time,view){
+    const section=q('[data-agenda-time-section]'),tracks=q('[data-agenda-tracks]'),total=q('[data-agenda-duration]'),note=q('[data-agenda-time-note]');
+    if(!section||!tracks||!total||!note)return;
+    section.hidden=!time||!time.count;
+    const hasTracks=!!time?.entries.length;tracks.hidden=!hasTracks;
+    const axis=section.querySelector('.mws-agenda-time-axis-v1');if(axis)axis.hidden=!hasTracks;
+    tracks.replaceChildren();
+    if(!time||!time.count){total.textContent='';note.textContent='';return}
+    const duration=n=>Math.floor(n/60)+'시간 '+n%60+'분';
+    total.textContent=time.entries.length?duration(time.minutes):'시간 미정';
+    note.textContent=[time.unknown?'시간 미정 '+time.unknown+'개':'',time.overnight?'다음 날 종료 '+time.overnight+'개':'','등록 시간 기준 · 중복 합산'].filter(Boolean).join(' · ');
+    const byId=new Map(view.map(item=>[item.id,item]));
+    for(const e of time.entries){
+      const item=byId.get(e.id);if(!item)continue;
+      const row=document.createElement('button');row.type='button';row.className='mws-agenda-track-v1';row.dataset.agendaTrack=e.id;
+      row.setAttribute('aria-haspopup','dialog');
+      const isSelected=window.mwsCalendarDetailsV1?.currentId()===e.id;
+      row.setAttribute('aria-expanded',String(isSelected));row.classList.toggle('mws-agenda-selected-v1',isSelected);
+      const label=item.title+' '+item.time+(e.spill?' 다음 날 종료':'');row.title=label;row.setAttribute('aria-label',label);
+      const bar=document.createElement('span');bar.className='mws-agenda-track-bar-v1';bar.style.left=e.start/14.4+'%';bar.style.width=(e.end-e.start)/14.4+'%';
+      if(/^#[0-9a-f]{3,8}$/i.test(item.color))bar.style.setProperty('--agenda-event-color',item.color);
+      if(e.spill)bar.classList.add('is-overnight');
+      const line=document.createElement('div');line.className='mws-agenda-track-line-v1';
+      const labelTime=document.createElement('span');labelTime.className='mws-agenda-track-label-v1';labelTime.textContent=item.time.split(' - ')[0];labelTime.setAttribute('aria-hidden','true');
+      row.append(bar);line.append(labelTime,row);tracks.append(line);
+    }
+  }
+  // One matching identity, paint-only linking between real calendar cards,
+  // agenda cards and timeline rows. No scroll jumps, timers or data requests.
+  function eventId(node){
+    if(!(node instanceof Element))return '';
+    const target=node.closest('.mini-event[data-evid],[data-agenda-event],[data-agenda-track]');
+    if(!target||(!grid.contains(target)&&!panel.contains(target)))return '';
+    return target.dataset.evid||target.dataset.agendaEvent||target.dataset.agendaTrack||'';
+  }
+  function syncLinks(){
+    const active=eventId(document.activeElement);
+    const id=opened&&(hoverId||active||focusId);
+    let next=[];
+    if(id){
+      const items=[...grid.querySelectorAll('.mini-event[data-evid]'),...panel.querySelectorAll('[data-agenda-event],[data-agenda-track]')];
+      next=items.filter(node=>(node.dataset.evid||node.dataset.agendaEvent||node.dataset.agendaTrack)===id);
+      if(!next.some(node=>panel.contains(node)))next=[];
+    }
+    // Keep already linked nodes intact when focus/hover changes within the
+    // same event. Re-rendered nodes are still resolved by real event identity.
+    const oldSet=new Set(linkedNodes),nextSet=new Set(next);
+    for(const node of linkedNodes)if(!nextSet.has(node))node.classList.remove('mws-agenda-link-v1');
+    for(const node of next)if(!oldSet.has(node))node.classList.add('mws-agenda-link-v1');
+    linkedNodes=next;
+  }
+  for(const surface of [grid,panel]){
+    surface.addEventListener('pointerover',e=>{
+      if(!opened||e.pointerType==='touch'||e.buttons)return;
+      const id=eventId(e.target);if(hoverId!==id){hoverId=id;syncLinks()}
+    });
+    surface.addEventListener('pointerout',e=>{
+      if(!opened||e.pointerType==='touch')return;
+      const id=eventId(e.relatedTarget);if(hoverId!==id){hoverId=id;syncLinks()}
+    });
+    surface.addEventListener('focusin',e=>{
+      if(!opened)return;
+      const id=eventId(e.target);focusId=id;syncLinks()
+    });
+    surface.addEventListener('focusout',e=>{
+      if(!opened)return;
+      const id=eventId(e.relatedTarget);focusId=id;
+      // activeElement can still refer to the departing node during focusout.
+      // Reconcile after the browser commits focus, not by polling.
+      queueMicrotask(()=>{if(opened)syncLinks()});
+    });
+  }
+  // One finite animation on the actual panel. Keep grid geometry unchanged
+  // throughout exit, then restore the month once. Never animate grid columns.
+  function animatePanel(open,from,immediate=false){
+    const generation=++panelGeneration;
+    panelMotion?.cancel();panelMotion=null;
+    const finish=()=>{
+      if(generation!==panelGeneration)return;
+      panelMotion?.cancel();panelMotion=null;
+      if(!opened){panel.hidden=true;month.classList.remove('mws-agenda-open-v1')}
+    };
+    if(immediate||!panel.animate||(window.mwsMotionReduced?.()??matchMedia('(prefers-reduced-motion: reduce)').matches)){
+      finish();return;
+    }
+    panelMotion=panel.animate([{opacity:from},{opacity:open?1:0}],{duration:open?180:140,easing:open?'cubic-bezier(.2,.72,.25,1)':'cubic-bezier(.4,0,.65,1)',fill:'both'});
+    panelMotion.finished.then(finish,()=>{});
+  }
+  function setOpen(value,{focus=false,immediate=false}={}){
+    const nextOpen=!!value&&allowed();
+    if(opened===nextOpen){
+      if(!nextOpen&&immediate&&!panel.hidden)animatePanel(false,0,true);
+      return;
+    }
+    const from=panel.hidden?0:Number(getComputedStyle(panel).opacity);
+    opened=nextOpen;lastSignature='';
+    toggle.setAttribute('aria-expanded',String(opened));toggle.title=opened?'일정 목록 닫기':'일정 목록 열기';toggle.setAttribute('aria-label',toggle.title);
+    panel.inert=!opened;panel.setAttribute('aria-hidden',String(!opened));
+    window.mwsCalendarDetailsV1?.close({restoreFocus:false});
+    if(opened){
+      month.classList.add('mws-agenda-open-v1');panel.hidden=false;
+      render();animatePanel(true,from,immediate);if(focus)dateInput.focus({preventScroll:true});
+    }else{
+      hoverId='';focusId='';syncLinks();mark();
+      if(focus&&allowed())toggle.focus({preventScroll:true});
+      animatePanel(false,from,immediate||!allowed());
+    }
+  }
+  const enforceAvailability=()=>{if(!allowed()&&(opened||!panel.hidden))setOpen(false,{immediate:true})};
+  function selectDate(value){if(!opened||!dates().includes(value))return;const changed=value!==selected;if(changed){hoverId='';focusId=''}selected=value;render();if(changed)list.scrollTop=0}
+  function step(n){const days=dates();selectDate(days[days.indexOf(selected)+n])}
+  toggle.addEventListener('click',()=>setOpen(!opened));
+  q('[data-agenda-close]').addEventListener('click',()=>setOpen(false,{focus:true}));
+  dateInput.addEventListener('change',()=>{selectDate(dateInput.value);dateInput.value=selected});
+  prev.addEventListener('click',()=>step(-1));next.addEventListener('click',()=>step(1));todayButton.addEventListener('click',()=>selectDate(dateToday()));
+  list.addEventListener('click',e=>{const button=e.target.closest('[data-agenda-event]');if(button&&list.contains(button))window.openCalendarEventDetailsV1?.(button.dataset.agendaEvent,button)});
+  q('[data-agenda-tracks]')?.addEventListener('click',e=>{const track=e.target.closest('[data-agenda-track]');if(!track)return;const row=[...list.querySelectorAll('[data-agenda-event]')].find(el=>el.dataset.agendaEvent===track.dataset.agendaTrack);if(row){row.scrollIntoView({block:'nearest',behavior:'instant'});row.focus({preventScroll:true});window.openCalendarEventDetailsV1?.(row.dataset.agendaEvent,row)}});
+  grid.addEventListener('click',e=>{
+    if(!opened||e.defaultPrevented||e.ctrlKey||e.target.closest('button,a')||month.closest('.calendar-group-select-active-v2'))return;
+    const event=e.target.closest('.mini-event[data-evid]');if(event)selectDate(event.closest('.day')?.dataset.date);
+  },true);
+  panel.addEventListener('keydown',e=>{if(e.key==='Escape'&&!window.mwsCalendarDetailsV1?.isOpen()){e.stopPropagation();setOpen(false,{focus:true})}});
+  new MutationObserver(()=>{if(opened)render()}).observe(grid,{childList:true});
+  new MutationObserver(enforceAvailability).observe(month,{attributes:true,attributeFilter:['class','hidden']});
+  if(section)new MutationObserver(enforceAvailability).observe(section,{attributes:true,attributeFilter:['class']});
+  new MutationObserver(enforceAvailability).observe(document.body,{attributes:true,attributeFilter:['data-device-mode','data-resolution']});
+  wide.addEventListener('change',enforceAvailability);
+})();

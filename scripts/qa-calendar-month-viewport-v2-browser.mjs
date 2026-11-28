@@ -101,7 +101,15 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const badgeCards=[...document.querySelectorAll('#calendarGrid .mini-event[data-evid]')];
  const vrCards=badgeCards.filter(el=>el.querySelector('.calendar-vr-badge-v1'));
  const vrBadgeOnly=vrCards.length===5&&badgeCards.every(el=>Boolean(el.querySelector('.calendar-vr-badge-v1'))===data.events.some(e=>e.id===el.dataset.evid&&!e.restDay&&e.device==='VR'))&&vrCards.every(el=>el.getAttribute('aria-label').includes(' VR '));
- const vrBadgeLayout=vrCards.every(el=>{const badge=el.querySelector('.calendar-vr-badge-v1'),slot=el.querySelector('.mws-steam-slot-v111'),main=el.querySelector('.mini-event-main'),b=badge.getBoundingClientRect(),s=slot.getBoundingClientRect(),m=main.getBoundingClientRect(),style=getComputedStyle(badge);return badge.textContent==='VR'&&b.width===20&&b.height===20&&style.borderRadius==='50%'&&style.pointerEvents==='none'&&b.right<=s.left-2&&m.right<=b.left+1&&Math.abs(centerY(b)-centerY(s))<=1&&Math.abs(centerY(b)-centerY(el.getBoundingClientRect()))<=1});
+ const vrBadgeGeometry=vrCards.map(el=>{
+  const badge=el.querySelector('.calendar-vr-badge-v1'),slot=el.querySelector('.mws-steam-slot-v111'),main=el.querySelector('.mini-event-main'),title=el.querySelector('.calendar-card-title-v2'),clock=el.querySelector('.calendar-start-v2'),cell=el.closest('.day'),cs=getComputedStyle(cell);
+  const narrow=cell.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)<215;
+  const b=badge.getBoundingClientRect(),s=slot.getBoundingClientRect(),m=main.getBoundingClientRect(),t=title.getBoundingClientRect(),c=clock.getBoundingClientRect(),style=getComputedStyle(badge);
+  const common=badge.textContent==='VR'&&style.pointerEvents==='none'&&s.width===24&&s.height===24&&m.right<=s.left+1;
+  const ok=common&&(narrow?b.width===19&&b.height===12&&b.right<=s.left+1&&c.right<=b.left+1&&b.bottom<=t.top+2&&Math.abs(t.width-m.width)<=1&&m.width>=el.getBoundingClientRect().width-46:b.width===20&&b.height===20&&style.borderRadius==='50%'&&b.right<=s.left-2&&m.right<=b.left+1&&Math.abs(centerY(b)-centerY(s))<=1&&Math.abs(centerY(b)-centerY(el.getBoundingClientRect()))<=1);
+  return {id:el.dataset.evid,narrow,ok,common,card:el.getBoundingClientRect().width,main:m.width,title:t.width,clockRight:c.right,badgeLeft:b.left,badgeBottom:b.bottom,titleTop:t.top,badgeRight:b.right,slotLeft:s.left,badgeHeight:b.height};
+ });
+ const vrBadgeLayout=vrBadgeGeometry.every(x=>x.ok);
  const groupedCard=$('[data-evid="qa-5-0"]'),groupAccent=getComputedStyle(groupedCard).borderLeftColor!==cardCSS.borderLeftColor&&getComputedStyle(groupedCard).outlineStyle==='none';
  const shadowGutter=Number.parseFloat(getComputedStyle(shortList).paddingInlineStart)>=3&&Number.parseFloat(getComputedStyle(shortList).paddingBottom)>=5;
  const preview=document.createElement('div');preview.id='calendarEventPreview';preview.className='calendar-event-preview open';document.body.append(preview);
@@ -112,7 +120,14 @@ window.addEventListener('DOMContentLoaded',async()=>{
  $('[data-evid="qa-18-0"]').click();await tick();
  const popoverCSS=getComputedStyle($('#calendarEventDetailsV1'));
  const translucentPopover=alpha(popoverCSS.backgroundColor)>=223&&alpha(popoverCSS.backgroundColor)<=225&&popoverCSS.backdropFilter==='none'&&popoverCSS.opacity==='1'&&popoverCSS.boxShadow!=='none';
- const charcoalGrid=getComputedStyle($('#calendarGrid')).backgroundColor==='rgb(12, 14, 18)'&&getComputedStyle($('.day:not(.out)')).backgroundColor==='rgb(12, 14, 18)';
+ const gridPaint=getComputedStyle($('#calendarGrid')),dayPaint=getComputedStyle($('.day:not(.out)'));
+ const noForcedScene=!gridPaint.backgroundImage.includes('url(')&&!$('#calendarGrid').hasAttribute('data-calendar-scene')&&!gridPaint.getPropertyValue('--calendar-atmosphere-art').trim();
+ const opticalGrid=gridPaint.backgroundColor==='rgb(18, 26, 38)'&&gridPaint.backgroundImage.includes('radial-gradient')&&gridPaint.backgroundImage.includes('linear-gradient')&&dayPaint.backgroundColor==='rgba(12, 14, 18, 0.32)'&&dayPaint.backgroundImage.includes('linear-gradient');
+ // Use an actual supported alternate theme; wait for its paint to settle.
+ const originalTheme=document.body.dataset.theme;document.body.dataset.theme='ocean';await new Promise(r=>setTimeout(r,300));
+ const altGrid=getComputedStyle($('#calendarGrid')),altDay=getComputedStyle($('.day:not(.out)'));
+ const alternateOpaque=!altGrid.backgroundImage.includes('data:image/png;base64,')&&!altGrid.backgroundImage.includes('data:image/jpeg;base64,')&&altDay.backgroundColor.startsWith('rgb(')&&getComputedStyle(document.body).getPropertyValue('--accent').trim()==='#22b8cf';
+ document.body.dataset.theme=originalTheme;await new Promise(r=>setTimeout(r,300));
  const panelPushes=Math.abs(r('#calendarGrid').width-closedWidth)<1&&getComputedStyle($('.app>.main')).transform==='none';
  const popup=r('#calendarEventDetailsV1'),card=r('[data-evid="qa-18-0"]');
  const saturdayVisible=popup.left>=11&&popup.right<=innerWidth-11&&popup.top>=11&&popup.bottom<=innerHeight-11&&(popup.right<=card.left||popup.left>=card.right);
@@ -133,11 +148,21 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const dayToDetails=!$('#calendarDetailsEditV1').hidden&&editorOpens===0;
  document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));await tick();
  const escapeCloses=!window.mwsCalendarDetailsV1.isOpen();
+ // Reopening while the previous detail is leaving must never hide the new panel.
+ $('[data-evid="qa-18-0"]').click();
+ const detailShell=$('#calendarEventDetailsV1');
+ window.mwsCalendarDetailsV1.close({restoreFocus:false});
+ const closingInert=detailShell.inert&&detailShell.getAttribute('aria-hidden')==='true';
+ $('[data-evid="qa-5-0"]').click();await tick();
+ const detailRect=detailShell.getBoundingClientRect(),detailStyle=getComputedStyle(detailShell);
+ const rapidDetailReopen=closingInert&&detailShell===$('#calendarEventDetailsV1')&&!detailShell.hidden&&!detailShell.inert&&window.mwsCalendarDetailsV1.isOpen()&&$('[data-evid="qa-5-0"]').classList.contains('event-details-selected-v1')&&detailStyle.opacity==='1'&&detailStyle.translate==='none'&&detailRect.left>=11&&detailRect.right<=innerWidth-11&&Math.abs(r('#calendarGrid').width-closedWidth)<1;
+ window.mwsCalendarDetailsV1.close();await tick();
+ const detailExitSettled=detailShell.hidden&&detailShell.inert&&!window.mwsCalendarDetailsV1.isOpen();
  const noMutation=JSON.stringify(data)===baseline;
  const noRootOverflow=document.documentElement.scrollWidth<=innerWidth;
  const months=[new Date(2026,1,1),new Date(2026,7,1)];let otherMonthsFit=true;
  for(const date of months){calDate=date;renderCalendar();await tick();otherMonthsFit&&=r('#calendarGrid').bottom<=innerHeight-10&&document.querySelectorAll('.day:not(.out)').length===new Date(date.getFullYear(),date.getMonth()+1,0).getDate()}
- document.getElementById('result').textContent=JSON.stringify({monthFits,visibleMonth,monthNoScroll,toolbarIcons,quickSearchFits,centeredAdd,singleHeader,headerNoOverlap,headerClickable,trayInitiallyClosed,trayOpensWithoutResize,trayDragPassThrough,trayCloses,trayNativeDrop,trayPointerDrop,startTimeVisible,clockHidden,shortListDoesNotFillBlankSpace,emptyListDoesNotCaptureBlankSpace,crowdedListStillScrolls,crowdedListMoves,hoverExpands,hoverTracksFixed,hoverRevealsCard,hoverCollapses,hoverShortUnchanged,pageScrollCanChain,matteCard,ribbonClean,adaptiveCard,readableCard,fixedDateAlignment,vrBadgeOnly,vrBadgeLayout,groupAccent,shadowGutter,translucentPreview,translucentPopover,charcoalGrid,panelPushes,saturdayVisible,participantRailClear,ribbonsKept,openMonthFits,outsideCloses,crowdedDayAccessible,dayToDetails,escapeCloses,noMutation,noRootOverflow,otherMonthsFit,headerGeometry});
+ document.getElementById('result').textContent=JSON.stringify({monthFits,visibleMonth,monthNoScroll,toolbarIcons,quickSearchFits,centeredAdd,singleHeader,headerNoOverlap,headerClickable,trayInitiallyClosed,trayOpensWithoutResize,trayDragPassThrough,trayCloses,trayNativeDrop,trayPointerDrop,startTimeVisible,clockHidden,shortListDoesNotFillBlankSpace,emptyListDoesNotCaptureBlankSpace,crowdedListStillScrolls,crowdedListMoves,hoverExpands,hoverTracksFixed,hoverRevealsCard,hoverCollapses,hoverShortUnchanged,pageScrollCanChain,matteCard,ribbonClean,adaptiveCard,readableCard,fixedDateAlignment,vrBadgeOnly,vrBadgeLayout,groupAccent,shadowGutter,translucentPreview,translucentPopover,noForcedScene,opticalGrid,alternateOpaque,panelPushes,saturdayVisible,participantRailClear,ribbonsKept,openMonthFits,outsideCloses,crowdedDayAccessible,dayToDetails,escapeCloses,rapidDetailReopen,detailExitSettled,noMutation,noRootOverflow,otherMonthsFit,headerGeometry,vrBadgeGeometry});
 });`;
 export function fixture({test=true}={}){return '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+(test?'\n.event-details-drawer-v1,body:has(#calendar.section.active) .app>.main:has(#calendar.section.active){transition:none!important}':'')+'\n.app{display:grid;grid-template-columns:180px minmax(0,1fr)}.calendar-head{display:grid;grid-template-columns:repeat(7,1fr)}#result{position:fixed;bottom:0;visibility:hidden}</style><body data-theme="neon" class="mws-premium sidebar-pinned" data-resolution="fhd"><div class="app"><aside class="sidebar">MAWANG<br>캘린더</aside><main class="main">'+globalTop+'<section id="calendar" class="section active">'+top+'<div class="calendar-responsive-scroll-v1"><div class="calendar-head">'+['일','월','화','수','목','금','토'].map(s=>'<span>'+s+'</span>').join('')+'</div><div id="calendarGrid" class="calendar"></div></div>'+copyTray+'</section></main></div><pre id="result">pending</pre><script>'+read('assets/calendar-continuous-series-v1.js')+'</script><script>'+read('assets/calendar-details-v1.js')+'</script><script>'+read('assets/calendar-day-expand-v1.js')+'</script><script>'+bootstrap+(test?checks:'')+'</script></body></html>'}
 if(process.env.MWS_MONTH_FIXTURE){writeFileSync(process.env.MWS_MONTH_FIXTURE,fixture({test:false}));process.exit(0)}
@@ -149,6 +174,6 @@ try{
  for(const [width,height] of [[1366,768],[1920,1080],[2560,1440],[2560,1080]]){
   await browser.navigate(pathToFileURL(file).href+'?size='+width+'x'+height,width,height);
   const result=await browser.evaluate(`new Promise((resolve,reject)=>{const start=performance.now();const check=()=>{const value=document.querySelector('#result')?.textContent;if(value&&value!=='pending'){resolve(JSON.parse(value));return}if(performance.now()-start>12000){reject(new Error('Missing month result'));return}setTimeout(check,25)};check()})`);
-  for(const [key,value] of Object.entries(result))if(key!=='headerGeometry')assert.equal(value,true,width+'x'+height+' '+key+' '+JSON.stringify(result));console.log('CALENDAR_MONTH_VIEWPORT_OK',width,height,JSON.stringify(result));
+  for(const [key,value] of Object.entries(result))if(!['headerGeometry','vrBadgeGeometry'].includes(key))assert.equal(value,true,width+'x'+height+' '+key+' '+JSON.stringify(result));console.log('CALENDAR_MONTH_VIEWPORT_OK',width,height,JSON.stringify(result));
  }
 }finally{await browser?.close();rmSync(temp,{recursive:true,force:true})}

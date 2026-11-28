@@ -29,7 +29,7 @@ const loadScript=(key,src,flag)=>{
 };
 const loadOptionalScript=(key,src,flag)=>loadScript(key,src,flag).catch(error=>{console.error(error);return null});
 const loadAppVersion=()=>loadScript('app-version-v120','/assets/app-version-v120.js?v=1.4.0-phase73','__mwsAppVersionV120');
-const loadCoreRuntime=()=>loadScript('cloud-core-v130','/assets/cf-static-cloud-core-v1.js?v=1.3.0-auth-decoupled&save-contract-v1=1&clipboard-first-v1=1&save-queue-v2=1&loginreadyv2=1&clipboard-session=1&sidebar-stable=1&request-budget=9&cache-first=1&admin-batch=1','__mwsCloudV110Loaded');
+const loadCoreRuntime=()=>loadScript('cloud-core-v130','/assets/cf-static-cloud-core-v1.js?v=1.3.0-auth-decoupled&save-contract-v1=1&clipboard-first-v1=1&save-queue-v2=1&loginreadyv2=1&clipboard-session=1&sidebar-stable=1&request-budget=9&cache-first=1&admin-batch=1&deviceprefs45=1','__mwsCloudV110Loaded');
 const loadSoopFetchProxy=()=>loadOptionalScript('soop-fetch-proxy','/assets/soop-fetch-proxy-v123.js?v=1.2.5','__mwsSoopFetchProxyV124');
 const loadFriendFinder=()=>loadOptionalScript('friend-finder-v120','/assets/friend-finder-v120.js?v=1.3.0-phase62&request-budget=9&request-v3-stage4=2&search=3','__mwsFriendFinderV120');
 const loadV130Hotfix=()=>loadOptionalScript('v130-live-contact-fix','/assets/v130-live-contact-fix.js?v=1.3.0-perf31','__mwsV130LiveContactFix');

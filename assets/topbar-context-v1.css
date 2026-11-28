@@ -66,3 +66,63 @@ body.mws-premium .dashboard-overview-heading p.muted{display:none!important}
   body.mws-premium .main > .topbar #newEventBtn {transition:none!important}
 }
 
+
+/* Stage 2 shared chrome. Retain compact header geometry, alert visibility and
+   each workspace's dedicated controls. No positioned decoration or overlays. */
+body.mws-premium:not(:has(:is(#gameF1Racing,#operationM,#wardogs,#careerTimeline,#mawangArchive).active)) .app>.main>.topbar{
+  border-bottom-color:var(--mws-material-edge)!important;
+}
+body.mws-premium:has(#calendar.active) .app>.main>.topbar #newEventBtn{
+  background:var(--mws-material-raised)!important;
+  border-color:color-mix(in srgb,var(--accent) 65%,var(--mws-material-edge))!important;
+  color:var(--text)!important;
+  box-shadow:inset 0 1px var(--mws-material-light),inset 0 -2px var(--accent),0 3px 9px #0004!important;
+  transform:none!important;
+  filter:none!important;
+  transition:background-color 100ms,border-color 100ms!important;
+}
+@media(hover:hover) and (pointer:fine){
+  body.mws-premium:has(#calendar.active) .app>.main>.topbar #newEventBtn:not(:disabled):hover{
+    background:var(--mws-material-selected)!important;
+    border-color:var(--accent)!important;
+    box-shadow:var(--mws-material-depth)!important;
+  }
+}
+body.mws-premium:has(#calendar.active) .app>.main>.topbar #newEventBtn:not(:disabled):active{
+  scale:none!important;
+  box-shadow:var(--mws-material-inset)!important;
+}
+body.mws-premium:has(#calendar.active) .app>.main>.topbar #newEventBtn:focus-visible{
+  outline:2px solid var(--text)!important;outline-offset:2px;
+}
+body.mws-premium:has(#calendar.active) .app>.main>.topbar #newEventBtn:disabled{
+  opacity:.55;box-shadow:none!important;
+}
+html[data-mws-motion=reduced] body.mws-premium:has(#calendar.active) .app>.main>.topbar #newEventBtn{transition:none!important}
+@media(prefers-reduced-motion:reduce){
+  html:not([data-mws-motion=full]) body.mws-premium:has(#calendar.active) .app>.main>.topbar #newEventBtn{transition:none!important}
+}
+
+/* Pass T: the month navigation is a single compact instrument strip.
+   Existing sizes, controls, order and responsive ownership are unchanged. */
+@media(min-width:901px){
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(.calendar-toolbar>.row>button,.calendar-jump select,.calendar-group-toolbar-v2 button){
+   background:var(--mws-calendar-metal-control)!important;
+   border-color:var(--mws-calendar-rim)!important;
+   box-shadow:var(--mws-calendar-control-shadow)!important;
+   transition:none!important;
+ }
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(button.active,button[aria-pressed=true],button[aria-expanded=true]){
+   background:var(--mws-calendar-metal-selected)!important;
+   box-shadow:inset 0 1px #d7ccff45,inset 0 -2px var(--accent),0 2px 4px #0004!important;
+ }
+ @media(hover:hover) and (pointer:fine){
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(.calendar-toolbar>.row>button,.calendar-jump select,.calendar-group-toolbar-v2 button):not(:disabled):hover{
+    border-color:#aec5df80!important;
+    color:var(--text)!important;
+    box-shadow:inset 0 1px #d2e3f35c,0 2px 5px #0005!important;
+  }
+ }
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(button,select):focus-visible{outline:2px solid var(--accent)!important;outline-offset:1px!important}
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(button,select):disabled{opacity:.55;box-shadow:none!important}
+}

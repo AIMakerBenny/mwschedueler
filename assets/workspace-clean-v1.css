@@ -1,8 +1,46 @@
 /* MWS workspace clean v1. Presentation only, using the selected theme palette.
    Preserve monthly slot geometry, sidebar rail widths and specialized F1 UI. */
+/* Pass I: shared material contract. Theme palette remains the sole color
+   source. Upper-left light, distinct raised / recessed / selected surfaces.
+   Components retain their own layout, interaction and animation owners. */
+body.mws-premium{
+  --mws-material-edge:color-mix(in srgb,var(--text) 15%,var(--border));
+  --mws-material-light:color-mix(in srgb,var(--text) 15%,transparent);
+  --mws-material-face:color-mix(in srgb,var(--panel) 93%,var(--text));
+  --mws-material-well:color-mix(in srgb,var(--input) 88%,var(--bg));
+  --mws-material-raised:linear-gradient(155deg,var(--mws-material-face),var(--panel) 48%,color-mix(in srgb,var(--panel) 88%,var(--bg)));
+  --mws-material-selected:linear-gradient(155deg,color-mix(in srgb,var(--accent) 23%,var(--mws-material-face)),color-mix(in srgb,var(--accent) 8%,var(--panel)));
+  --mws-material-depth:inset 0 1px var(--mws-material-light),inset 0 -1px #0003,0 6px 18px #0004;
+  --mws-material-inset:inset 0 1px 5px #0004,inset 0 0 0 1px var(--mws-material-edge);
+}
+/* Pass X: one desktop calendar material palette. Inherited by the real
+   calendar, rail, toolbar, detail dialog, editor and optional agenda.
+   Other themes keep their existing theme-derived material contract. */
+body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active){
+  /* Pass AF: brushed grain tuned against the actual photographic calendar capture; retain subtle satin highlights, not visible scanlines. */
+  --mws-calendar-brush:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2764%27%20height%3D%2764%27%20viewBox%3D%270%200%2064%2064%27%20shape-rendering%3D%27crispEdges%27%3E%3Cpath%20d%3D%27M0%200.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0095%27%2F%3E%3Cpath%20d%3D%27M11%200.5h19%27%20stroke%3D%27black%27%20opacity%3D%270.0047%27%2F%3E%3Cpath%20d%3D%27M1%200.5h23%27%20stroke%3D%27black%27%20opacity%3D%270.0060%27%2F%3E%3Cpath%20d%3D%27M0%201.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0055%27%2F%3E%3Cpath%20d%3D%27M63%201.5h7%27%20stroke%3D%27black%27%20opacity%3D%270.0045%27%2F%3E%3Cpath%20d%3D%27M0%201.5h6%27%20stroke%3D%27black%27%20opacity%3D%270.0045%27%2F%3E%3Cpath%20d%3D%27M31%201.5h21%27%20stroke%3D%27white%27%20opacity%3D%270.0047%27%2F%3E%3Cpath%20d%3D%27M0%202.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0040%27%2F%3E%3Cpath%20d%3D%27M61%202.5h5%27%20stroke%3D%27black%27%20opacity%3D%270.0055%27%2F%3E%3Cpath%20d%3D%27M0%202.5h2%27%20stroke%3D%27black%27%20opacity%3D%270.0055%27%2F%3E%3Cpath%20d%3D%27M59%202.5h23%27%20stroke%3D%27white%27%20opacity%3D%270.0097%27%2F%3E%3Cpath%20d%3D%27M0%202.5h18%27%20stroke%3D%27white%27%20opacity%3D%270.0097%27%2F%3E%3Cpath%20d%3D%27M0%203.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0107%27%2F%3E%3Cpath%20d%3D%27M17%203.5h21%27%20stroke%3D%27white%27%20opacity%3D%270.0047%27%2F%3E%3Cpath%20d%3D%27M52%203.5h25%27%20stroke%3D%27white%27%20opacity%3D%270.0090%27%2F%3E%3Cpath%20d%3D%27M0%203.5h13%27%20stroke%3D%27white%27%20opacity%3D%270.0090%27%2F%3E%3Cpath%20d%3D%27M0%204.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0110%27%2F%3E%3Cpath%20d%3D%27M23%204.5h17%27%20stroke%3D%27white%27%20opacity%3D%270.0080%27%2F%3E%3Cpath%20d%3D%27M7%204.5h11%27%20stroke%3D%27white%27%20opacity%3D%270.0077%27%2F%3E%3Cpath%20d%3D%27M0%205.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0077%27%2F%3E%3Cpath%20d%3D%27M28%205.5h11%27%20stroke%3D%27black%27%20opacity%3D%270.0085%27%2F%3E%3Cpath%20d%3D%27M37%205.5h7%27%20stroke%3D%27black%27%20opacity%3D%270.0035%27%2F%3E%3Cpath%20d%3D%27M0%206.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0070%27%2F%3E%3Cpath%20d%3D%27M25%206.5h10%27%20stroke%3D%27black%27%20opacity%3D%270.0075%27%2F%3E%3Cpath%20d%3D%27M14%206.5h23%27%20stroke%3D%27black%27%20opacity%3D%270.0043%27%2F%3E%3Cpath%20d%3D%27M0%207.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0085%27%2F%3E%3Cpath%20d%3D%27M52%207.5h5%27%20stroke%3D%27black%27%20opacity%3D%270.0073%27%2F%3E%3Cpath%20d%3D%27M50%207.5h24%27%20stroke%3D%27black%27%20opacity%3D%270.0100%27%2F%3E%3Cpath%20d%3D%27M0%207.5h10%27%20stroke%3D%27black%27%20opacity%3D%270.0100%27%2F%3E%3Cpath%20d%3D%27M0%208.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0110%27%2F%3E%3Cpath%20d%3D%27M35%208.5h13%27%20stroke%3D%27white%27%20opacity%3D%270.0035%27%2F%3E%3Cpath%20d%3D%27M36%208.5h10%27%20stroke%3D%27black%27%20opacity%3D%270.0067%27%2F%3E%3Cpath%20d%3D%27M0%209.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0065%27%2F%3E%3Cpath%20d%3D%27M41%209.5h18%27%20stroke%3D%27black%27%20opacity%3D%270.0067%27%2F%3E%3Cpath%20d%3D%27M50%209.5h14%27%20stroke%3D%27white%27%20opacity%3D%270.0073%27%2F%3E%3Cpath%20d%3D%27M0%2010.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0060%27%2F%3E%3Cpath%20d%3D%27M16%2010.5h20%27%20stroke%3D%27black%27%20opacity%3D%270.0075%27%2F%3E%3Cpath%20d%3D%27M12%2010.5h16%27%20stroke%3D%27white%27%20opacity%3D%270.0067%27%2F%3E%3Cpath%20d%3D%27M0%2011.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0037%27%2F%3E%3Cpath%20d%3D%27M33%2011.5h24%27%20stroke%3D%27black%27%20opacity%3D%270.0043%27%2F%3E%3Cpath%20d%3D%27M23%2011.5h11%27%20stroke%3D%27black%27%20opacity%3D%270.0083%27%2F%3E%3Cpath%20d%3D%27M0%2012.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0080%27%2F%3E%3Cpath%20d%3D%27M30%2012.5h7%27%20stroke%3D%27black%27%20opacity%3D%270.0083%27%2F%3E%3Cpath%20d%3D%27M52%2012.5h20%27%20stroke%3D%27white%27%20opacity%3D%270.0100%27%2F%3E%3Cpath%20d%3D%27M0%2012.5h8%27%20stroke%3D%27white%27%20opacity%3D%270.0100%27%2F%3E%3Cpath%20d%3D%27M0%2013.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0107%27%2F%3E%3Cpath%20d%3D%27M16%2013.5h20%27%20stroke%3D%27white%27%20opacity%3D%270.0035%27%2F%3E%3Cpath%20d%3D%27M25%2013.5h9%27%20stroke%3D%27white%27%20opacity%3D%270.0037%27%2F%3E%3Cpath%20d%3D%27M0%2014.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0030%27%2F%3E%3Cpath%20d%3D%27M46%2014.5h13%27%20stroke%3D%27white%27%20opacity%3D%270.0040%27%2F%3E%3Cpath%20d%3D%27M21%2014.5h10%27%20stroke%3D%27white%27%20opacity%3D%270.0063%27%2F%3E%3Cpath%20d%3D%27M0%2015.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0060%27%2F%3E%3Cpath%20d%3D%27M12%2015.5h19%27%20stroke%3D%27black%27%20opacity%3D%270.0043%27%2F%3E%3Cpath%20d%3D%27M10%2015.5h11%27%20stroke%3D%27black%27%20opacity%3D%270.0037%27%2F%3E%3Cpath%20d%3D%27M0%2016.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0103%27%2F%3E%3Cpath%20d%3D%27M18%2016.5h22%27%20stroke%3D%27white%27%20opacity%3D%270.0088%27%2F%3E%3Cpath%20d%3D%27M45%2016.5h6%27%20stroke%3D%27black%27%20opacity%3D%270.0085%27%2F%3E%3Cpath%20d%3D%27M0%2017.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0063%27%2F%3E%3Cpath%20d%3D%27M23%2017.5h10%27%20stroke%3D%27black%27%20opacity%3D%270.0090%27%2F%3E%3Cpath%20d%3D%27M42%2017.5h23%27%20stroke%3D%27black%27%20opacity%3D%270.0070%27%2F%3E%3Cpath%20d%3D%27M0%2017.5h1%27%20stroke%3D%27black%27%20opacity%3D%270.0070%27%2F%3E%3Cpath%20d%3D%27M0%2018.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0063%27%2F%3E%3Cpath%20d%3D%27M21%2018.5h5%27%20stroke%3D%27black%27%20opacity%3D%270.0080%27%2F%3E%3Cpath%20d%3D%27M12%2018.5h6%27%20stroke%3D%27white%27%20opacity%3D%270.0032%27%2F%3E%3Cpath%20d%3D%27M0%2019.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0083%27%2F%3E%3Cpath%20d%3D%27M49%2019.5h8%27%20stroke%3D%27black%27%20opacity%3D%270.0043%27%2F%3E%3Cpath%20d%3D%27M52%2019.5h17%27%20stroke%3D%27black%27%20opacity%3D%270.0077%27%2F%3E%3Cpath%20d%3D%27M0%2019.5h5%27%20stroke%3D%27black%27%20opacity%3D%270.0077%27%2F%3E%3Cpath%20d%3D%27M0%2020.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0035%27%2F%3E%3Cpath%20d%3D%27M59%2020.5h6%27%20stroke%3D%27black%27%20opacity%3D%270.0050%27%2F%3E%3Cpath%20d%3D%27M0%2020.5h1%27%20stroke%3D%27black%27%20opacity%3D%270.0050%27%2F%3E%3Cpath%20d%3D%27M25%2020.5h21%27%20stroke%3D%27white%27%20opacity%3D%270.0050%27%2F%3E%3Cpath%20d%3D%27M0%2021.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0075%27%2F%3E%3Cpath%20d%3D%27M34%2021.5h7%27%20stroke%3D%27white%27%20opacity%3D%270.0053%27%2F%3E%3Cpath%20d%3D%27M34%2021.5h20%27%20stroke%3D%27black%27%20opacity%3D%270.0085%27%2F%3E%3Cpath%20d%3D%27M0%2022.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0063%27%2F%3E%3Cpath%20d%3D%27M32%2022.5h20%27%20stroke%3D%27white%27%20opacity%3D%270.0050%27%2F%3E%3Cpath%20d%3D%27M44%2022.5h8%27%20stroke%3D%27white%27%20opacity%3D%270.0070%27%2F%3E%3Cpath%20d%3D%27M0%2023.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0032%27%2F%3E%3Cpath%20d%3D%27M54%2023.5h8%27%20stroke%3D%27black%27%20opacity%3D%270.0088%27%2F%3E%3Cpath%20d%3D%27M31%2023.5h11%27%20stroke%3D%27black%27%20opacity%3D%270.0077%27%2F%3E%3Cpath%20d%3D%27M0%2024.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0050%27%2F%3E%3Cpath%20d%3D%27M6%2024.5h14%27%20stroke%3D%27black%27%20opacity%3D%270.0067%27%2F%3E%3Cpath%20d%3D%27M45%2024.5h16%27%20stroke%3D%27white%27%20opacity%3D%270.0067%27%2F%3E%3Cpath%20d%3D%27M0%2025.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0073%27%2F%3E%3Cpath%20d%3D%27M2%2025.5h25%27%20stroke%3D%27white%27%20opacity%3D%270.0077%27%2F%3E%3Cpath%20d%3D%27M37%2025.5h25%27%20stroke%3D%27white%27%20opacity%3D%270.0095%27%2F%3E%3Cpath%20d%3D%27M0%2026.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0077%27%2F%3E%3Cpath%20d%3D%27M29%2026.5h14%27%20stroke%3D%27black%27%20opacity%3D%270.0088%27%2F%3E%3Cpath%20d%3D%27M7%2026.5h25%27%20stroke%3D%27black%27%20opacity%3D%270.0063%27%2F%3E%3Cpath%20d%3D%27M0%2027.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0083%27%2F%3E%3Cpath%20d%3D%27M1%2027.5h17%27%20stroke%3D%27white%27%20opacity%3D%270.0035%27%2F%3E%3Cpath%20d%3D%27M27%2027.5h15%27%20stroke%3D%27white%27%20opacity%3D%270.0077%27%2F%3E%3Cpath%20d%3D%27M0%2028.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0037%27%2F%3E%3Cpath%20d%3D%27M52%2028.5h23%27%20stroke%3D%27black%27%20opacity%3D%270.0077%27%2F%3E%3Cpath%20d%3D%27M0%2028.5h11%27%20stroke%3D%27black%27%20opacity%3D%270.0077%27%2F%3E%3Cpath%20d%3D%27M1%2028.5h16%27%20stroke%3D%27white%27%20opacity%3D%270.0057%27%2F%3E%3Cpath%20d%3D%27M0%2029.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0105%27%2F%3E%3Cpath%20d%3D%27M3%2029.5h16%27%20stroke%3D%27black%27%20opacity%3D%270.0040%27%2F%3E%3Cpath%20d%3D%27M54%2029.5h12%27%20stroke%3D%27white%27%20opacity%3D%270.0088%27%2F%3E%3Cpath%20d%3D%27M0%2029.5h2%27%20stroke%3D%27white%27%20opacity%3D%270.0088%27%2F%3E%3Cpath%20d%3D%27M0%2030.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0032%27%2F%3E%3Cpath%20d%3D%27M56%2030.5h7%27%20stroke%3D%27white%27%20opacity%3D%270.0032%27%2F%3E%3Cpath%20d%3D%27M30%2030.5h11%27%20stroke%3D%27black%27%20opacity%3D%270.0037%27%2F%3E%3Cpath%20d%3D%27M0%2031.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0060%27%2F%3E%3Cpath%20d%3D%27M31%2031.5h6%27%20stroke%3D%27white%27%20opacity%3D%270.0090%27%2F%3E%3Cpath%20d%3D%27M50%2031.5h20%27%20stroke%3D%27black%27%20opacity%3D%270.0080%27%2F%3E%3Cpath%20d%3D%27M0%2031.5h6%27%20stroke%3D%27black%27%20opacity%3D%270.0080%27%2F%3E%3Cpath%20d%3D%27M0%2032.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0053%27%2F%3E%3Cpath%20d%3D%27M33%2032.5h20%27%20stroke%3D%27black%27%20opacity%3D%270.0032%27%2F%3E%3Cpath%20d%3D%27M57%2032.5h5%27%20stroke%3D%27black%27%20opacity%3D%270.0073%27%2F%3E%3Cpath%20d%3D%27M0%2033.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0043%27%2F%3E%3Cpath%20d%3D%27M0%2033.5h13%27%20stroke%3D%27white%27%20opacity%3D%270.0077%27%2F%3E%3Cpath%20d%3D%27M51%2033.5h18%27%20stroke%3D%27black%27%20opacity%3D%270.0063%27%2F%3E%3Cpath%20d%3D%27M0%2033.5h5%27%20stroke%3D%27black%27%20opacity%3D%270.0063%27%2F%3E%3Cpath%20d%3D%27M0%2034.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0103%27%2F%3E%3Cpath%20d%3D%27M63%2034.5h13%27%20stroke%3D%27white%27%20opacity%3D%270.0040%27%2F%3E%3Cpath%20d%3D%27M0%2034.5h12%27%20stroke%3D%27white%27%20opacity%3D%270.0040%27%2F%3E%3Cpath%20d%3D%27M42%2034.5h20%27%20stroke%3D%27black%27%20opacity%3D%270.0083%27%2F%3E%3Cpath%20d%3D%27M0%2035.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0055%27%2F%3E%3Cpath%20d%3D%27M37%2035.5h20%27%20stroke%3D%27white%27%20opacity%3D%270.0075%27%2F%3E%3Cpath%20d%3D%27M13%2035.5h22%27%20stroke%3D%27white%27%20opacity%3D%270.0032%27%2F%3E%3Cpath%20d%3D%27M0%2036.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0067%27%2F%3E%3Cpath%20d%3D%27M47%2036.5h18%27%20stroke%3D%27white%27%20opacity%3D%270.0085%27%2F%3E%3Cpath%20d%3D%27M0%2036.5h1%27%20stroke%3D%27white%27%20opacity%3D%270.0085%27%2F%3E%3Cpath%20d%3D%27M1%2036.5h9%27%20stroke%3D%27white%27%20opacity%3D%270.0032%27%2F%3E%3Cpath%20d%3D%27M0%2037.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0045%27%2F%3E%3Cpath%20d%3D%27M59%2037.5h19%27%20stroke%3D%27black%27%20opacity%3D%270.0065%27%2F%3E%3Cpath%20d%3D%27M0%2037.5h14%27%20stroke%3D%27black%27%20opacity%3D%270.0065%27%2F%3E%3Cpath%20d%3D%27M24%2037.5h25%27%20stroke%3D%27black%27%20opacity%3D%270.0073%27%2F%3E%3Cpath%20d%3D%27M0%2038.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0088%27%2F%3E%3Cpath%20d%3D%27M16%2038.5h5%27%20stroke%3D%27black%27%20opacity%3D%270.0085%27%2F%3E%3Cpath%20d%3D%27M63%2038.5h20%27%20stroke%3D%27white%27%20opacity%3D%270.0070%27%2F%3E%3Cpath%20d%3D%27M0%2038.5h19%27%20stroke%3D%27white%27%20opacity%3D%270.0070%27%2F%3E%3Cpath%20d%3D%27M0%2039.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0053%27%2F%3E%3Cpath%20d%3D%27M30%2039.5h16%27%20stroke%3D%27white%27%20opacity%3D%270.0040%27%2F%3E%3Cpath%20d%3D%27M50%2039.5h12%27%20stroke%3D%27white%27%20opacity%3D%270.0065%27%2F%3E%3Cpath%20d%3D%27M0%2040.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0075%27%2F%3E%3Cpath%20d%3D%27M20%2040.5h12%27%20stroke%3D%27black%27%20opacity%3D%270.0067%27%2F%3E%3Cpath%20d%3D%27M61%2040.5h19%27%20stroke%3D%27white%27%20opacity%3D%270.0030%27%2F%3E%3Cpath%20d%3D%27M0%2040.5h16%27%20stroke%3D%27white%27%20opacity%3D%270.0030%27%2F%3E%3Cpath%20d%3D%27M0%2041.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0083%27%2F%3E%3Cpath%20d%3D%27M56%2041.5h6%27%20stroke%3D%27white%27%20opacity%3D%270.0090%27%2F%3E%3Cpath%20d%3D%27M4%2041.5h7%27%20stroke%3D%27black%27%20opacity%3D%270.0047%27%2F%3E%3Cpath%20d%3D%27M0%2042.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0077%27%2F%3E%3Cpath%20d%3D%27M44%2042.5h24%27%20stroke%3D%27black%27%20opacity%3D%270.0085%27%2F%3E%3Cpath%20d%3D%27M0%2042.5h4%27%20stroke%3D%27black%27%20opacity%3D%270.0085%27%2F%3E%3Cpath%20d%3D%27M21%2042.5h18%27%20stroke%3D%27black%27%20opacity%3D%270.0080%27%2F%3E%3Cpath%20d%3D%27M0%2043.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0110%27%2F%3E%3Cpath%20d%3D%27M53%2043.5h21%27%20stroke%3D%27white%27%20opacity%3D%270.0030%27%2F%3E%3Cpath%20d%3D%27M0%2043.5h10%27%20stroke%3D%27white%27%20opacity%3D%270.0030%27%2F%3E%3Cpath%20d%3D%27M51%2043.5h22%27%20stroke%3D%27white%27%20opacity%3D%270.0057%27%2F%3E%3Cpath%20d%3D%27M0%2043.5h9%27%20stroke%3D%27white%27%20opacity%3D%270.0057%27%2F%3E%3Cpath%20d%3D%27M0%2044.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0060%27%2F%3E%3Cpath%20d%3D%27M13%2044.5h6%27%20stroke%3D%27white%27%20opacity%3D%270.0097%27%2F%3E%3Cpath%20d%3D%27M14%2044.5h22%27%20stroke%3D%27black%27%20opacity%3D%270.0070%27%2F%3E%3Cpath%20d%3D%27M0%2045.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0032%27%2F%3E%3Cpath%20d%3D%27M30%2045.5h21%27%20stroke%3D%27white%27%20opacity%3D%270.0083%27%2F%3E%3Cpath%20d%3D%27M3%2045.5h11%27%20stroke%3D%27white%27%20opacity%3D%270.0060%27%2F%3E%3Cpath%20d%3D%27M0%2046.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0050%27%2F%3E%3Cpath%20d%3D%27M39%2046.5h24%27%20stroke%3D%27black%27%20opacity%3D%270.0043%27%2F%3E%3Cpath%20d%3D%27M61%2046.5h5%27%20stroke%3D%27white%27%20opacity%3D%270.0050%27%2F%3E%3Cpath%20d%3D%27M0%2046.5h2%27%20stroke%3D%27white%27%20opacity%3D%270.0050%27%2F%3E%3Cpath%20d%3D%27M0%2047.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0103%27%2F%3E%3Cpath%20d%3D%27M43%2047.5h22%27%20stroke%3D%27white%27%20opacity%3D%270.0075%27%2F%3E%3Cpath%20d%3D%27M0%2047.5h1%27%20stroke%3D%27white%27%20opacity%3D%270.0075%27%2F%3E%3Cpath%20d%3D%27M48%2047.5h6%27%20stroke%3D%27white%27%20opacity%3D%270.0095%27%2F%3E%3Cpath%20d%3D%27M0%2048.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0063%27%2F%3E%3Cpath%20d%3D%27M51%2048.5h7%27%20stroke%3D%27black%27%20opacity%3D%270.0075%27%2F%3E%3Cpath%20d%3D%27M12%2048.5h21%27%20stroke%3D%27white%27%20opacity%3D%270.0092%27%2F%3E%3Cpath%20d%3D%27M0%2049.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0073%27%2F%3E%3Cpath%20d%3D%27M24%2049.5h9%27%20stroke%3D%27black%27%20opacity%3D%270.0088%27%2F%3E%3Cpath%20d%3D%27M30%2049.5h25%27%20stroke%3D%27white%27%20opacity%3D%270.0092%27%2F%3E%3Cpath%20d%3D%27M0%2050.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0085%27%2F%3E%3Cpath%20d%3D%27M5%2050.5h25%27%20stroke%3D%27white%27%20opacity%3D%270.0055%27%2F%3E%3Cpath%20d%3D%27M46%2050.5h22%27%20stroke%3D%27black%27%20opacity%3D%270.0085%27%2F%3E%3Cpath%20d%3D%27M0%2050.5h4%27%20stroke%3D%27black%27%20opacity%3D%270.0085%27%2F%3E%3Cpath%20d%3D%27M0%2051.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0055%27%2F%3E%3Cpath%20d%3D%27M8%2051.5h12%27%20stroke%3D%27black%27%20opacity%3D%270.0100%27%2F%3E%3Cpath%20d%3D%27M18%2051.5h23%27%20stroke%3D%27white%27%20opacity%3D%270.0047%27%2F%3E%3Cpath%20d%3D%27M0%2052.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0040%27%2F%3E%3Cpath%20d%3D%27M55%2052.5h19%27%20stroke%3D%27black%27%20opacity%3D%270.0083%27%2F%3E%3Cpath%20d%3D%27M0%2052.5h10%27%20stroke%3D%27black%27%20opacity%3D%270.0083%27%2F%3E%3Cpath%20d%3D%27M17%2052.5h17%27%20stroke%3D%27black%27%20opacity%3D%270.0088%27%2F%3E%3Cpath%20d%3D%27M0%2053.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0095%27%2F%3E%3Cpath%20d%3D%27M62%2053.5h19%27%20stroke%3D%27white%27%20opacity%3D%270.0043%27%2F%3E%3Cpath%20d%3D%27M0%2053.5h17%27%20stroke%3D%27white%27%20opacity%3D%270.0043%27%2F%3E%3Cpath%20d%3D%27M39%2053.5h13%27%20stroke%3D%27black%27%20opacity%3D%270.0088%27%2F%3E%3Cpath%20d%3D%27M0%2054.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0107%27%2F%3E%3Cpath%20d%3D%27M51%2054.5h7%27%20stroke%3D%27black%27%20opacity%3D%270.0095%27%2F%3E%3Cpath%20d%3D%27M60%2054.5h7%27%20stroke%3D%27white%27%20opacity%3D%270.0037%27%2F%3E%3Cpath%20d%3D%27M0%2054.5h3%27%20stroke%3D%27white%27%20opacity%3D%270.0037%27%2F%3E%3Cpath%20d%3D%27M0%2055.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0085%27%2F%3E%3Cpath%20d%3D%27M21%2055.5h22%27%20stroke%3D%27black%27%20opacity%3D%270.0070%27%2F%3E%3Cpath%20d%3D%27M18%2055.5h22%27%20stroke%3D%27white%27%20opacity%3D%270.0095%27%2F%3E%3Cpath%20d%3D%27M0%2056.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0063%27%2F%3E%3Cpath%20d%3D%27M3%2056.5h8%27%20stroke%3D%27black%27%20opacity%3D%270.0032%27%2F%3E%3Cpath%20d%3D%27M58%2056.5h19%27%20stroke%3D%27black%27%20opacity%3D%270.0047%27%2F%3E%3Cpath%20d%3D%27M0%2056.5h13%27%20stroke%3D%27black%27%20opacity%3D%270.0047%27%2F%3E%3Cpath%20d%3D%27M0%2057.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0067%27%2F%3E%3Cpath%20d%3D%27M4%2057.5h12%27%20stroke%3D%27black%27%20opacity%3D%270.0053%27%2F%3E%3Cpath%20d%3D%27M20%2057.5h9%27%20stroke%3D%27black%27%20opacity%3D%270.0092%27%2F%3E%3Cpath%20d%3D%27M0%2058.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0073%27%2F%3E%3Cpath%20d%3D%27M42%2058.5h13%27%20stroke%3D%27white%27%20opacity%3D%270.0030%27%2F%3E%3Cpath%20d%3D%27M53%2058.5h18%27%20stroke%3D%27black%27%20opacity%3D%270.0095%27%2F%3E%3Cpath%20d%3D%27M0%2058.5h7%27%20stroke%3D%27black%27%20opacity%3D%270.0095%27%2F%3E%3Cpath%20d%3D%27M0%2059.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0053%27%2F%3E%3Cpath%20d%3D%27M30%2059.5h6%27%20stroke%3D%27black%27%20opacity%3D%270.0050%27%2F%3E%3Cpath%20d%3D%27M63%2059.5h25%27%20stroke%3D%27white%27%20opacity%3D%270.0040%27%2F%3E%3Cpath%20d%3D%27M0%2059.5h24%27%20stroke%3D%27white%27%20opacity%3D%270.0040%27%2F%3E%3Cpath%20d%3D%27M0%2060.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0075%27%2F%3E%3Cpath%20d%3D%27M55%2060.5h20%27%20stroke%3D%27white%27%20opacity%3D%270.0075%27%2F%3E%3Cpath%20d%3D%27M0%2060.5h11%27%20stroke%3D%27white%27%20opacity%3D%270.0075%27%2F%3E%3Cpath%20d%3D%27M60%2060.5h21%27%20stroke%3D%27white%27%20opacity%3D%270.0095%27%2F%3E%3Cpath%20d%3D%27M0%2060.5h17%27%20stroke%3D%27white%27%20opacity%3D%270.0095%27%2F%3E%3Cpath%20d%3D%27M0%2061.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0075%27%2F%3E%3Cpath%20d%3D%27M36%2061.5h6%27%20stroke%3D%27black%27%20opacity%3D%270.0045%27%2F%3E%3Cpath%20d%3D%27M21%2061.5h11%27%20stroke%3D%27white%27%20opacity%3D%270.0092%27%2F%3E%3Cpath%20d%3D%27M0%2062.5H64%27%20stroke%3D%27black%27%20opacity%3D%270.0065%27%2F%3E%3Cpath%20d%3D%27M53%2062.5h21%27%20stroke%3D%27black%27%20opacity%3D%270.0063%27%2F%3E%3Cpath%20d%3D%27M0%2062.5h10%27%20stroke%3D%27black%27%20opacity%3D%270.0063%27%2F%3E%3Cpath%20d%3D%27M32%2062.5h14%27%20stroke%3D%27white%27%20opacity%3D%270.0043%27%2F%3E%3Cpath%20d%3D%27M0%2063.5H64%27%20stroke%3D%27white%27%20opacity%3D%270.0057%27%2F%3E%3Cpath%20d%3D%27M49%2063.5h20%27%20stroke%3D%27black%27%20opacity%3D%270.0083%27%2F%3E%3Cpath%20d%3D%27M0%2063.5h5%27%20stroke%3D%27black%27%20opacity%3D%270.0083%27%2F%3E%3Cpath%20d%3D%27M8%2063.5h24%27%20stroke%3D%27white%27%20opacity%3D%270.0065%27%2F%3E%3C%2Fsvg%3E");
+  --mws-calendar-metal:var(--mws-calendar-brush),radial-gradient(ellipse at 17% 0%,#adc6df24,transparent 52%),linear-gradient(150deg,#354151 0%,#252f3e 14%,#1b2432 43%,#101722 88%,#0b111a);
+  --mws-calendar-metal-raised:var(--mws-calendar-brush),linear-gradient(165deg,#465467 0%,#354153 13%,#263141 52%,#1b2432);
+  --mws-calendar-metal-control:var(--mws-calendar-brush),linear-gradient(165deg,#3d495a,#293444 42%,#1b2533);
+  --mws-calendar-metal-selected:var(--mws-calendar-brush),linear-gradient(155deg,#585474,#353449 45%,#252a3c);
+  --mws-calendar-rim:#71849a66;
+  --mws-calendar-glint:#d2e3f34a;
+  --mws-calendar-shadow:inset 0 1px var(--mws-calendar-glint),inset 1px 0 #94a9be28,inset -1px 0 #070d1680,inset 0 -2px #05080db3,0 3px 5px #0005,0 9px 18px #0007;
+  --mws-calendar-glass:linear-gradient(180deg,#0b142006 0%,#0b142006 100%);
+  --mws-calendar-glass-hover:linear-gradient(145deg,#b9d8ed18,#88b5dc07 45%,#0b152314);
+  --mws-calendar-reflection:radial-gradient(ellipse at 17% 6%,#adcde91c,transparent 59%),linear-gradient(156deg,#a6c0dc0c 0%,#111a2908 33%,#080e192a 68%,#080d1850 100%);
+  --mws-calendar-rim-light:#b8d0e65c;
+  --mws-calendar-rim-dark:#050b15d4;
+  --mws-calendar-control-shadow:inset 0 1px #d6e5f34a,inset 1px 0 #9ab4cf1c,inset 0 -1px #090e19,0 1px 1px #050a13a0,0 3px 5px #0004;
+  --mws-calendar-focus:#8ccee9;
+}
 body.mws-premium:not(:has(#gameF1Racing.active)){
   --mws-clean-line:color-mix(in srgb,var(--border) 68%,transparent);
   background:var(--bg)!important;
+}
+body.mws-premium[data-background-custom=true]:not(:has(#gameF1Racing.active)){
+  background-image:linear-gradient(rgb(0 0 0 / var(--custom-bg-dim)),rgb(0 0 0 / var(--custom-bg-dim))),var(--custom-bg-image)!important;
+  background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;
 }
 body.mws-premium:not(:has(#gameF1Racing.active)) .app>.main{
   border-color:transparent!important;border-radius:10px!important;
@@ -310,3 +348,509 @@ body[data-device-mode="mobile"] #dashboard #dashboardOverviewMode .dashboard-kpi
    Keep text selection/copy intact and preserve the normal typing caret in editors. */
 html,body.mws-premium{caret-color:transparent}
 body.mws-premium :is(input,textarea,[contenteditable]:not([contenteditable="false"]),[role="textbox"]){caret-color:auto}
+
+/* Premium calendar stage 1. Original embedded studio vector; paint-only
+   surfaces. No extra network resource, DOM, timers or layout ownership. */
+@media(min-width:901px){
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active){
+    --mws-studio-line:var(--mws-material-edge);
+    --mws-studio-glint:var(--mws-material-light);
+    --mws-studio-recess:var(--mws-material-well);
+    --mws-studio-surface:var(--mws-material-face);
+    --mws-studio-art:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201600%20900%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22wall%22%20x2%3D%22.8%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23617597%22%20stop-opacity%3D%22.30%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2328384d%22%20stop-opacity%3D%22.02%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22floor%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2392a7c4%22%20stop-opacity%3D%22.14%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23101c30%22%20stop-opacity%3D%22.03%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22edge%22%3E%3Cstop%20stop-color%3D%22%23b8d6ff%22%20stop-opacity%3D%22.02%22%2F%3E%3Cstop%20offset%3D%22.52%22%20stop-color%3D%22%23b8d6ff%22%20stop-opacity%3D%22.38%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23b8d6ff%22%20stop-opacity%3D%22.03%22%2F%3E%3C%2FlinearGradient%3E%3CradialGradient%20id%3D%22lamp%22%3E%3Cstop%20stop-color%3D%22%2394b6eb%22%20stop-opacity%3D%22.16%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2394b6eb%22%20stop-opacity%3D%220%22%2F%3E%3C%2FradialGradient%3E%3C%2Fdefs%3E%3Cellipse%20cx%3D%221150%22%20cy%3D%22240%22%20rx%3D%22690%22%20ry%3D%22400%22%20fill%3D%22url(%23lamp)%22%2F%3E%3Cpath%20d%3D%22M0%200H1600V145L1180%20325%20420%20325%200%20145Z%20M0%20145L420%20325V570L0%20900Z%20M1600%20145L1180%20325V570L1600%20900Z%22%20fill%3D%22url(%23wall)%22%2F%3E%3Cpath%20d%3D%22M0%20900L420%20570H1180L1600%20900Z%22%20fill%3D%22url(%23floor)%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%239db4d6%22%20stroke-opacity%3D%22.13%22%20stroke-width%3D%221.5%22%3E%3Cpath%20d%3D%22M0%2065L420%20325H1180L1600%2065M0%20145L420%20325V570L0%20900M1600%20145L1180%20325V570L1600%20900M0%20240L420%20365H1180L1600%20240M0%20420L420%20460H1180L1600%20420M0%20660L420%20525H1180L1600%20660M420%20570H1180M250%20900L540%20570M525%20900L665%20570M800%20900V570M1075%20900L935%20570M1350%20900L1060%20570M120%20805H1480M250%20705H1350M350%20625H1250M145%200L485%20325M360%200L625%20325M1240%200L975%20325M1455%200L1115%20325%22%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22url(%23edge)%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22M0%20145L420%20325H1180L1600%20145M0%20900L420%20570H1180L1600%20900M45%2015H1555M420%20325V570M1180%20325V570%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) .app>.main{
+    background:var(--mws-studio-art) center top / 100% auto no-repeat,
+      radial-gradient(ellipse at 73% 0%,color-mix(in srgb,var(--accent) 11%,var(--bg)),var(--bg) 72%) var(--bg)!important;
+    border-color:color-mix(in srgb,var(--border) 80%,transparent)!important;
+    box-shadow:inset 0 1px var(--mws-studio-glint)!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-responsive-scroll-v1{
+    background:color-mix(in srgb,var(--mws-studio-recess) 92%,transparent)!important;
+    border-radius:10px;
+    box-shadow:0 12px 32px #0003,0 0 0 1px var(--mws-studio-line),inset 0 1px var(--mws-studio-glint)!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-view-tabs-v172{
+    background:var(--mws-studio-recess)!important;
+    border-radius:8px!important;
+    box-shadow:0 0 0 1px var(--mws-studio-line),inset 0 2px 5px #0003!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-view-tab-v172.active{
+    background:linear-gradient(165deg,color-mix(in srgb,var(--accent) 18%,var(--mws-studio-surface)),var(--panel))!important;
+    box-shadow:inset 0 1px var(--mws-studio-glint),inset 0 -2px var(--accent),0 2px 5px #0003!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-head{
+    background:linear-gradient(180deg,var(--mws-studio-surface),var(--panel))!important;
+    box-shadow:inset 0 1px var(--mws-studio-glint),0 2px 5px #0002!important;
+    border-radius:8px 8px 0 0;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out){
+    background:linear-gradient(155deg,color-mix(in srgb,var(--calendar-grid-surface,var(--panel)) 96%,var(--text)),var(--calendar-grid-surface,var(--panel)) 65%) var(--calendar-grid-surface,var(--panel))!important;
+    box-shadow:inset 0 1px var(--mws-studio-glint),inset 0 -1px #0002!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.today{
+    box-shadow:inset 0 0 0 1px var(--accent),inset 0 3px 0 var(--accent)!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:is(.drag-over,.template-drag-over){
+    background:color-mix(in srgb,var(--accent) 14%,var(--panel))!important;
+    box-shadow:inset 0 0 0 2px var(--accent)!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]:not(.mws-ui-group-highlight):not(.event-details-selected-v1):not(.calendar-group-selected-v2):not(.mws-calendar-event-pointer-dragging-v174){
+    box-shadow:0 -1px 0 color-mix(in srgb,var(--text) 13%,transparent),0 1px 0 #080d16b3,0 2px 4px #0005!important;
+  }
+  @media(hover:hover) and (pointer:fine){
+    body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out):not(.drag-over):not(.template-drag-over):hover{
+      background:linear-gradient(155deg,color-mix(in srgb,var(--accent) 6%,var(--mws-studio-surface)),var(--calendar-grid-surface,var(--panel))) var(--calendar-grid-surface,var(--panel))!important;
+    }
+  }
+}
+/* Existing motion settings own all animation; no new animation or transform. */
+
+/* Stage 3: Broadcast control room. This original vector is a visual asset,
+   not a simulated dashboard. All displayed metrics are still application data.
+   Existing stylesheet request only; no overlay nodes, animations or filters. */
+@media(min-width:901px){
+  body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]):has(#dashboard.section.active #dashboardOverviewMode.active){
+    --mws-controlroom-art:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201920%201080%22%20preserveAspectRatio%3D%22xMidYMid%20slice%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22steel%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23546983%22%20stop-opacity%3D%22.28%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23273a53%22%20stop-opacity%3D%22.12%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23111c2a%22%20stop-opacity%3D%22.03%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2388afc8%22%20stop-opacity%3D%22.15%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231e334a%22%20stop-opacity%3D%22.02%22%2F%3E%3C%2FlinearGradient%3E%3CradialGradient%20id%3D%22light%22%3E%3Cstop%20stop-color%3D%22%2389acd4%22%20stop-opacity%3D%22.30%22%2F%3E%3Cstop%20offset%3D%22.5%22%20stop-color%3D%22%234b779e%22%20stop-opacity%3D%22.09%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%234b779e%22%20stop-opacity%3D%220%22%2F%3E%3C%2FradialGradient%3E%3ClinearGradient%20id%3D%22strip%22%3E%3Cstop%20stop-color%3D%22%23c4dcff%22%20stop-opacity%3D%220%22%2F%3E%3Cstop%20offset%3D%22.48%22%20stop-color%3D%22%23c4dcff%22%20stop-opacity%3D%22.38%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c4dcff%22%20stop-opacity%3D%220%22%2F%3E%3C%2FlinearGradient%3E%3Cpattern%20id%3D%22mesh%22%20width%3D%225%22%20height%3D%225%22%20patternUnits%3D%22userSpaceOnUse%22%3E%3Cpath%20d%3D%22M0%200h1v1H0z%22%20fill%3D%22%23a2b6d3%22%20opacity%3D%22.08%22%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Cellipse%20cx%3D%221460%22%20cy%3D%22175%22%20rx%3D%22760%22%20ry%3D%22560%22%20fill%3D%22url(%23light)%22%2F%3E%3Cpath%20fill%3D%22url(%23steel)%22%20d%3D%22M0%200H1920V104L1410%20282H490L0%20105Z%22%2F%3E%3Cpath%20fill%3D%22url(%23steel)%22%20d%3D%22M0%20105%20490%20282V665L0%201060ZM1920%20104%201410%20282V665L1920%201060Z%22%2F%3E%3Cpath%20fill%3D%22url(%23glass)%22%20d%3D%22M510%20298H1390V647H510Z%22%2F%3E%3Cpath%20fill%3D%22url(%23steel)%22%20d%3D%22M0%201060%20490%20665H1410L1920%201060V1080H0Z%22%2F%3E%3Cg%20fill%3D%22url(%23glass)%22%20stroke%3D%22%238da9c9%22%20stroke-opacity%3D%22.16%22%3E%3Cpath%20d%3D%22M55%20154%20446%20294V444L55%20371Z%22%2F%3E%3Cpath%20d%3D%22M55%20390%20446%20459V640L55%20888Z%22%2F%3E%3Cpath%20d%3D%22M1865%20154%201454%20294V444L1865%20371Z%22%2F%3E%3Cpath%20d%3D%22M1865%20390%201454%20459V640L1865%20888Z%22%2F%3E%3Cpath%20d%3D%22M525%20315H795V630H525Z%20M817%20315H1103V630H817Z%20M1125%20315H1375V630H1125Z%22%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%22url(%23mesh)%22%3E%3Cpath%20d%3D%22M55%20154%20446%20294V444L55%20371Z%20M1865%20154%201454%20294V444L1865%20371Z%22%2F%3E%3Crect%20x%3D%22525%22%20y%3D%22315%22%20width%3D%22850%22%20height%3D%22315%22%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%239bb8d8%22%20stroke-opacity%3D%22.13%22%20stroke-width%3D%221.5%22%3E%3Cpath%20d%3D%22M0%2075%20490%20282H1410L1920%2075%20M0%20105%20490%20282V665L0%201060%20M1920%20104%201410%20282V665L1920%201060%20M0%20246%20490%20350H1410L1920%20246%20M0%20410%20490%20435H1410L1920%20410%20M0%20690%20490%20560H1410L1920%20690%20M490%20665H1410%20M290%201080%20625%20665%20M620%201080%20790%20665%20M960%201080V665%20M1300%201080%201130%20665%20M1630%201080%201295%20665%20M220%20884H1700%20M110%20991H1810%20M390%20751H1530%22%2F%3E%3Cpath%20d%3D%22M190%200%20610%20282%20M500%200%20770%20282%20M1420%200%201150%20282%20M1730%200%201310%20282%22%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22url(%23strip)%22%20stroke-width%3D%223%22%3E%3Cpath%20d%3D%22M0%20105%20490%20282H1410L1920%20104%20M0%201060%20490%20665H1410L1920%201060%20M55%20145%20446%20285%20M1454%20285%201865%20145%20M490%20282V665%20M1410%20282V665%20M130%2018H1790%22%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%22%23a8c6ea%22%20opacity%3D%22.12%22%3E%3Crect%20x%3D%2273%22%20y%3D%22170%22%20width%3D%2226%22%20height%3D%222%22%2F%3E%3Crect%20x%3D%2273%22%20y%3D%22177%22%20width%3D%2242%22%20height%3D%222%22%2F%3E%3Crect%20x%3D%221805%22%20y%3D%22170%22%20width%3D%2228%22%20height%3D%222%22%2F%3E%3Crect%20x%3D%221791%22%20y%3D%22177%22%20width%3D%2242%22%20height%3D%222%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+    --mws-controlroom-edge:color-mix(in srgb,var(--text) 14%,var(--border));
+    --mws-controlroom-glint:color-mix(in srgb,var(--text) 12%,transparent);
+    --mws-controlroom-face:color-mix(in srgb,var(--panel) 91%,var(--text));
+    --mws-controlroom-recess:color-mix(in srgb,var(--input) 87%,var(--bg));
+  }
+  body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]):has(#dashboard.section.active #dashboardOverviewMode.active) .app>.main{
+    background:var(--mws-controlroom-art) center top / 100% auto no-repeat,
+      radial-gradient(ellipse at 76% 4%,color-mix(in srgb,var(--accent) 10%,var(--bg)),var(--bg) 74%) var(--bg)!important;
+    border-color:color-mix(in srgb,var(--border) 85%,transparent)!important;
+    box-shadow:inset 0 1px var(--mws-controlroom-glint)!important;
+  }
+  body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]) #dashboard.section.active #dashboardOverviewMode.active .dashboard-kpi-grid-local>.card{
+    background:linear-gradient(155deg,color-mix(in srgb,var(--metric-accent,var(--accent)) 11%,var(--mws-controlroom-face)),var(--panel) 52%,var(--mws-controlroom-recess))!important;
+    border-color:var(--mws-controlroom-edge)!important;
+    box-shadow:inset 0 1px var(--mws-controlroom-glint),inset 0 -1px #0003,0 4px 10px #0003!important;
+    transform:none!important;scale:none!important;
+  }
+  body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]) #dashboard.section.active #dashboardOverviewMode.active .dashboard-kpi-grid-local>.card::before{
+    background:linear-gradient(180deg,color-mix(in srgb,var(--metric-accent,var(--accent)) 70%,var(--text)),var(--metric-accent,var(--accent)))!important;
+    pointer-events:none;
+  }
+  body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]) #dashboard.section.active #dashboardOverviewMode.active .dashboard-kpi-grid-local>.card .kpi strong{
+    text-shadow:0 2px 6px #0003;
+  }
+  body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]) #dashboard.section.active #dashboardOverviewMode.active :is(.dashboard-detail-card,.dashboard-upcoming-panel,.dashboard-insight-card-v55){
+    background:linear-gradient(150deg,color-mix(in srgb,var(--panel) 95%,var(--text)),var(--panel) 35%,color-mix(in srgb,var(--panel) 92%,var(--bg)))!important;
+    border-color:var(--mws-controlroom-edge)!important;
+    box-shadow:inset 0 1px var(--mws-controlroom-glint),0 8px 24px #0003!important;
+  }
+  body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]) #dashboard.section.active #dashboardOverviewMode.active :is(.dashboard-upcoming-list,.dashboard-notice-list-local):not(:empty){
+    background:var(--mws-controlroom-recess);
+    border-radius:8px;
+    box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--border) 70%,transparent),inset 0 2px 5px #0002;
+  }
+  body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]) #dashboard.section.active #dashboardOverviewMode.active .dashboard-upcoming-card.pinned{
+    box-shadow:inset 0 0 0 1px var(--accent),inset 3px 0 var(--accent),0 3px 8px #0003!important;
+  }
+  @media(hover:hover) and (pointer:fine){
+    body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]) #dashboard.section.active #dashboardOverviewMode.active .dashboard-kpi-grid-local>.card:hover{
+      background:linear-gradient(155deg,color-mix(in srgb,var(--metric-accent,var(--accent)) 19%,var(--mws-controlroom-face)),var(--panel) 70%)!important;
+      border-color:color-mix(in srgb,var(--metric-accent,var(--accent)) 55%,var(--border))!important;
+      box-shadow:inset 0 1px var(--mws-controlroom-glint),0 5px 14px #0004!important;
+    }
+  }
+  body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]) #dashboard.section.active #dashboardOverviewMode.active .dashboard-kpi-grid-local>.card:focus-visible{
+    outline:2px solid var(--metric-accent,var(--accent))!important;outline-offset:-2px!important;
+  }
+  body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]) #dashboard.section.active #dashboardOverviewMode.active .dashboard-kpi-grid-local>.card:active{
+    box-shadow:inset 0 2px 6px #0005,inset 0 0 0 1px var(--metric-accent,var(--accent))!important;
+  }
+}
+/* The environment is absent from mobile layout, reminders, and other tabs. */
+
+/* Stage 5: compact, data-driven schedule telemetry. No decorative fake data. */
+body.mws-premium #dashboard #dashboardOverviewMode .dashboard-statistics-v1{
+  --stats-line:color-mix(in srgb,var(--text) 12%,var(--border));
+  --stats-track:color-mix(in srgb,var(--input) 82%,var(--panel));
+  --stats-glint:color-mix(in srgb,var(--text) 9%,transparent);
+  margin:12px 0 0;min-width:0;
+  background:linear-gradient(150deg,color-mix(in srgb,var(--panel) 94%,var(--text)),var(--panel) 38%,var(--sidebar))!important;
+  border-color:var(--stats-line)!important;
+  box-shadow:inset 0 1px var(--stats-glint),0 6px 16px #0003!important;
+}
+#dashboard .dashboard-statistics-v1[hidden]{display:none!important}
+#dashboard .dashboard-stats-head-v1{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+#dashboard .dashboard-stats-head-v1 h3{margin:0!important}
+#dashboard .dashboard-stats-controls-v1,#dashboard .dashboard-stats-metric-v1{display:flex;align-items:center;gap:4px}
+#dashboard .dashboard-stats-controls-v1{flex-wrap:wrap}
+#dashboard .dashboard-stats-metric-v1{padding:2px;border-radius:8px;background:var(--stats-track)}
+#dashboard .dashboard-stats-controls-v1 :is(button,select){font-size:12px;min-height:32px;padding:5px 9px;line-height:1.3;width:auto}
+#dashboard .dashboard-stats-metric-v1 button[aria-pressed=true]{background:color-mix(in srgb,var(--accent) 18%,var(--panel))!important;box-shadow:inset 0 -2px var(--accent)!important;color:var(--text)}
+#dashboard .dashboard-stats-totals-v1{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+#dashboard .dashboard-stats-totals-v1>div{min-width:0;padding:8px 10px;background:var(--stats-track);border-radius:7px;box-shadow:inset 0 1px 3px #0002}
+#dashboard .dashboard-stats-totals-v1 span{font-size:11px;color:var(--muted);display:block}
+#dashboard .dashboard-stats-totals-v1 strong{display:block;font-size:clamp(13px,1.4vw,20px);line-height:1.4;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:var(--text)}
+#dashboard .dashboard-stats-chart-wrap-v1{display:flex;align-items:stretch;gap:7px;min-width:0;padding:8px;background:var(--stats-track);border-radius:8px;box-shadow:inset 0 0 0 1px var(--stats-line)}
+#dashboard .dashboard-stats-axis-v1{flex:0 0 auto;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;color:var(--muted);font-size:10px;line-height:1.2;padding:0 0 20px;max-width:80px;overflow-wrap:anywhere}
+#dashboard .dashboard-stats-chart-v1{display:grid;grid-template-columns:repeat(var(--stats-days,30),minmax(22px,1fr));gap:3px;overflow-x:auto;min-width:0;flex:1;scrollbar-width:thin}
+#dashboard .dashboard-stats-column-v1{display:flex;min-width:0;flex-direction:column;align-items:stretch;gap:4px;padding:0 0 2px!important;background:none!important;border:0!important;border-radius:4px!important;box-shadow:none!important;transform:none!important;scale:none!important}
+#dashboard .dashboard-stats-track-v1{height:98px;display:flex;align-items:flex-end;justify-content:center;position:relative;border-radius:4px;background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),var(--stats-line) calc(25% - 1px),var(--stats-line) 25%);border-bottom:1px solid var(--stats-line)}
+#dashboard .dashboard-stats-bar-v1{width:68%;height:calc(var(--stats-bar-ratio,0) * 100%);min-height:1px;border-radius:3px 3px 0 0;background:linear-gradient(0deg,var(--accent2),color-mix(in srgb,var(--accent) 74%,var(--text)));box-shadow:inset 0 1px #ffffff35;transform-origin:bottom;animation:mwsStatsBarV1 220ms cubic-bezier(.2,.75,.25,1) both}
+#dashboard .dashboard-stats-column-v1[data-empty=true] .dashboard-stats-bar-v1{background:var(--muted);opacity:.35;box-shadow:none}
+#dashboard .dashboard-stats-column-v1[data-unknown=true] .dashboard-stats-track-v1{border-bottom:2px dashed #d8a64b}
+#dashboard .dashboard-stats-column-v1[aria-pressed=true] .dashboard-stats-track-v1{box-shadow:inset 0 0 0 1px var(--accent);background-color:color-mix(in srgb,var(--accent) 9%,transparent)}
+#dashboard .dashboard-stats-column-v1:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+@media(hover:hover) and (pointer:fine){#dashboard .dashboard-stats-column-v1:hover .dashboard-stats-track-v1{background-color:color-mix(in srgb,var(--accent) 12%,transparent)}}
+#dashboard .dashboard-stats-date-v1{font-size:9px;line-height:1.3;min-height:12px;white-space:nowrap;text-align:center;color:var(--muted)}
+#dashboard .dashboard-stats-day-v1{min-height:1.5em;margin-top:9px;font-size:12px;color:var(--text);overflow-wrap:anywhere}
+#dashboard .dashboard-stats-note-v1{font-size:10px;color:var(--muted);line-height:1.5;margin-top:4px}
+@keyframes mwsStatsBarV1{from{transform:scaleY(.1);opacity:.6}to{transform:none;opacity:1}}
+@container dashboard-overview (max-width:530px){#dashboard .dashboard-stats-totals-v1{grid-template-columns:repeat(2,minmax(0,1fr))}}
+html[data-mws-motion=reduced] #dashboard .dashboard-stats-bar-v1{animation:none}
+@media(prefers-reduced-motion:reduce){#dashboard .dashboard-stats-bar-v1{animation:none}}
+
+/* Stage 39: independent optical calendar surface, with optional device-local wallpaper.
+   No bundled scene, extra image request, new hit target or layout change. */
+@media(min-width:901px){
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar{
+    background-image:var(--mws-calendar-reflection)!important;
+    background-position:center,center!important;
+    background-size:100% 100%,100% 100%!important;
+    background-repeat:no-repeat!important;
+    background-color:#121a26!important;
+  }
+  body.mws-premium[data-theme=neon][data-background-custom=true]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar{
+    background-image:var(--mws-calendar-reflection),linear-gradient(rgb(0 0 0 / var(--custom-bg-dim)),rgb(0 0 0 / var(--custom-bg-dim))),var(--custom-bg-image)!important;
+    background-position:center,center,center,center!important;
+    background-size:100% 100%,100% 100%,100% 100%,cover!important;
+  }
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out):not(.drag-over):not(.template-drag-over){
+    background:var(--mws-calendar-glass) rgba(12,14,18,.32)!important;
+    border-color:#9db7cf38!important;
+    box-shadow:inset 0 1px #c3def20b,inset 0 -1px #05091225!important;
+  }
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.out{
+    background:linear-gradient(180deg,#10182491,#0b101ba5)!important;
+  }
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.today:not(.drag-over):not(.template-drag-over){
+    box-shadow:inset 0 2px var(--accent),inset 0 0 0 1px color-mix(in srgb,var(--accent) 38%,transparent),inset 0 16px 26px -22px var(--accent)!important;
+  }
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .calendar-date-number-v3{
+    font-variant-numeric:tabular-nums;font-size:13px!important;font-weight:700;text-shadow:0 1px 2px #000e,0 0 5px #080c16bf;
+  }
+  @media(hover:hover) and (pointer:fine){
+    body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out):not(.drag-over):not(.template-drag-over):hover{
+      background:var(--mws-calendar-glass-hover) rgba(12,14,18,.32)!important;
+    }
+  }
+}
+
+/* Visual pass S: continuous satin-metal housing and recessed calendar glass. Separate the housing from the landscape and
+   calendar glass. The existing padding and header row remain unchanged.
+   No new pseudo-overlay, hit target, animation or network resource. */
+@media(min-width:901px){
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) .app>.main{
+    background:var(--mws-calendar-metal) var(--bg)!important;
+    box-shadow:var(--mws-calendar-shadow)!important;
+  }
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-responsive-scroll-v1{
+    box-shadow:0 -1px 0 1px var(--mws-calendar-rim-light),0 1px 0 2px var(--mws-calendar-rim-dark),0 4px 0 2px #080e17b8,0 9px 20px #0008,inset 0 1px #c1d8ef55!important;
+  }
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-head{
+    background:var(--mws-calendar-metal-raised)!important;
+    box-shadow:inset 0 1px var(--mws-calendar-rim-light),inset 0 -1px var(--mws-calendar-rim-dark),0 2px 5px #0005!important;
+  }
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-head>*{
+    font-weight:700;letter-spacing:.015em;
+  }
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.today .calendar-date-number-v3{
+    background:linear-gradient(145deg,#c3b5ff,var(--accent) 56%,#5944aa);
+    box-shadow:inset 0 1px #e4dcff9c,0 2px 5px #0007;
+  }
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out) .calendar-date-number-v3:focus-visible{
+    outline:2px solid #d8e6ff;outline-offset:-2px;
+  }
+}
+
+/* Calendar agenda is a real optional split workspace, never a decorative
+   mockup. Below the wide-screen breakpoint, the original month owns all space. */
+body #calendar.section .calendar-topbar-v4 #calendarAgendaToggleV1{display:none!important}
+#calendarAgendaV1[hidden]{display:none!important}
+#calendarAgendaToggleV1{--calendar-toolbar-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='16' rx='2'/%3E%3Cpath d='M14 4v16M6 8h5M6 12h5M6 16h5'/%3E%3C/svg%3E")}
+@media(min-width:1700px){
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active:has(#calendarMonthPanelV172.active:not([hidden])) .calendar-topbar-v4 #calendarAgendaToggleV1{display:inline-grid!important}
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarAgendaToggleV1[aria-expanded=true]{
+   background:color-mix(in srgb,var(--accent) 24%,var(--panel))!important;box-shadow:inset 0 -2px var(--accent)!important;color:var(--text)!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendarMonthPanelV172.active.mws-agenda-open-v1{
+   display:grid!important;grid-template-columns:minmax(0,1fr) minmax(248px,17.4%);column-gap:12px;align-items:start;align-content:start;min-width:0;
+ }
+ #calendarMonthPanelV172.mws-agenda-open-v1>:not(.calendar-responsive-scroll-v1):not(#calendarAgendaV1){grid-column:1/-1}
+ #calendarMonthPanelV172.mws-agenda-open-v1>.calendar-responsive-scroll-v1{grid-column:1;min-width:0}
+ #calendarAgendaV1:not([hidden]){
+   grid-column:2;min-width:0;box-sizing:border-box;display:flex;flex-direction:column;gap:13px;padding:14px;
+   height:100%;max-height:calc(100dvh - 100px);overflow:hidden;
+   color:var(--text);border:1px solid color-mix(in srgb,var(--text) 18%,var(--border));border-radius:12px;
+   background:linear-gradient(155deg,color-mix(in srgb,var(--panel2) 65%,var(--panel)),var(--panel) 27%,color-mix(in srgb,var(--panel) 86%,var(--bg)));
+   box-shadow:inset 0 1px color-mix(in srgb,var(--text) 13%,transparent),0 8px 22px #0006,0 0 0 2px #0002;
+ }
+ .mws-agenda-head-v1{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+ .mws-agenda-head-v1 h2{margin:0!important;font-size:14px!important;font-weight:700;line-height:1.4}
+ #calendarAgendaV1 button{min-width:0;max-width:100%;box-sizing:border-box}
+ #calendarAgendaV1 :is([data-agenda-close],[data-agenda-prev],[data-agenda-next],[data-agenda-today]){
+   border:1px solid var(--border)!important;background:var(--input)!important;border-radius:7px!important;color:var(--text);
+   min-height:30px;padding:4px 8px!important;box-shadow:inset 0 1px #ffffff0d!important;font-size:12px;
+ }
+ #calendarAgendaV1 [data-agenda-close]{min-width:30px;font-size:19px;line-height:1;padding:3px!important}
+ .mws-agenda-nav-v1{display:grid;grid-template-columns:30px minmax(0,1fr) 30px;gap:5px;align-items:center}
+ #calendarAgendaV1 [data-agenda-date]{min-width:0;width:100%;box-sizing:border-box;min-height:32px;padding:3px 5px!important;font-size:12px;background:var(--input);border-radius:7px;color:var(--text);color-scheme:dark}
+ .mws-agenda-date-summary-v1{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;padding:8px 0;border-bottom:1px solid var(--border)}
+ .mws-agenda-date-summary-v1 strong{font-size:15px;line-height:1.4;overflow-wrap:anywhere}
+ .mws-agenda-date-summary-v1 small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+ .mws-agenda-list-v1{display:flex;flex-direction:column;gap:8px;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:2px 3px 10px 1px}
+ #calendarAgendaV1 .mws-agenda-event-v1{
+   display:flex;flex-direction:column;align-items:flex-start;gap:5px;flex-shrink:0;text-align:left;width:100%;min-height:68px;
+   background:linear-gradient(145deg,color-mix(in srgb,var(--agenda-event-color,var(--accent)) 13%,var(--panel2)),var(--panel))!important;
+   border:1px solid color-mix(in srgb,var(--agenda-event-color,var(--accent)) 23%,var(--border))!important;border-left:3px solid var(--agenda-event-color,var(--accent))!important;
+   border-radius:8px!important;padding:10px!important;box-shadow:inset 0 1px #ffffff13,0 2px 6px #0004!important;
+ }
+ #calendarAgendaV1 .mws-agenda-event-meta-v1{display:flex;align-items:center;justify-content:space-between;width:100%;gap:6px;color:var(--muted);font-size:11px;line-height:1.3;font-variant-numeric:tabular-nums}
+ #calendarAgendaV1 .mws-agenda-event-meta-v1 span{background:var(--input);border:1px solid var(--border);padding:2px 4px;border-radius:4px;color:var(--text);font-size:9px}
+ #calendarAgendaV1 .mws-agenda-event-v1 strong{display:block;color:var(--text);font-size:13px;font-weight:650;line-height:1.4;white-space:normal;overflow-wrap:anywhere;text-align:left}
+ #calendarAgendaV1 .mws-agenda-event-v1 small{color:var(--muted);font-size:11px;font-weight:400}
+ #calendarAgendaV1 .mws-agenda-event-v1:hover{border-color:var(--agenda-event-color,var(--accent))!important;transform:none!important;scale:none!important;box-shadow:inset 0 1px #ffffff24,0 4px 9px #0006!important}
+ #calendarAgendaV1 :is(button,input):focus-visible{outline:2px solid var(--accent)!important;outline-offset:-2px}
+ #calendarAgendaV1 button:disabled{opacity:.45;cursor:default}
+ .mws-agenda-empty-v1{padding:20px 8px;text-align:center;color:var(--muted);font-size:12px;line-height:1.6;border:1px dashed var(--border);border-radius:8px}
+ body.mws-premium #calendar.section #calendarGrid .day.mws-agenda-date-v1:not(.drag-over):not(.template-drag-over){outline:1px solid var(--accent)!important;outline-offset:-1px}
+ /* Selected agenda day uses a cool glass edge, independent of the violet today marker. */
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.mws-agenda-date-v1:not(.drag-over):not(.template-drag-over){outline:1px solid var(--mws-calendar-focus)!important;outline-offset:-1px;}
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.mws-agenda-date-v1:not(.today):not(.drag-over):not(.template-drag-over){box-shadow:inset 0 2px #8ccee9ab,inset 0 0 22px #78bad112!important;}
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.mws-agenda-date-v1:not(.today) .calendar-date-number-v3{color:#c4ecff;text-shadow:0 1px 4px #0b1529;}
+}
+
+/* Pass G: a compact, data-driven day instrument rather than empty chrome. */
+#calendarAgendaV1 [data-agenda-time-section][hidden]{display:none!important}
+@media(min-width:1700px){
+ #calendarAgendaV1:not([hidden]){
+   background:linear-gradient(150deg,color-mix(in srgb,var(--panel2) 65%,var(--panel)),var(--panel) 26%,color-mix(in srgb,var(--panel) 80%,var(--bg)))!important;
+   box-shadow:inset 0 1px color-mix(in srgb,var(--text) 20%,transparent),inset 0 0 0 2px #0002,0 8px 22px #0006!important;
+ }
+ #calendarAgendaV1 .mws-agenda-head-v1 h2{font-size:16px!important;letter-spacing:-.02em}
+ #calendarAgendaV1 [data-agenda-date]{text-align:center;padding:4px 18px 4px 4px!important;font-weight:650}
+ #calendarAgendaV1 .mws-agenda-date-summary-v1 strong{font-size:17px}
+ .mws-agenda-time-v1{flex:none;min-width:0;display:flex;flex-direction:column;gap:7px;padding:11px 10px 9px;border:1px solid var(--border);border-radius:9px;background:color-mix(in srgb,var(--input) 82%,var(--panel));box-shadow:inset 0 2px 6px #0004,0 1px #ffffff0a}
+ .mws-agenda-time-head-v1{display:flex;align-items:baseline;justify-content:space-between;gap:6px;min-width:0}
+ .mws-agenda-time-head-v1 span{font-size:10px;color:var(--muted)}
+ .mws-agenda-time-head-v1 strong{font-size:15px;color:var(--text);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+ .mws-agenda-time-axis-v1{display:flex;justify-content:space-between;color:var(--muted);font-size:9px;font-variant-numeric:tabular-nums}
+ .mws-agenda-tracks-v1{display:flex;flex-direction:column;gap:4px;max-height:98px;overflow:auto;scrollbar-width:thin;padding:1px 0}
+ #calendarAgendaV1 .mws-agenda-track-v1{position:relative;display:block;width:100%;min-width:0;flex:none;height:13px;min-height:13px!important;border:0!important;border-radius:3px!important;padding:0!important;margin:0!important;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(25% - 1px),color-mix(in srgb,var(--text) 13%,transparent) calc(25% - 1px),color-mix(in srgb,var(--text) 13%,transparent) 25%),var(--bg)!important;box-shadow:inset 0 1px 3px #0005!important;transform:none!important;overflow:hidden}
+ .mws-agenda-track-bar-v1{position:absolute;top:2px;height:9px;min-width:1px;pointer-events:none;border-radius:2px;background:linear-gradient(180deg,color-mix(in srgb,var(--agenda-event-color,var(--accent)) 78%,white),var(--agenda-event-color,var(--accent)));box-shadow:inset 0 1px #ffffff38}
+ .mws-agenda-track-bar-v1.is-overnight{border-radius:2px 0 0 2px;box-shadow:inset -3px 0 #ffffffa0}
+ #calendarAgendaV1 .mws-agenda-track-v1:hover{outline:1px solid var(--accent);outline-offset:-1px}
+ #calendarAgendaV1 [data-agenda-time-note]{font-size:10px;color:var(--muted);line-height:1.5;overflow-wrap:anywhere}
+ #calendarAgendaV1 .mws-agenda-list-v1{flex:1 1 auto}
+}
+
+/* Pass H: one visual language for the same event across three views.
+   Geometry remains fixed on hover/focus/selection; no animated layout. */
+@media(min-width:1700px){
+ #calendarAgendaV1:not([hidden]){
+   background:var(--mws-material-raised)!important;
+   border-color:var(--mws-material-edge)!important;
+   box-shadow:var(--mws-material-depth),0 0 0 2px #0004!important;
+ }
+ #calendarAgendaV1 .mws-agenda-time-v1{
+   border-color:var(--mws-material-edge);
+   background:var(--mws-material-well);
+   box-shadow:var(--mws-material-inset);
+ }
+ #calendarAgendaV1 .mws-agenda-tracks-v1{max-height:116px;gap:3px}
+ #calendarAgendaV1 .mws-agenda-track-v1{
+   height:24px;min-height:24px!important;
+   border-radius:5px!important;
+ }
+ #calendarAgendaV1 .mws-agenda-track-bar-v1{top:6px;height:12px;border-radius:3px}
+ #calendarAgendaV1 .mws-agenda-event-v1{
+   background:linear-gradient(165deg,color-mix(in srgb,var(--agenda-event-color,var(--accent)) 17%,var(--panel2)),var(--panel) 88%)!important;
+   box-shadow:inset 0 1px #ffffff20,0 3px 8px #0005!important;
+   transition:background-color 140ms ease,box-shadow 140ms ease,border-color 140ms ease!important;
+ }
+ #calendarAgendaV1 .mws-agenda-event-v1 strong{font-size:14px}
+ #calendarAgendaV1 .mws-agenda-event-v1.mws-agenda-link-v1,
+ #calendarAgendaV1 .mws-agenda-event-v1.mws-agenda-selected-v1{
+   border-color:var(--agenda-event-color,var(--accent))!important;
+   background:linear-gradient(165deg,color-mix(in srgb,var(--agenda-event-color,var(--accent)) 27%,var(--panel2)),var(--panel))!important;
+   box-shadow:inset 0 1px #ffffff32,0 4px 10px #0006!important;
+ }
+ #calendarAgendaV1 :is(.mws-agenda-track-v1.mws-agenda-link-v1,.mws-agenda-track-v1.mws-agenda-selected-v1){
+   outline:1px solid var(--accent);outline-offset:-1px;
+ }
+ #calendarAgendaV1 :is(.mws-agenda-track-v1.mws-agenda-link-v1,.mws-agenda-track-v1.mws-agenda-selected-v1) .mws-agenda-track-bar-v1{
+   box-shadow:inset 0 1px #ffffff80,0 0 7px color-mix(in srgb,var(--agenda-event-color,var(--accent)) 42%,transparent);
+ }
+ body.mws-premium #calendar.section #calendarMonthPanelV172.mws-agenda-open-v1 #calendarGrid .mini-event[data-evid].mws-agenda-link-v1:not(.event-details-selected-v1){
+   outline:1px solid var(--content-group-color,var(--accent))!important;outline-offset:0!important;
+   box-shadow:inset 0 1px var(--mws-material-light),0 3px 9px #0007!important;
+   filter:none;
+ }
+ #calendarAgendaV1 :is(button,select):focus-visible{outline:2px solid var(--accent)!important;outline-offset:-2px}
+ #calendarAgendaV1 :is([data-agenda-close],[data-agenda-prev],[data-agenda-next],[data-agenda-today]):hover:not(:disabled){
+   border-color:color-mix(in srgb,var(--accent) 55%,var(--border))!important;
+   background:color-mix(in srgb,var(--accent) 15%,var(--input))!important;
+ }
+ #calendarAgendaV1 :is([data-agenda-close],[data-agenda-prev],[data-agenda-next],[data-agenda-today]):active:not(:disabled){box-shadow:inset 0 2px 5px #0006!important}
+ html[data-mws-motion=reduced] #calendarAgendaV1 .mws-agenda-event-v1{transition:none!important}
+ @media(prefers-reduced-motion:reduce){#calendarAgendaV1 .mws-agenda-event-v1{transition:none!important}}
+}
+
+/* The day instrument is read in three levels: date, time scale, event list.
+   Empty state occupies the available list, not the control rail. */
+@media(min-width:1700px){
+ #calendarAgendaV1 .mws-agenda-date-summary-v1{border-bottom-color:var(--mws-material-edge)}
+ #calendarAgendaV1 .mws-agenda-date-summary-v1 strong{font-variant-numeric:tabular-nums;letter-spacing:-.035em}
+ #calendarAgendaV1 .mws-agenda-time-head-v1 strong{font-size:19px;line-height:1.3;font-weight:730}
+ #calendarAgendaV1 .mws-agenda-time-axis-v1{font-size:10px}
+ #calendarAgendaV1 .mws-agenda-event-v1{display:grid;grid-template-columns:minmax(0,1fr);align-content:start}
+ #calendarAgendaV1 .mws-agenda-event-meta-v1 span{border-color:var(--mws-material-edge);border-radius:5px;font-size:10px}
+ #calendarAgendaV1 .mws-agenda-event-v1 small{line-height:1.45}
+ #calendarAgendaV1 .mws-agenda-empty-v1{display:grid;place-content:center;min-height:104px;border:0;box-shadow:var(--mws-material-inset);background:var(--mws-material-well);line-height:1.6}
+ #calendarAgendaV1 .mws-agenda-list-v1{scrollbar-color:var(--mws-material-edge) transparent}
+ #calendarAgendaV1 .mws-agenda-track-v1{background-color:var(--mws-material-well)!important}
+ #calendarAgendaV1 .mws-agenda-track-bar-v1.is-overnight{border-radius:3px 0 0 3px;box-shadow:inset -3px 0 color-mix(in srgb,var(--text) 75%,transparent)}
+}
+
+/* Pass L: separate participant information from exceptional time states. */
+@media(min-width:1700px){
+ #calendarAgendaV1 .mws-agenda-card-foot-v1{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px 8px;min-width:0}
+ #calendarAgendaV1 .mws-agenda-card-foot-v1 .mws-agenda-time-flag-v1{color:var(--text);border:1px solid var(--mws-material-edge);border-radius:4px;padding:1px 5px}
+ #calendarAgendaV1 .mws-agenda-event-v1 .mws-agenda-event-meta-v1 time{font-variant-numeric:tabular-nums;color:color-mix(in srgb,var(--text) 83%,var(--muted))}
+}
+
+/* Pass O: time-scale labels are in a dedicated rail, leaving the 24-hour
+   track itself proportional and the existing event button as its only owner. */
+@media(min-width:1700px){
+ #calendarAgendaV1 .mws-agenda-time-axis-v1{padding-inline-start:42px}
+ #calendarAgendaV1 .mws-agenda-track-line-v1{display:grid;grid-template-columns:36px minmax(0,1fr);gap:6px;align-items:center;min-width:0;flex:none}
+ #calendarAgendaV1 .mws-agenda-track-label-v1{font-variant-numeric:tabular-nums;font-size:10px;color:var(--muted);white-space:nowrap}
+ #calendarAgendaV1 .mws-agenda-track-line-v1:has(.mws-agenda-link-v1) .mws-agenda-track-label-v1,
+ #calendarAgendaV1 .mws-agenda-track-line-v1:has(.mws-agenda-selected-v1) .mws-agenda-track-label-v1{color:var(--text)}
+ #calendarAgendaV1 .mws-agenda-time-axis-v1[hidden],#calendarAgendaV1 [data-agenda-tracks][hidden]{display:none!important}
+ #calendarAgendaV1 .mws-agenda-card-duration-v1{font-variant-numeric:tabular-nums;color:var(--text)!important}
+ #calendarAgendaV1 .mws-agenda-event-v1[data-agenda-state=rest]{background:var(--mws-material-well)!important}
+ #calendarAgendaV1 .mws-agenda-event-v1[data-agenda-state=unknown] .mws-agenda-time-flag-v1{color:color-mix(in srgb,var(--text) 70%,#d8a64b)}
+ #calendarAgendaV1 .mws-agenda-empty-v1{gap:9px;min-height:138px}
+ #calendarAgendaV1 .mws-agenda-empty-v1 strong{font-weight:600;color:var(--muted)}
+ #calendarAgendaV1 .mws-agenda-empty-icon-v1{width:35px;height:35px;justify-self:center;background:var(--muted);opacity:.65;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'%3E%3Crect x='4' y='7' width='24' height='21' rx='4'/%3E%3Cpath d='M4 13h24M10 4v6M22 4v6M12 20h8'/%3E%3C/svg%3E") center/contain no-repeat}
+}
+
+/* Pass W: agenda instrument, matched to the calendar's satin housing.
+   The graph remains proportional to real start/end times. No animated
+   grid dimensions, duplicate calendar DOM or continuous rendering. */
+@media(min-width:1700px){
+ body.mws-premium[data-theme=neon] #calendarAgendaV1:not([hidden]){
+   background:var(--mws-calendar-metal)!important;
+   border-color:var(--mws-calendar-rim)!important;
+   box-shadow:var(--mws-calendar-shadow)!important;
+ }
+ #calendarAgendaV1 .mws-agenda-time-v1{
+   background:linear-gradient(160deg,color-mix(in srgb,var(--panel) 88%,var(--text)),var(--mws-material-well) 34%)!important;
+   box-shadow:inset 0 2px 6px #0005,inset 0 -1px var(--mws-material-light)!important;
+ }
+ #calendarAgendaV1 .mws-agenda-time-head-v1{align-items:center}
+ #calendarAgendaV1 .mws-agenda-time-head-v1 strong{font-size:clamp(19px,1.05vw,25px);font-weight:780;letter-spacing:-.035em;line-height:1.25}
+ #calendarAgendaV1 .mws-agenda-time-axis-v1{
+   display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 0;
+   justify-content:normal;align-items:end;font-size:10px;line-height:1.35;
+ }
+ #calendarAgendaV1 .mws-agenda-time-axis-v1 span{width:max-content;transform:translateX(-50%)}
+ #calendarAgendaV1 .mws-agenda-time-axis-v1 span:first-child{transform:none}
+ #calendarAgendaV1 .mws-agenda-time-axis-v1 span:last-child{transform:translateX(-100%)}
+ #calendarAgendaV1 .mws-agenda-track-v1{
+   background:repeating-linear-gradient(90deg,transparent 0,transparent calc(25% - 1px),color-mix(in srgb,var(--text) 22%,transparent) calc(25% - 1px),color-mix(in srgb,var(--text) 22%,transparent) 25%),repeating-linear-gradient(90deg,transparent 0,transparent calc(100% / 24 - 1px),color-mix(in srgb,var(--text) 7%,transparent) calc(100% / 24 - 1px),color-mix(in srgb,var(--text) 7%,transparent) calc(100% / 24)),var(--mws-material-well)!important;
+ }
+ #calendarAgendaV1 .mws-agenda-track-bar-v1{
+   background:linear-gradient(180deg,color-mix(in srgb,var(--agenda-event-color,var(--accent)) 68%,white),var(--agenda-event-color,var(--accent)) 45%,color-mix(in srgb,var(--agenda-event-color,var(--accent)) 77%,var(--bg)))!important;
+   box-shadow:inset 0 1px #ffffff65,inset 0 -1px #0004,0 2px 3px #0005;
+ }
+ #calendarAgendaV1 .mws-agenda-track-bar-v1.is-overnight{box-shadow:inset -3px 0 #ffffffa0,inset 0 1px #ffffff65}
+ #calendarAgendaV1 .mws-agenda-card-duration-v1{
+   font-weight:700;color:var(--text)!important;
+   background:var(--mws-material-well);border-radius:4px;padding:1px 4px;
+ }
+ #calendarAgendaV1 .mws-agenda-event-v1[data-agenda-state=unknown] .mws-agenda-time-flag-v1{
+   border-style:dashed;border-color:color-mix(in srgb,#d8a64b 55%,var(--border));
+ }
+ #calendarAgendaV1 .mws-agenda-event-v1[data-agenda-state=rest]{
+   background:color-mix(in srgb,var(--mws-material-well) 90%,var(--agenda-event-color,var(--accent)))!important;
+ }
+ #calendarAgendaV1 .mws-agenda-event-v1.mws-agenda-selected-v1{
+   outline:1px solid color-mix(in srgb,var(--agenda-event-color,var(--accent)) 60%,var(--text));outline-offset:-1px;
+ }
+ #calendarAgendaV1 .mws-agenda-empty-v1{background:linear-gradient(160deg,var(--mws-material-well),var(--panel))!important}
+ /* The agenda controller owns one interruptible whole-panel opacity motion. */
+ #calendarAgendaV1[inert]{pointer-events:none!important}
+ #calendarAgendaV1 .mws-agenda-event-v1:not(:disabled):active{
+   box-shadow:inset 0 2px 5px #0007!important;transform:none!important;scale:none!important;
+ }
+ #calendarAgendaV1 .mws-agenda-track-v1:not(:disabled):active .mws-agenda-track-bar-v1{
+   box-shadow:inset 0 2px 4px #0007!important;
+ }
+}
+
+/* Align the agenda controls to the compact toolbar, without changing bounds. */
+@media(min-width:1700px){
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) #calendarAgendaV1 :is([data-agenda-close],[data-agenda-prev],[data-agenda-next],[data-agenda-today],[data-agenda-date]){
+   background:var(--mws-calendar-metal-control)!important;
+   border-color:var(--mws-calendar-rim)!important;
+   box-shadow:var(--mws-calendar-control-shadow)!important;
+ }
+ #calendarAgendaV1 .mws-agenda-event-meta-v1 time,#calendarAgendaV1 .mws-agenda-track-label-v1,#calendarAgendaV1 .mws-agenda-time-axis-v1{
+   color:color-mix(in srgb,var(--text) 75%,var(--muted));
+ }
+}
+
+/* Pass AB: the optional agenda has more room on tall QHD and above.
+   Increase text, not panel width or grid columns; retain proportional bars. */
+@media(min-width:2200px) and (min-height:1200px){
+ #calendarAgendaV1 .mws-agenda-head-v1 h2{font-size:18px!important}
+ #calendarAgendaV1 .mws-agenda-event-v1 strong{font-size:16px}
+ #calendarAgendaV1 .mws-agenda-event-meta-v1,#calendarAgendaV1 .mws-agenda-event-v1 small{font-size:12px}
+ #calendarAgendaV1 .mws-agenda-track-label-v1,#calendarAgendaV1 .mws-agenda-time-axis-v1{font-size:11px}
+ #calendarAgendaV1 [data-agenda-date]{font-size:13px}
+}
+
+/* A brushed face and machined edge, not a noisy texture over event text.
+   The existing background layers remain the only painted layers. */
+@media(min-width:901px){
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) :is(.app>.main,.app>.sidebar,#calendar .calendar-head,#calendarAgendaV1:not([hidden])){
+  background-size:64px 64px,100% 100%,100% 100%!important;
+  background-repeat:repeat,no-repeat,no-repeat!important;
+ }
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-responsive-scroll-v1{
+  box-shadow:0 -1px 0 1px var(--mws-calendar-rim-light),0 1px 0 2px var(--mws-calendar-rim-dark),0 3px 0 2px #1b2736,0 5px 0 2px #080e17b8,0 9px 20px #0008,inset 0 1px #c1d8ef55!important;
+ }
+}
+
+/* Pass AG / stage 37: legible calendar indices on photographic glass.
+   Keep the existing 24px date control, weekday semantics, and geometry. */
+@media(min-width:901px){
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out):not(.today) .calendar-date-number-v3{
+    font-size:14px!important;
+    font-weight:750;
+    color:#e6eef9;
+    text-shadow:0 1px 2px #03070e,0 0 4px #03070e;
+  }
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out):not(.today) .calendar-date-number-v3:not(:hover):not(:focus-visible){
+    background-color:rgba(8,14,24,.74);
+    box-shadow:inset 0 1px #b8d0e61c;
+  }
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:nth-child(7n+1 of .day):not(.out):not(.today):not(.mws-agenda-date-v1) .calendar-date-number-v3{color:#ffb3bd}
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:nth-child(7n of .day):not(.out):not(.today):not(.mws-agenda-date-v1) .calendar-date-number-v3{color:#b2ccff}
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.mws-agenda-date-v1:not(.today) .calendar-date-number-v3{color:#c4ecff}
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-head>*{
+    font-size:14px!important;
+    text-shadow:0 1px 2px #050a13;
+  }
+}
+@media(min-width:1700px){
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out):not(.today) .calendar-date-number-v3{font-size:15px!important}
+}

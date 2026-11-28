@@ -10,6 +10,7 @@ import worker from '../src/cf-v111-entry.js';
 import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 import {ROSTER as OP_ROSTER,rosterContactName} from '../assets/operation-m-model-v1.js';
 const operationMQA=process.env.MWS_QA_OPERATION_M==='1';
+const calendarVisualQA=process.env.MWS_QA_CALENDAR_VISUAL==='1';
 
 // Real HTML, browser scripts and Worker route chain; all data and upstream
 // responses are synthetic. Neither Cloudflare nor SOOP is contacted.
@@ -76,6 +77,20 @@ if(operationMQA){
  [...OP_ROSTER,...roles].forEach((name,i)=>{contacts[i].name=name==='리냐_LIN…'?'리냐_LINYA':name==='카노미☆'?'카노':rosterContactName(name)});
  parts.miniGames.operationMV1={links:Object.fromEntries(OP_ROSTER.map((name,i)=>[name,contacts[i].id])),roles:roles.map((_,i)=>contacts[OP_ROSTER.length+i].id)};
 }
+if(calendarVisualQA){
+ const month=day.slice(0,7),last=new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7)),0)).getUTCDate();
+ const categories=[{id:'visual-vr',name:'VR 콘텐츠',color:'#8b72df'},{id:'visual-collab',name:'합방',color:'#4789ce'},{id:'visual-solo',name:'개인 방송',color:'#35ad92'}];
+ parts.core.categories.push(...categories);
+ const titles=['VR 콘텐츠 연습','협동 게임 합방','개인 방송','정기 콘텐츠','저녁 방송','참가자 사전 미팅','장시간 콘텐츠 진행'];
+ for(let d=1;d<=last;d++){
+  if(d%7===0){parts.events.push({id:'visual-rest-'+d,date:month+'-'+String(d).padStart(2,'0'),title:'휴방',restDay:true});continue}
+  if(d%5===0)continue;
+  for(let n=0;n<(d%4===0?3:1);n++){
+   const c=categories[(d+n)%categories.length];
+   parts.events.push({id:'visual-event-'+d+'-'+n,title:titles[(d+n)%titles.length],date:month+'-'+String(d).padStart(2,'0'),categoryId:c.id,color:c.color,start:d===2?'23:00':d===3?'TBD':['12:00','17:00','20:30'][n],end:d===2?'01:00':d===3?'TBD':['16:00','19:30','23:00'][n],device:n===0?'VR':'PC',participants:['qa0','qa1'],checklist:[],...(d===1&&n===0||d===4&&n===1?{steamGame:{source:'manual',id:'manual:visual-fixture',name:'검증용 게임',platform:'PC',image:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAA4CAIAAAC5XqvpAAACVklEQVR42u3cO07DQBAG4HjkIyDq1FQpXBqJKsoBUAoarkDJASgocwAaNz4DokpBmSK3QKKg4gAURsHY6/U+ZmbH8WwVJLT+58t4s+tIyZbldqGDfoASKLRC61BohVZoHSwjV4L2eH+8bP9ZPn9izZwx7KOLzfrw+jYtYnRucuhis25eiLW2ECNyA49y5/XklL3+M/2HoUzrye86jKyirH2bNKapgb9559nXkGSJkGAd1p7BTQ38yvPsa0iiPEPrxEfw+VhDcrWZWIOE3kxiHXbSCz4fgpAV4Oz7GiQop7L2bc+Yxx0gSueM+1rcg39m636TPhxX6O28iHxMSofC/0y1OfKdlHerIxZxLDR16/FbdyrarY6I37CA2Bs8+Xo9tIbwdTQnAVtfW4pCySD9W3CeN9V+FZQMIP+Opr6iy/zxGUC4MvV13WeOzADyleWcZWIywEzqxJowOIPTrkPUyRhrHxJZlG8MtF3Hvq4m1Nf8jxsBZcZGeV9XPNxC7jCvGCNLx+hcFtmbu3uZawju++QYwwYdo8zDHWBNcTe4xBiEtgfyXSLouL2si816X1cUYUZjmKFxlam5Ha2/vz6o81iSeEOjfNxxVtj3Jc0zlMQAPaSMvqPA5e5X6EJMkcdo3YVmU6brJl9fikh963/QRmW2k0h8eaLuuY71H3Ra5cjaqHOGpWpb/0L3lfmJAwpjDhnDbYZOq+xS2CT6oG2dLcutTGVjYdKyuYtnt08vkomnMkbFc1VGGSe9IfFciSnE+9zZxdW16jAsKQrNNPRnJBRaoXUEjB8XLAV7SsQeswAAAABJRU5ErkJggg=='}}:{})});
+  }
+ }
+}
 if(bsandongQA){
  const prior=n=>new Date(Date.now()+9*3600000-n*86400000).toISOString().slice(0,10);
  parts.core.categories.push({id:'qa-bsandong',name:'브산동',color:'#06b6d4'});
@@ -125,8 +140,8 @@ try{
 
  const compareMode=process.env.MWS_QA_CSS_COMPARE==='1';
  if(compareMode)await browser.setReducedMotion(true);
- const viewport=compareMode?String(process.env.MWS_QA_VIEWPORT||'1366,768').split(',').map(Number):firstPaintQA&&process.env.MWS_QA_FIRST_PAINT_WIDE==='1'?[1920,1080]:[1366,768];
- await browser.navigate(base+':'+server.address().port+'/',...viewport,compareMode&&viewport[0]<761);
+ const viewport=(compareMode||calendarVisualQA)?String(process.env.MWS_QA_VIEWPORT||'1366,768').split(',').map(Number):firstPaintQA&&process.env.MWS_QA_FIRST_PAINT_WIDE==='1'?[1920,1080]:[1366,768];
+ await browser.navigate(base+':'+server.address().port+'/',...viewport,(compareMode||calendarVisualQA)&&viewport[0]<761);
  await until(()=>browser.evaluate("(()=>{document.querySelector('#mwsAnnouncementDialog[open] .mws-notice-close')?.click();if(document.body.classList.contains('mws-gated')){document.querySelector('#mwsModePublic')?.click();document.querySelector('#mwsLoginSubmit')?.click()}return !!window.__mwsAppReadyV130&&document.body.dataset.mwsMode==='public'&&!document.body.classList.contains('mws-gated')&&!document.body.classList.contains('mws-app-loading')})()"),'Full app public readiness');
  await until(()=>browser.evaluate('!!window.__mwsMediaPreloadPromiseV1'),'Media preloader scheduled');
  await browser.evaluate('window.__mwsMediaPreloadPromiseV1.then(()=>true)');
@@ -144,7 +159,245 @@ try{
  const routes=['calendar','contacts','dashboard','memos','careerTimeline','achievements','mawangArchive','gameLadder','gameMultiDraw','contentPlanner','toolTier','toolMatrix','toolRelations','settings','calendar'];
  const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,450));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
  let before=calls.length;
- if(operationMQA){
+ if(calendarVisualQA){
+  const captureDir=process.env.MWS_QA_VISUAL_CAPTURE;assert(captureDir,'Capture directory required');
+  const {mkdirSync}=await import('node:fs');mkdirSync(captureDir,{recursive:true});
+  const capture=async label=>{
+   await pause(550);
+   const shot=await browser.captureScreenshot();
+   writeFileSync(path.join(captureDir,label+'-'+viewport[0]+'x'+viewport[1]+'.jpg'),Buffer.from(shot,'base64'));
+  };
+  await browser.setFocusEmulation(true);
+  await nav(['calendar']);
+  await until(()=>browser.evaluate("document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length>=25"),'Representative calendar loaded');
+  await browser.evaluate("document.fonts.ready.then(()=>true)");
+  const scene=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),paint=getComputedStyle(grid),body=getComputedStyle(document.body);return {noForcedArt:!paint.backgroundImage.includes('url('),noSceneMarker:!grid.hasAttribute('data-calendar-scene'),noDefaultImage:body.getPropertyValue('--custom-bg-image').trim()==='none',custom:document.body.dataset.backgroundCustom}})()`);
+  assert(scene.noForcedArt&&scene.noSceneMarker&&scene.noDefaultImage&&scene.custom==='false','Default UI must not require artwork '+JSON.stringify(scene));
+  if(viewport[0]>=901)await until(()=>browser.evaluate("document.querySelectorAll('#calendarGrid .mws-steam-slot-v111.linked img').length>=2"),'Existing linked game images rendered');
+  await capture('calendar');
+  // Real upload and removal through the existing settings handlers.
+  // Synthetic image is confined to isolated QA; never a product asset.
+  const wallpaperBefore=calls.length;
+  const uploadWallpaper=()=>browser.evaluate(`(async()=>{const c=document.createElement('canvas');c.width=32;c.height=16;const ctx=c.getContext('2d');ctx.fillStyle='#ebebeb';ctx.fillRect(0,0,32,16);const b=await new Promise(r=>c.toBlob(r,'image/png'));const dt=new DataTransfer();dt.items.add(new File([b],'qa-wallpaper.png',{type:'image/png'}));const input=document.getElementById('backgroundImageInput');input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);
+  await uploadWallpaper();
+  await until(()=>browser.evaluate("document.body.dataset.backgroundCustom==='true'"),'Wallpaper upload applied');
+  const wallpaper=await browser.evaluate(`(()=>{const b=document.body,g=document.getElementById('calendarGrid'),prefs=JSON.parse(localStorage.getItem('mws_device_preferences_v1')||'{}'),s=getComputedStyle(g);return {stored:prefs.backgroundImage?.startsWith('data:image/'),body:getComputedStyle(b).backgroundImage.includes('data:image/'),grid:s.backgroundImage.includes('data:image/'),preview:document.getElementById('backgroundPreview').style.backgroundImage.includes('data:image/')}})()`);
+  assert(wallpaper.stored&&wallpaper.body&&wallpaper.preview,'Uploaded wallpaper must be local and visible '+JSON.stringify(wallpaper));
+  assert(wallpaper.grid,'Calendar must use user wallpaper at every tested viewport');
+  const readWallpaperAlpha=()=>browser.evaluate(`(()=>{const d=document.querySelector('#calendarGrid .day:not(.out):not(.today)'),c=document.createElement('canvas');c.width=c.height=1;const x=c.getContext('2d');x.fillStyle=getComputedStyle(d).backgroundColor;x.fillRect(0,0,1,1);return x.getImageData(0,0,1,1).data[3]})()`);
+  // Wait for the existing background transition to finish, not just the upload flag.
+  await until(async()=>{const alpha=await readWallpaperAlpha();return alpha>0&&alpha<255},'Calendar day must not hide the custom wallpaper');
+  await pause(200);
+  const wallpaperAlpha=await readWallpaperAlpha();
+  assert(wallpaperAlpha>0&&wallpaperAlpha<255,'Settled calendar wallpaper alpha '+wallpaperAlpha);
+  await capture('calendar-custom-background');
+  await browser.evaluate("document.getElementById('removeBackgroundBtn').click()");
+  await until(()=>browser.evaluate("document.body.dataset.backgroundCustom==='false'"),'Wallpaper removed');
+  assert(await browser.evaluate("(()=>{const p=JSON.parse(localStorage.getItem('mws_device_preferences_v1')||'{}');return p.backgroundImage===''&&getComputedStyle(document.body).getPropertyValue('--custom-bg-image').trim()==='none'&&!getComputedStyle(document.getElementById('calendarGrid')).backgroundImage.includes('url(')})()"),'Removal must restore the image-free surface');
+  assert.equal(calls.length,wallpaperBefore,'Wallpaper interaction must not make Worker requests');
+
+  const geom=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),main=document.querySelector('.app>.main'),r=grid.getBoundingClientRect(),m=main.getBoundingClientRect();return {cards:grid.querySelectorAll('.mini-event[data-evid]').length,rootOverflow:document.documentElement.scrollWidth-innerWidth,gridWidth:r.width,mainWidth:m.width,gridHeight:r.height,theme:document.body.dataset.theme,font:getComputedStyle(grid).fontFamily}})()`);
+  assert(geom.cards>=25&&geom.rootOverflow<=2&&geom.gridWidth>0,JSON.stringify(geom));
+  geom.labelMetrics=await browser.evaluate(`(()=>{
+   const titles=[...document.querySelectorAll('#calendarGrid .calendar-card-title-v2')].filter(el=>el.getBoundingClientRect().width>0),vr=titles.filter(el=>el.closest('.calendar-event-vr-v1'));
+   const dense=[...document.querySelectorAll('#calendarGrid .calendar-day-events-v2')].filter(el=>el.querySelectorAll('.mini-event[data-evid]').length===3);
+   const report=list=>({total:list.length,fullyReadable:list.filter(el=>el.scrollWidth<=el.clientWidth+1&&el.scrollHeight<=el.clientHeight+1).length,minWidth:list.length?Math.min(...list.map(el=>Math.round(el.getBoundingClientRect().width*10)/10)):null});
+   return {titles:report(titles),vrTitles:report(vr),denseDays:dense.map(el=>{const r=el.getBoundingClientRect(),cards=[...el.querySelectorAll('.mini-event[data-evid]')];return {date:el.closest('.day').dataset.date,fullCards:cards.filter(c=>{const b=c.getBoundingClientRect();return b.height>0&&b.top>=r.top-1&&b.bottom<=r.bottom+1}).length,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight}})};
+  })()`);
+  if(viewport[0]>=1366){
+   geom.material=await browser.evaluate(`(()=>{const frame=document.querySelector('#calendar .calendar-responsive-scroll-v1'),header=document.querySelector('#calendar .calendar-head'),grid=document.getElementById('calendarGrid'),today=grid.querySelector('.day.today'),day=grid.querySelector('.day:not(.today):not(.out)'),s=n=>getComputedStyle(n);return {frameShadow:s(frame).boxShadow,headerPaint:s(header).backgroundImage,glassPaint:s(day).backgroundImage,todayDistinct:!today||s(today).boxShadow!==s(day).boxShadow,frameRadius:parseFloat(s(frame).borderTopLeftRadius)}})()`);
+   assert(geom.material.frameShadow!=='none'&&geom.material.headerPaint.includes('linear-gradient')&&geom.material.glassPaint.includes('linear-gradient')&&geom.material.todayDistinct&&geom.material.frameRadius>0,'Calendar frame material '+JSON.stringify(geom.material));
+   assert(geom.labelMetrics.titles.total>0&&geom.labelMetrics.titles.fullyReadable===geom.labelMetrics.titles.total,'Fixture titles clipped '+JSON.stringify(geom.labelMetrics));
+   geom.integratedMaterial=await browser.evaluate(`(()=>{const q=s=>document.querySelector(s),s=n=>getComputedStyle(n),body=s(document.body),main=s(q('.app>.main')),rail=s(q('.app>.sidebar')),header=s(q('#calendar .calendar-head'));return {token:body.getPropertyValue('--mws-calendar-metal').includes('linear-gradient'),sharedHousing:main.backgroundImage===rail.backgroundImage,headerPaint:header.backgroundImage.includes('linear-gradient')}})()`);
+   assert(Object.values(geom.integratedMaterial).every(Boolean),'Integrated calendar material '+JSON.stringify(geom.integratedMaterial));
+   geom.brushedSurface=await browser.evaluate(`(()=>{const s=n=>getComputedStyle(n),main=s(document.querySelector('.app>.main')),rail=s(document.querySelector('.app>.sidebar')),grid=s(document.querySelector('#calendarGrid')),header=s(document.querySelector('#calendar .calendar-head'));return {grain:main.backgroundImage.includes('data:image/svg+xml,'),shared:main.backgroundImage===rail.backgroundImage,header:header.backgroundImage.includes('data:image/svg+xml,'),tile:main.backgroundSize.startsWith('64px 64px'),repeat:main.backgroundRepeat.startsWith('repeat'),cleanGrid:!grid.backgroundImage.includes('data:image/svg+xml,'),noFilter:main.filter==='none'&&rail.filter==='none'}})()`);
+   assert(Object.values(geom.brushedSurface).every(Boolean),'Brushed housing material '+JSON.stringify(geom.brushedSurface));
+   // Validate the actual embedded texture, not just the presence of a URL.
+   const grainSource=await browser.evaluate("getComputedStyle(document.body).getPropertyValue('--mws-calendar-brush').trim()");
+   const grainSvg=decodeURIComponent(grainSource.slice(grainSource.indexOf(',')+1,grainSource.lastIndexOf('"')));
+   const grainOpacity=Array.from(grainSvg.matchAll(/opacity='([0-9.]+)'/g),m=>Number(m[1]));
+   geom.grainOpacity={strokes:grainOpacity.length,max:Math.max(...grainOpacity)};
+   assert(grainOpacity.length>=100&&geom.grainOpacity.max<=.012&&geom.grainOpacity.max>0,'Satin grain must remain subtle '+JSON.stringify(geom.grainOpacity));
+   geom.opticalSurface=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),s=n=>getComputedStyle(n),day=grid.querySelector('.day:not(.out):not(.today)'),paint=s(grid),glass=s(day),date=s(day.querySelector('.calendar-date-number-v3')),layers=paint.backgroundImage,body=s(document.body);return {oneReflection:layers.split('radial-gradient').length===2&&layers.split('linear-gradient').length===2,noImage:!layers.includes('url('),glassAlpha:glass.backgroundColor,cellWash:glass.backgroundImage.includes('linear-gradient'),noLiveBlur:glass.backdropFilter==='none'&&paint.backdropFilter==='none',dateSize:parseFloat(date.fontSize),dateShadow:date.textShadow!=='none',rim:body.getPropertyValue('--mws-calendar-rim-light').trim().length>0}})()`);
+   assert(geom.opticalSurface.oneReflection&&geom.opticalSurface.noImage&&geom.opticalSurface.glassAlpha==='rgba(12, 14, 18, 0.32)'&&geom.opticalSurface.cellWash&&geom.opticalSurface.noLiveBlur&&geom.opticalSurface.dateSize===(viewport[0]>=1700?15:14)&&geom.opticalSurface.dateShadow&&geom.opticalSurface.rim,'Continuous optical surface '+JSON.stringify(geom.opticalSurface));
+   // Stage 37: check the actual computed date material and stable date hit area.
+   geom.dateLegibility=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),style=n=>getComputedStyle(n),days=[...grid.querySelectorAll('.day:not(.out):not(.today)')],items=days.map(d=>{const n=d.querySelector('.calendar-date-number-v3'),s=style(n),r=n.getBoundingClientRect(),weekday=new Date(d.dataset.date+'T12:00:00').getDay();return {weekday,color:s.color,background:s.backgroundColor,size:parseFloat(s.fontSize),width:r.width,height:r.height}}),header=[...document.querySelectorAll('#calendar .calendar-head>*')].map(n=>parseFloat(style(n).fontSize));return {items,header}})()`);
+   assert(geom.dateLegibility.items.length>0&&geom.dateLegibility.items.every(x=>x.size===(viewport[0]>=1700?15:14)&&x.width>=23&&x.height>=23&&x.background==='rgba(8, 14, 24, 0.74)'&&x.color===(x.weekday===0?'rgb(255, 179, 189)':x.weekday===6?'rgb(178, 204, 255)':'rgb(230, 238, 249)'))&&geom.dateLegibility.header.length===7&&geom.dateLegibility.header.every(x=>x===14),'Calendar date legibility '+JSON.stringify(geom.dateLegibility));
+   geom.cardMaterial=await browser.evaluate(`(()=>{
+     const grid=document.getElementById('calendarGrid'),card=grid.querySelector('.mini-event[data-evid]:not(.rest-event)'),unknown=grid.querySelector('.calendar-start-v2[data-clock-state=unknown]'),rest=grid.querySelector('.mini-event.rest-event'),s=n=>getComputedStyle(n),r=n=>{const b=n.getBoundingClientRect();return [b.x,b.y,b.width,b.height]},base=JSON.stringify(r(card)),original=card.className,oldTransition=card.style.getPropertyValue('transition'),oldPriority=card.style.getPropertyPriority('transition');
+     card.style.setProperty('transition','none','important');
+     try{
+      const normal={shadow:s(card).boxShadow,transform:s(card).transform,paint:s(card).backgroundImage};
+      const state=cls=>{card.className=original;card.classList.add(cls);const st=s(card);return {outline:st.outlineStyle,width:st.outlineWidth,shadow:st.boxShadow,stable:JSON.stringify(r(card))===base,transform:st.transform}};
+      return {normal,selected:state('event-details-selected-v1'),group:state('calendar-group-selected-v2'),drag:state('mws-calendar-event-pointer-dragging-v174'),unknown:unknown&&s(unknown).textDecorationStyle,rest:!!rest&&s(rest).backgroundColor};
+     }finally{card.className=original;if(oldTransition)card.style.setProperty('transition',oldTransition,oldPriority);else card.style.removeProperty('transition')}
+   })()`);
+   assert(geom.cardMaterial.normal.paint==='none'&&geom.cardMaterial.normal.transform==='none'&&geom.cardMaterial.selected.outline==='solid'&&geom.cardMaterial.group.width==='2px'&&geom.cardMaterial.drag.outline==='dashed'&&geom.cardMaterial.unknown==='dotted'&&geom.cardMaterial.rest&&[geom.cardMaterial.selected,geom.cardMaterial.group,geom.cardMaterial.drag].every(v=>v.stable&&v.transform==='none'),'Card state material '+JSON.stringify(geom.cardMaterial));
+   geom.gameSlots=await browser.evaluate(`(async()=>{const slots=[...document.querySelectorAll('#calendarGrid .mws-steam-slot-v111.linked:has(img)')];await Promise.all(slots.map(b=>b.firstElementChild.decode()));return slots.map(b=>{const card=b.closest('.mini-event'),title=card.querySelector('.calendar-card-title-v2'),vr=card.querySelector('.calendar-vr-badge-v1'),r=b.getBoundingClientRect(),t=title.getBoundingClientRect(),v=vr?.getBoundingClientRect(),day=card.closest('.day'),style=getComputedStyle(day),width=day.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);return {id:card.dataset.evid,width:r.width,height:r.height,decoded:b.firstElementChild.naturalWidth>0,titleClear:t.right<=r.left+1,vrClear:!v||v.right<=r.left+1,wide:width>=215,fit:title.scrollWidth<=title.clientWidth+1,label:b.getAttribute('aria-label')}})})()`);
+   assert(geom.gameSlots.length===2&&geom.gameSlots.every(x=>x.decoded&&x.titleClear&&x.vrClear&&x.height>=24&&x.width>=(x.wide?36:24)&&x.fit&&x.label.includes('게임 수정')),'Linked game slot geometry '+JSON.stringify(geom.gameSlots));
+   if(viewport[0]>=2200&&viewport[1]>=1200){
+    geom.highResolutionType=await browser.evaluate("parseFloat(getComputedStyle(document.querySelector('#calendarGrid .calendar-card-title-v2')).fontSize)");
+    assert(geom.highResolutionType>=14&&geom.gameSlots.every(x=>x.width>=42),'High resolution calendar must use available room '+JSON.stringify(geom.gameSlots));
+   }
+   geom.gameStability=await browser.evaluate(`(()=>{const buttons=[...document.querySelectorAll('#calendarGrid .mws-steam-slot-v111.linked:has(img)')];const rect=n=>{const r=n.getBoundingClientRect();return [r.x,r.y,r.width,r.height]};return buttons.map(b=>{const card=b.closest('.mini-event'),image=b.firstElementChild,title=card.querySelector('.calendar-card-title-v2'),vr=card.querySelector('.calendar-vr-badge-v1'),nodes=[card,b,title,...(vr?[vr]:[])],measure=()=>JSON.stringify(nodes.map(rect)),after=measure();b.classList.remove('linked');image.remove();const before=measure();b.append(image);b.classList.add('linked');const restored=measure();return {id:card.dataset.evid,reserved:card.dataset.calendarGameReserved==='true',stable:before===after&&restored===after,imageWidth:image.naturalWidth,imageHeight:image.naturalHeight}})})()`);
+   assert(geom.gameStability.length===2&&geom.gameStability.every(x=>x.reserved&&x.stable&&x.imageWidth===120&&x.imageHeight===56),'Thumbnail loading must not move card, title or control '+JSON.stringify(geom.gameStability));
+   geom.brand=await browser.evaluate(`(()=>{const full=document.querySelector('.sidebar .logo-full'),mini=document.querySelector('.sidebar .logo-mini'),pin=document.getElementById('sidebarPinBtn'),logo=document.querySelector('.sidebar .logo'),f=full.getBoundingClientRect(),p=pin.getBoundingClientRect(),l=logo.getBoundingClientRect(),style=getComputedStyle(full,'::before');return {mark:style.maskImage.includes('data:image/svg+xml'),miniMark:getComputedStyle(mini,'::before').maskImage.includes('data:image/svg+xml'),width:f.width,available:l.width,overlap:Math.max(0,f.right-p.left),wordmarkFits:full.scrollWidth<=full.clientWidth+1,pinVisible:p.width>0}})()`);
+   assert(geom.brand.mark&&geom.brand.miniMark&&geom.brand.wordmarkFits&&geom.brand.overlap<=1&&geom.brand.pinVisible,'Brand must fit existing rail without overlap '+JSON.stringify(geom.brand));
+   assert(geom.labelMetrics.vrTitles.total>0&&geom.labelMetrics.vrTitles.fullyReadable===geom.labelMetrics.vrTitles.total,'Fixture VR titles clipped '+JSON.stringify(geom.labelMetrics));
+   assert(geom.labelMetrics.denseDays.length>0&&geom.labelMetrics.denseDays.every(d=>d.fullCards===3),'Three-event fixture days must show all three cards '+JSON.stringify(geom.labelMetrics.denseDays));
+  }
+  if(viewport[0]<761){
+   const labels=await browser.evaluate(`(()=>{const cards=[...document.querySelectorAll('#calendarGrid .mini-event[data-evid].calendar-event-vr-v1')].filter(c=>c.getBoundingClientRect().width>0);return cards.map(c=>{const title=c.querySelector('.calendar-card-title-v2'),r=title.getBoundingClientRect(),box=c.getBoundingClientRect(),s=getComputedStyle(c);return {width:r.width,card:box.width,visible:!!title.textContent&&getComputedStyle(title).visibility==='visible',padding:parseFloat(s.paddingRight)}})})()`);
+   assert(labels.length>0&&labels.every(x=>x.visible&&x.width>=x.card*.65&&x.padding<=3),'Mobile VR titles clipped '+JSON.stringify(labels));
+   assert(geom.labelMetrics.titles.fullyReadable>0,'Mobile titles must improve on the zero fully readable baseline '+JSON.stringify(geom.labelMetrics));
+   if(viewport[0]===390){
+    assert(geom.labelMetrics.titles.total>0&&geom.labelMetrics.titles.fullyReadable===geom.labelMetrics.titles.total,'390px fixture titles must remain fully readable '+JSON.stringify(geom.labelMetrics));
+    geom.phoneTitleLines=await browser.evaluate("getComputedStyle(document.querySelector('#calendarGrid .calendar-card-title-v2')).webkitLineClamp");
+    assert.equal(geom.phoneTitleLines,'3');
+   }
+   assert(geom.labelMetrics.denseDays.every(d=>d.fullCards===2),'Mobile dense days must keep both visible cards '+JSON.stringify(geom.labelMetrics));
+   await browser.evaluate("document.querySelector('#calendarGrid .day:has(.mini-event[data-evid])').click()");
+   await until(()=>browser.evaluate("!!document.querySelector('.mws-mobile-calendar-day-detail-v130.open')"),'Mobile day sheet open');
+   await capture('calendar-detail');
+   const savedBeforeEditor=await browser.evaluate("JSON.stringify(activeEvents())");
+   await browser.evaluate("document.querySelector('.mws-mobile-calendar-day-detail-v130.open [data-mws-event-id]').click()");
+   await until(()=>browser.evaluate("document.getElementById('eventModal').classList.contains('open')"),'Mobile day card opens real editor');
+   await capture('calendar-editor');
+   geom.mobileEditor=await browser.evaluate(`(()=>{const q=id=>document.getElementById(id),modal=q('eventModal'),box=modal.querySelector('.mws-event-editor-v6'),r=box.getBoundingClientRect(),layout=modal.querySelector('.event-modal-layout'),save=q('saveEventBtn').getBoundingClientRect(),cancel=q('eventEditorCancelV13').getBoundingClientRect();return {title:q('evTitle').value,inside:r.left>=-1&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1,scrollable:layout.scrollHeight>layout.clientHeight,overflow:layout.scrollWidth-layout.clientWidth,saveHeight:save.height,cancelHeight:cancel.height,actions:cancel.right<=save.left+1&&save.bottom<=r.bottom+1&&save.right<=r.right+1}})()`);
+   assert(geom.mobileEditor.title&&geom.mobileEditor.inside&&geom.mobileEditor.scrollable&&geom.mobileEditor.overflow<=1&&geom.mobileEditor.saveHeight>=44&&geom.mobileEditor.cancelHeight>=44&&geom.mobileEditor.actions,'Mobile editor geometry '+JSON.stringify(geom.mobileEditor));
+   geom.mobileEditor.secondaryTargets=await browser.evaluate("Array.from(document.querySelectorAll('#eventModal .event-actions>.row:first-child button')).filter(b=>b.getClientRects().length).map(b=>({id:b.id,height:b.getBoundingClientRect().height}))");
+   assert(geom.mobileEditor.secondaryTargets.length>0&&geom.mobileEditor.secondaryTargets.every(b=>b.height>=44),'Mobile secondary action targets '+JSON.stringify(geom.mobileEditor.secondaryTargets));
+   await browser.evaluate("document.getElementById('eventEditorCancelV13').click()");
+   await until(()=>browser.evaluate("!document.getElementById('eventModal').classList.contains('open')"),'Mobile editor cancel closes');
+   assert.equal(await browser.evaluate("JSON.stringify(activeEvents())"),savedBeforeEditor,'Mobile editor cancel must not mutate schedules');
+  }else{
+   await browser.evaluate("document.querySelector('#calendarGrid .mini-event[data-evid]').click()");
+   await until(()=>browser.evaluate("window.mwsCalendarDetailsV1?.isOpen()===true"),'Calendar detail open');
+   geom.detailLayout=await browser.evaluate(`(()=>{const pop=document.getElementById('calendarEventDetailsV1'),clock=pop.querySelector('.mws-detail-clock-v1'),date=pop.querySelector('.mws-detail-date-v1'),body=pop.querySelector('.event-details-body-v1'),r=pop.getBoundingClientRect(),c=clock?.getBoundingClientRect(),d=date?.getBoundingClientRect();return {clock:clock?.textContent,date:date?.textContent,ordered:!!(c&&d&&c.top>=d.bottom-1),inside:r.left>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1,overflow:body.scrollWidth-body.clientWidth,people:[...pop.querySelectorAll('.calendar-preview-person-name')].every(n=>n.scrollWidth<=n.clientWidth+1)}})()`);
+   assert(geom.detailLayout.clock&&geom.detailLayout.date&&geom.detailLayout.ordered&&geom.detailLayout.inside&&geom.detailLayout.overflow<=1&&geom.detailLayout.people,'Detail layout '+JSON.stringify(geom.detailLayout));
+   geom.detailMaterial=await browser.evaluate(`(()=>{const d=document.getElementById('calendarEventDetailsV1'),t=d.querySelector('.mws-detail-time-v1'),edit=document.getElementById('calendarDetailsEditV1'),s=n=>getComputedStyle(n);return {glass:s(d).backgroundImage.includes('linear-gradient'),time:s(t).backgroundImage.includes('linear-gradient'),timeRecess:s(t).boxShadow.includes('inset'),action:s(edit).boxShadow!=='none'}})()`);
+   assert(Object.values(geom.detailMaterial).every(Boolean),'Detail material '+JSON.stringify(geom.detailMaterial));
+   await capture('calendar-detail');
+   const savedBeforeEditor=await browser.evaluate("JSON.stringify(activeEvents())");
+   await browser.evaluate("document.getElementById('calendarDetailsEditV1').click()");
+   await until(()=>browser.evaluate("document.getElementById('eventModal').classList.contains('open')"),'Actual editor opened from detail');
+   await capture('calendar-editor');
+   geom.editor=await browser.evaluate(`(()=>{const q=id=>document.getElementById(id),modal=q('eventModal'),box=modal.querySelector('.mws-event-editor-v6'),r=box.getBoundingClientRect(),save=q('saveEventBtn').getBoundingClientRect(),cancel=q('eventEditorCancelV13').getBoundingClientRect(),duration=q('evBroadcastDurationWrapV1'),dates=modal.querySelector('.event-date-time-v7');return {title:q('evTitle').value,duration:q('evBroadcastDurationValueV1').textContent,adjacent:dates.nextElementSibling===duration,inside:r.left>=-1&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1,actions:save.width>0&&cancel.width>0&&cancel.right<=save.left+1&&save.bottom<=r.bottom+1}})()`);
+   assert(geom.editor.title&&geom.editor.adjacent&&geom.editor.inside&&geom.editor.actions,'Editor geometry '+JSON.stringify(geom.editor));
+   geom.editorMaterial=await browser.evaluate(`(()=>{const m=document.getElementById('eventModal'),s=n=>getComputedStyle(n),q=id=>document.getElementById(id);return {shell:s(m.querySelector('.mws-event-editor-v6')).boxShadow!=='none',title:s(q('evTitle')).boxShadow.includes('inset'),date:s(q('evDateDisplay')).backgroundImage.includes('linear-gradient'),save:s(q('saveEventBtn')).backgroundImage.includes('linear-gradient'),cancel:s(q('eventEditorCancelV13')).backgroundImage.includes('linear-gradient')}})()`);
+   assert(Object.values(geom.editorMaterial).every(Boolean),'Editor material '+JSON.stringify(geom.editorMaterial));
+   await browser.evaluate("document.getElementById('eventEditorCancelV13').click()");
+   await until(()=>browser.evaluate("!document.getElementById('eventModal').classList.contains('open')"),'Cancel closes without saving');
+   assert.equal(await browser.evaluate("JSON.stringify(activeEvents())"),savedBeforeEditor,'Editor open/cancel must not mutate schedules');
+  }
+  // Both mobile and desktop retain actual editor action hit targets.
+  // The dedicated modal regression covers opening, closing and rapid re-entry.
+  if(viewport[0]>=1700){
+   const beforeAgenda=calls.length;
+   const originalEvents=await browser.evaluate("JSON.stringify(activeEvents())");
+   const initialWidth=geom.gridWidth;
+   await browser.evaluate("document.getElementById('calendarAgendaToggleV1').click()");
+   await until(()=>browser.evaluate("!document.getElementById('calendarAgendaV1').hidden"),'Wide calendar agenda opened');
+   const date=geom.labelMetrics.denseDays[0].date;
+   await browser.evaluate("(date=>{const input=document.querySelector('[data-agenda-date]');input.value=date;input.dispatchEvent(new Event('change',{bubbles:true}))})("+JSON.stringify(date)+")");
+   const agenda=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),panel=document.getElementById('calendarAgendaV1'),r=grid.getBoundingClientRect(),p=panel.getBoundingClientRect(),main=document.querySelector('.app>.main').getBoundingClientRect(),date=panel.querySelector('[data-agenda-date]').value,items=[...panel.querySelectorAll('[data-agenda-event]')];return {date,ids:items.map(e=>e.dataset.agendaEvent),expected:activeEvents().filter(e=>e.date===date).map(e=>String(e.id)),gridWidth:r.width,panelWidth:p.width,separate:r.right<=p.left+1,inside:p.right<=main.right+1&&p.bottom<=innerHeight+1,marked:grid.querySelector('.mws-agenda-date-v1')?.dataset.date}})()`);
+   assert(agenda.separate&&agenda.inside&&agenda.marked===date&&agenda.gridWidth<initialWidth&&agenda.panelWidth>=248,JSON.stringify(agenda));
+   assert.deepEqual([...agenda.ids].sort(),[...agenda.expected].sort());assert.equal(agenda.ids.length,3);
+   agenda.material=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),selected=grid.querySelector('.day.mws-agenda-date-v1'),today=grid.querySelector('.day.today'),s=getComputedStyle(selected);return {outline:s.outlineStyle,color:s.outlineColor,todayDistinct:!today||selected===today||s.boxShadow!==getComputedStyle(today).boxShadow}})()`);
+   assert(agenda.material.outline==='solid'&&agenda.material.color==='rgb(140, 206, 233)'&&agenda.material.todayDistinct,'Selected date material '+JSON.stringify(agenda.material));
+   assert.equal(calls.length,beforeAgenda,'Opening or selecting agenda date must not request data');
+   const timeInstrument=await browser.evaluate(`(()=>{const panel=document.getElementById('calendarAgendaV1'),select=panel.querySelector('[data-agenda-date]'),tracks=[...panel.querySelectorAll('[data-agenda-track]')],total=panel.querySelector('[data-agenda-duration]').textContent,model=window.mwsCalendarAgendaTimeV1.summarize(activeEvents().filter(e=>e.date===select.value)),list=panel.querySelector('[data-agenda-list]');return {dateLabel:select.selectedOptions[0].textContent,options:select.options.length,tracks:tracks.map(t=>({id:t.dataset.agendaTrack,left:parseFloat(t.firstElementChild.style.left),width:parseFloat(t.firstElementChild.style.width)})),expected:model.entries,total,expectedTotal:Math.floor(model.minutes/60)+'시간 '+model.minutes%60+'분',listHeight:list.clientHeight}})()`);
+   assert(timeInstrument.dateLabel.includes('년')&&timeInstrument.dateLabel.includes('월')&&timeInstrument.dateLabel.includes('일')&&timeInstrument.options>=28);
+   assert.equal(timeInstrument.total,timeInstrument.expectedTotal);
+   assert.equal(timeInstrument.tracks.length,3);
+   for(const track of timeInstrument.tracks){const e=timeInstrument.expected.find(x=>x.id===track.id);assert(e&&Math.abs(track.left-e.start/14.4)<.01&&Math.abs(track.width-(e.end-e.start)/14.4)<.01)}
+   assert(timeInstrument.listHeight>200,JSON.stringify(timeInstrument));
+   agenda.timeInstrument=timeInstrument;
+   agenda.instrumentMaterial=await browser.evaluate(`(()=>{const p=document.getElementById('calendarAgendaV1'),track=p.querySelector('[data-agenda-track]'),axis=p.querySelector('.mws-agenda-time-axis-v1'),bar=track.firstElementChild,s=n=>getComputedStyle(n);return {housing:s(p).backgroundImage.includes('linear-gradient'),ticks:s(track).backgroundImage.split('repeating-linear-gradient').length===3,bar:s(bar).backgroundImage.includes('linear-gradient'),labels:axis.children.length===5,axisGrid:s(axis).display==='grid'}})()`);
+   assert(Object.values(agenda.instrumentMaterial).every(Boolean),'Agenda material '+JSON.stringify(agenda.instrumentMaterial));
+   agenda.sharedHousing=await browser.evaluate("getComputedStyle(document.getElementById('calendarAgendaV1')).backgroundImage===getComputedStyle(document.querySelector('.app>.main')).backgroundImage");
+   assert(agenda.sharedHousing,'Agenda and calendar must share the same housing material');
+   const linkCheck=await browser.evaluate(`(()=>{
+     const panel=document.getElementById('calendarAgendaV1'),track=panel.querySelector('[data-agenda-track]'),id=track.dataset.agendaTrack,card=[...panel.querySelectorAll('[data-agenda-event]')].find(x=>x.dataset.agendaEvent===id),grid=[...document.querySelectorAll('#calendarGrid .mini-event[data-evid]')].find(x=>x.dataset.evid===id),nodes=[track,card,grid],rects=()=>nodes.map(n=>{const r=n.getBoundingClientRect();return [r.x,r.y,r.width,r.height]}),before=JSON.stringify(rects());
+     const linked=()=>nodes.every(n=>n.classList.contains('mws-agenda-link-v1'));
+     track.dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));const hover=linked(),stable=JSON.stringify(rects())===before;
+     track.dispatchEvent(new PointerEvent('pointerout',{bubbles:true,pointerType:'mouse',relatedTarget:panel.querySelector('[data-agenda-date]')}));const cleared=nodes.every(n=>!n.classList.contains('mws-agenda-link-v1'));
+     card.focus({preventScroll:true});const focus=linked()&&document.activeElement===card,documentFocused=document.hasFocus(),active=document.activeElement?.outerHTML.slice(0,160),inert=!!card.closest('[inert]');card.blur();
+     return {hover,stable,cleared,focus,documentFocused,active,inert,hitHeight:track.getBoundingClientRect().height};
+   })()`);
+   assert(linkCheck.hover&&linkCheck.stable&&linkCheck.cleared&&linkCheck.focus&&linkCheck.hitHeight>=24,JSON.stringify(linkCheck));
+   agenda.linkCheck=linkCheck;
+   await capture('calendar-agenda');
+   await browser.evaluate("document.querySelector('#calendarAgendaV1 [data-agenda-track]').click()");
+   await until(()=>browser.evaluate("window.mwsCalendarDetailsV1?.isOpen()===true"),'Time bar opens actual event detail');
+   const detailSelected=await browser.evaluate(`(()=>{const track=document.querySelector('#calendarAgendaV1 [data-agenda-track]'),id=track.dataset.agendaTrack,card=[...document.querySelectorAll('#calendarAgendaV1 [data-agenda-event]')].find(x=>x.dataset.agendaEvent===id),grid=[...document.querySelectorAll('#calendarGrid [data-evid]')].find(x=>x.dataset.evid===id);return window.mwsCalendarDetailsV1.currentId()===id&&[track,card].every(n=>n.classList.contains('mws-agenda-selected-v1')&&n.getAttribute('aria-expanded')==='true')&&grid.classList.contains('event-details-selected-v1')})()`);
+   assert(detailSelected,'Detail selection must highlight the matching event in all three views');
+   agenda.detailSelected=detailSelected;
+   await browser.evaluate("window.mwsCalendarDetailsV1.close({restoreFocus:false})");
+   await browser.evaluate("document.querySelector('#calendarAgendaV1 [data-agenda-event]').click()");
+   await until(()=>browser.evaluate("window.mwsCalendarDetailsV1?.isOpen()===true"),'Agenda opens existing event detail');
+   await capture('calendar-agenda-detail');
+   await browser.evaluate("window.mwsCalendarDetailsV1.close({restoreFocus:false})");
+   await browser.evaluate("document.querySelector('[data-agenda-next]').click()");
+   assert.notEqual(await browser.evaluate("document.querySelector('[data-agenda-date]').value"),date);
+   await browser.evaluate("document.querySelector('[data-agenda-prev]').click()");
+   assert.equal(await browser.evaluate("document.querySelector('[data-agenda-date]').value"),date);
+   const dayPrefix=date.slice(0,8);
+   const choose=async d=>browser.evaluate("(date=>{const input=document.querySelector('[data-agenda-date]');input.value=date;input.dispatchEvent(new Event('change',{bubbles:true}))})("+JSON.stringify(dayPrefix+d)+")");
+   const inspectState=()=>browser.evaluate(`(()=>{const p=document.getElementById('calendarAgendaV1');return {count:p.querySelectorAll('[data-agenda-event]').length,tracks:p.querySelectorAll('[data-agenda-track]').length,hidden:p.querySelector('[data-agenda-time-section]').hidden,axisHidden:p.querySelector('.mws-agenda-time-axis-v1').hidden,total:p.querySelector('[data-agenda-duration]').textContent,empty:!!p.querySelector('.mws-agenda-empty-v1'),rest:!!p.querySelector('[data-agenda-state=rest]'),flag:p.querySelector('.mws-agenda-time-flag-v1')?.textContent,labels:[...p.querySelectorAll('.mws-agenda-track-label-v1')].map(n=>n.textContent)}})()`);
+   await choose('02');const overnight=await inspectState();assert(overnight.count===1&&overnight.tracks===1&&overnight.total==='2시간 0분'&&overnight.flag==='다음 날 종료'&&overnight.labels[0]==='23:00',JSON.stringify(overnight));await capture('calendar-agenda-overnight');
+   await choose('03');const unknown=await inspectState();assert(unknown.count===1&&unknown.tracks===0&&!unknown.hidden&&unknown.axisHidden&&unknown.total==='시간 미정'&&unknown.flag==='시간 합계 미정',JSON.stringify(unknown));await capture('calendar-agenda-unknown');
+   await choose('05');const empty=await inspectState();assert(empty.count===0&&empty.tracks===0&&empty.hidden&&empty.empty,JSON.stringify(empty));await capture('calendar-agenda-empty');
+   await choose('07');const rest=await inspectState();assert(rest.count===1&&rest.hidden&&rest.rest&&!rest.empty,JSON.stringify(rest));await capture('calendar-agenda-rest');
+   agenda.states={overnight,unknown,empty,rest};
+   // Exercise rapid close/reopen without letting stale animation completions
+   // hide the new panel; check the real month is not continuously resized.
+   const panelMotion=await browser.evaluate(`(async()=>{
+     const panel=document.getElementById('calendarAgendaV1'),toggle=document.getElementById('calendarAgendaToggleV1'),close=panel.querySelector('[data-agenda-close]'),grid=document.getElementById('calendarGrid'),width=()=>grid.getBoundingClientRect().width;
+     const before=width();close.click();
+     const exit={inert:panel.inert,aria:panel.getAttribute('aria-hidden'),closed:toggle.getAttribute('aria-expanded')==='false',animations:panel.getAnimations().map(a=>({duration:a.effect.getTiming().duration,properties:Object.keys(a.effect.getKeyframes()[0]).filter(k=>!['offset','computedOffset','easing','composite'].includes(k))}))};
+     const stable=panel.hidden||Math.abs(width()-before)<1;
+     toggle.click();await new Promise(r=>setTimeout(r,250));
+     return {exit,stable,reopened:!panel.hidden&&!panel.inert&&toggle.getAttribute('aria-expanded')==='true',settled:panel.getAnimations().length===0,restored:Math.abs(width()-before)<1};
+   })()`);
+   assert(panelMotion.exit.inert&&panelMotion.exit.aria==='true'&&panelMotion.exit.closed&&panelMotion.exit.animations.every(a=>a.duration===140&&a.properties.every(k=>k==='opacity'))&&panelMotion.stable&&panelMotion.reopened&&panelMotion.settled&&panelMotion.restored,'Agenda motion '+JSON.stringify(panelMotion));
+   agenda.panelMotion=panelMotion;
+   await browser.evaluate("document.querySelector('[data-agenda-close]').click()");
+   await until(()=>browser.evaluate("document.getElementById('calendarAgendaV1').hidden"),'Agenda closed');
+   assert(await browser.evaluate("!document.querySelector('.mws-agenda-link-v1,.mws-agenda-selected-v1')"),'Closing agenda must clear linked and selected state');
+   const restored=await browser.evaluate("document.getElementById('calendarGrid').getBoundingClientRect().width");
+   assert(Math.abs(restored-initialWidth)<=1,'Default month width must be restored');
+   assert.equal(await browser.evaluate("JSON.stringify(activeEvents())"),originalEvents,'Agenda must not mutate schedule data');
+   assert.equal(calls.length,beforeAgenda,'Agenda interaction must not request data');
+   geom.agenda={...agenda,restored,requests:calls.length-beforeAgenda};
+  }else{
+   assert(await browser.evaluate("document.getElementById('calendarAgendaV1').hidden&&getComputedStyle(document.getElementById('calendarAgendaToggleV1')).display==='none'"),'Narrow view keeps original calendar');
+  }
+  await nav(['dashboard']);await capture('dashboard');
+  await nav(['calendar']);await browser.evaluate("document.body.dataset.theme='ocean'");await capture('calendar-ocean');
+  // Run real reload tests after the interaction budget and standard captures,
+  // so startup traffic is not mistaken for background-setting traffic.
+  await browser.evaluate("document.body.dataset.theme='neon'");
+  await uploadWallpaper();
+  await until(()=>browser.evaluate("document.body.dataset.backgroundCustom==='true'"),'Wallpaper uploaded before reload');
+  await browser.evaluate("(()=>{const s=document.getElementById('backgroundDim');s.value='65';s.dispatchEvent(new Event('input',{bubbles:true}));s.dispatchEvent(new Event('change',{bubbles:true}))})()");
+  const beforeReloadPrefs=await browser.evaluate("JSON.parse(localStorage.getItem('mws_device_preferences_v1'))");
+  assert(beforeReloadPrefs.backgroundImage?.startsWith('data:image/')&&beforeReloadPrefs.backgroundDim===65);
+  const reloadReady=async()=>{const origin=await browser.evaluate('performance.timeOrigin');await browser.reload(false);await until(async()=>{try{return await browser.evaluate("(()=>{document.querySelector('#mwsAnnouncementDialog[open] .mws-notice-close')?.click();return performance.timeOrigin!=="+origin+"&&!!window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading')&&!document.body.classList.contains('mws-gated')})()")}catch{return false}},'Wallpaper reload ready');await nav(['calendar']);await until(()=>browser.evaluate("document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length>=25"),'Calendar restored after wallpaper reload')};
+  await reloadReady();
+  const restoredWallpaper=await browser.evaluate(`(()=>{const b=document.body,p=JSON.parse(localStorage.getItem('mws_device_preferences_v1')),s=getComputedStyle(b);return {image:p.backgroundImage,dim:p.backgroundDim,active:b.dataset.backgroundCustom==='true',paint:getComputedStyle(document.getElementById('calendarGrid')).backgroundImage.includes('data:image/'),cssDim:s.getPropertyValue('--custom-bg-dim').trim(),slider:document.getElementById('backgroundDim').value,memoryMatches:data.backgroundImage===p.backgroundImage,memoryDim:data.backgroundDim,theme:b.dataset.theme}})()`);
+  assert(restoredWallpaper.image===beforeReloadPrefs.backgroundImage&&restoredWallpaper.dim===65&&restoredWallpaper.active&&restoredWallpaper.paint&&Number(restoredWallpaper.cssDim)===.65&&restoredWallpaper.slider==='65'&&restoredWallpaper.memoryMatches&&restoredWallpaper.memoryDim===65,'Wallpaper and darkness must survive reload '+JSON.stringify({...restoredWallpaper,image:undefined,imageMatches:restoredWallpaper.image===beforeReloadPrefs.backgroundImage}));
+  await capture('calendar-custom-background-reload');
+  await browser.evaluate("document.getElementById('removeBackgroundBtn').click()");
+  await reloadReady();
+  const removedAfterReload=await browser.evaluate("(()=>{const p=JSON.parse(localStorage.getItem('mws_device_preferences_v1'));return p.backgroundImage===''&&data.backgroundImage===''&&document.body.dataset.backgroundCustom==='false'&&!getComputedStyle(document.getElementById('calendarGrid')).backgroundImage.includes('url(')})()");
+  assert(removedAfterReload,'Wallpaper removal must survive reload');
+  geom.wallpaperPersistence={uploaded:wallpaper.stored,visible:wallpaper.grid,dayAlpha:wallpaperAlpha,restored:true,dim:65,removedAfterReload};
+  console.log('CALENDAR_WALLPAPER_PERSISTENCE_OK '+JSON.stringify({viewport,...geom.wallpaperPersistence}));
+  assert.equal(errors.length,0,JSON.stringify(errors));
+  writeFileSync(path.join(captureDir,'geometry-'+viewport[0]+'.json'),JSON.stringify({viewport,geom,scene,requests:summary(calls)},null,2));
+  console.log('CALENDAR_VISUAL_CAPTURE_OK '+JSON.stringify({viewport,geom}));
+ }else if(operationMQA){
   const captureDir=process.env.MWS_OPERATION_M_CAPTURE;
   if(captureDir){const {mkdirSync}=await import('node:fs');mkdirSync(captureDir,{recursive:true})}
   const capture=async(label,w,h)=>{if(!captureDir)return;const shot=await browser.captureScreenshot();writeFileSync(path.join(captureDir,'full-'+label+'-'+w+'x'+h+'.jpg'),Buffer.from(shot,'base64'));if(w===1726&&['overview','agent','roster'].includes(label))console.log('OPERATION_M_FULL_'+label.toUpperCase()+' '+shot)};
@@ -580,6 +833,24 @@ try{
   assert(calls.some(r=>r.path==='/media/contact/qa0'));
   await browser.evaluate("document.querySelector('#qa-cdn-fallback-contact')?.remove()");
   console.log('FULL_APP_CDN '+JSON.stringify({cdn:cdnCalls.length,workerContact:cold.filter(r=>r.path.startsWith('/media/contact/')).length,workerAchievement:cold.filter(r=>r.path.startsWith('/media/achievement/')).length}));
+ }
+ // Premium environment scope and stable dashboard geometry using the real app.
+ if(viewport[0]>=901){
+  await nav(['dashboard']);
+  const room=await browser.evaluate(`(()=>{const main=document.querySelector('.app>.main'),cards=[...document.querySelectorAll('#dashboardOverviewMode .dashboard-kpi-grid-local>.card')];const style=getComputedStyle(main);return {overview:document.querySelector('#dashboardOverviewMode').classList.contains('active'),art:style.backgroundImage.includes('data:image/svg+xml'),metrics:cards.length,stable:cards.every(c=>{const r=c.getBoundingClientRect();return r.width>0&&r.height>0&&r.right<=main.getBoundingClientRect().right+2}),visible:cards.every(c=>!!c.querySelector('.kpi strong')?.textContent.trim())}})()`);
+  assert(room.overview&&room.art&&room.metrics===6&&room.stable&&room.visible,JSON.stringify(room));
+  const statsOffset=calls.length;
+  const statsCheck=await browser.evaluate(`(()=>{const root=document.getElementById('dashboardScheduleStatsV1'),range=document.getElementById('dashboardStatsRangeV1'),chart=document.getElementById('dashboardStatsChartV1');if(!root||root.hidden)return {visible:false};const initial=chart.children.length;const original=JSON.stringify(data.events);range.value='7';range.dispatchEvent(new Event('change',{bubbles:true}));root.querySelector('[data-stats-metric=count]').click();chart.firstElementChild.click();const expected=window.mwsDashboardScheduleStatsV1.summarize(data.events,todayKST(),7);const selected=chart.querySelector('[aria-pressed=true]');const stable=chart.firstElementChild;renderDashboardInsightsV55();return {visible:true,initial,days:chart.children.length,selected:selected?.dataset.statsDate===expected.days[0].date,metric:root.querySelector('[data-stats-metric=count]').getAttribute('aria-pressed')==='true',count:document.getElementById('dashboardStatsCountV1').textContent===expected.count+'개',noMutation:JSON.stringify(data.events)===original,stable:chart.firstElementChild===stable}})()`);
+  assert.deepEqual(statsCheck,{visible:true,initial:30,days:7,selected:true,metric:true,count:true,noMutation:true,stable:true});
+  assert.equal(calls.slice(statsOffset).filter(common).length,0,'Dashboard chart controls fetched common data');
+  console.log('PREMIUM_STATS_OK '+JSON.stringify(statsCheck));
+  await browser.evaluate("document.querySelector('[data-dashboard-mode=reminders]').click()");
+  assert.equal(await browser.evaluate("getComputedStyle(document.querySelector('.app>.main')).backgroundImage.includes('data:image/svg+xml')"),false,'Dashboard art leaked into reminder mode');
+  await browser.evaluate("document.querySelector('[data-dashboard-mode=overview]').click()");
+  await nav(['contacts']);
+  assert.equal(await browser.evaluate("getComputedStyle(document.querySelector('.app>.main')).backgroundImage.includes('data:image/svg+xml')"),false,'Dashboard art leaked into contacts');
+  await nav(['calendar']);
+  console.log('PREMIUM_ENVIRONMENT_SCOPE_OK '+JSON.stringify(room));
  }
  before=calls.length;await nav([...routes,...routes]);await pause(700);const warm=calls.slice(before);console.log('FULL_APP_WARM_NAV '+JSON.stringify(summary(warm)));
  assert.equal(warm.filter(common).length,0);

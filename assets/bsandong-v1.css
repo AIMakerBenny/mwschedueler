@@ -73,3 +73,33 @@ html[data-mws-motion=reduced] #bsandong *{transition:none!important}
 @media(max-width:650px){#bsandong .bs-shell{max-width:100%}#bsandong .bs-dates label{flex:1 1 125px}#bsandong .bs-session-head>div{display:grid}}
 
 @media(min-width:900px){#bsandong .bs-summary{grid-template-columns:repeat(5,minmax(0,1fr))}}
+
+/* Stage 7: attendance console uses the existing calculated ring and bar
+   values. No invented percentages, duplicate counters or change of chart scale. */
+#bsandong .bs-shell{
+  --bs-rim:color-mix(in srgb,var(--text) 13%,var(--border));
+  --bs-well:color-mix(in srgb,var(--input) 85%,var(--bg));
+  --bs-face:color-mix(in srgb,var(--panel) 92%,var(--text));
+}
+#bsandong :is(.bs-summary>div,.bs-member,.bs-chart-card,.bs-session:not(.bs-session-empty)){
+  background:linear-gradient(150deg,var(--bs-face),var(--panel) 44%,color-mix(in srgb,var(--panel) 88%,var(--bg)))!important;
+  border-color:var(--bs-rim);
+  box-shadow:inset 0 1px color-mix(in srgb,var(--text) 9%,transparent),0 5px 15px #0003;
+}
+#bsandong .bs-summary>div{box-shadow:inset 0 2px color-mix(in srgb,var(--bs-accent) 55%,var(--border)),0 3px 9px #0003}
+#bsandong .bs-session:not(.bs-session-empty){border-left-color:var(--bs-accent)}
+#bsandong .bs-member.bs-attention{border-color:#d69a4c88;box-shadow:inset 0 2px #d69a4c99,0 5px 15px #0003}
+#bsandong .bs-member .bs-ring{box-shadow:0 0 0 1px var(--bs-rim),0 3px 8px #0004}
+#bsandong .bs-member.bs-attention .bs-ring{box-shadow:0 0 0 2px #d69a4c70,0 3px 8px #0004}
+#bsandong .bs-member dl{background:var(--bs-well);border:1px solid var(--border);border-radius:8px;padding:9px;box-shadow:inset 0 2px 4px #0002}
+#bsandong .bs-bar-track{background:repeating-linear-gradient(to top,transparent 0 calc(25% - 1px),var(--bs-rim) calc(25% - 1px) 25%),var(--bs-well);box-shadow:inset 0 1px 4px #0004}
+#bsandong .bs-bar{background:linear-gradient(0deg,#28607a,#348e9b 52%,#80ded0);box-shadow:inset 0 1px #e3fff75c}
+#bsandong .bs-meter{box-shadow:inset 0 1px 3px #0004}
+#bsandong .bs-meter i{background:linear-gradient(90deg,#39879b,#66d7c4)}
+#bsandong .bs-rank{background:linear-gradient(150deg,var(--bs-face),var(--panel));border-color:var(--bs-rim)}
+#bsandong .bs-tabs button.active{background:linear-gradient(150deg,color-mix(in srgb,var(--bs-accent) 15%,var(--panel2)),var(--panel));box-shadow:inset 0 -2px var(--bs-accent),0 2px 5px #0003}
+#bsandong :is(button,select,input):focus-visible{outline:2px solid var(--bs-accent);outline-offset:2px}
+@media(hover:hover) and (pointer:fine){
+  #bsandong :is(.bs-person,.bs-member):hover{transform:none;box-shadow:inset 0 0 0 1px var(--bs-accent),0 5px 14px #0004}
+  #bsandong .bs-rank:hover{border-color:var(--bs-accent)}
+}

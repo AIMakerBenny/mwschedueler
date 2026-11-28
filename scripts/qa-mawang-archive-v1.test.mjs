@@ -218,7 +218,7 @@ test('workspace header keeps only page-relevant actions and links to the exact M
   assert.match(html,/<div class="top-left">[\s\S]*?<h1 id="pageTitle">캘린더<\/h1>[\s\S]*?<a id="mwsArchiveWikiLink"/);
   assert.match(html,/id="mwsArchiveWikiLink"[^>]*href="https:\/\/namu\.wiki\/w\/MaWang"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
   assert.match(html,/assets\/mawang-archive-header-v1\.css\?v=3/);
-  assert.match(html,/assets\/topbar-context-v1\.css\?v=2/);
+  assert.match(html,/assets\/topbar-context-v1\.css\?v=3/);
   assert.match(html,/assets\/topbar-context-v1\.js\?v=1/);
   assert.match(global,/body:has\(\#calendar\.active\).*\#newEventBtn/);
   assert.match(global,/\.topbar \#clockText\s*\{display:none!important\}/);

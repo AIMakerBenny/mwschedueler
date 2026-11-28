@@ -6,7 +6,12 @@ import os from 'node:os';
 
 const file=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const html=file('index.html'),core=file('assets/app-core.js');
-const section=html.slice(html.indexOf('<section id="calendar"'),html.indexOf('</section>',html.indexOf('<section id="calendar"'))+10);
+// The calendar has nested semantic sections. Bound this fixture by its
+// next top-level sibling, not the first closing section tag.
+const sectionStart=html.indexOf('<section id="calendar"'),sectionEnd=html.indexOf('<section id="contacts"',sectionStart);
+assert(sectionStart>=0&&sectionEnd>sectionStart,'Calendar section boundaries');
+const section=html.slice(sectionStart,sectionEnd).trim();
+assert(section.endsWith('</section>'),'Calendar fixture must include the whole section');
 const switcher=core.slice(core.indexOf('function setCalendarViewModeV172(mode){'),core.indexOf('function initCalendarSearchV172(){'));
 assert(section.includes('id="calendarTimelinePanelV1"'));
 assert(switcher.includes('mwsCalendarTimelineV1'));

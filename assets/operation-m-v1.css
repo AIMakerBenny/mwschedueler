@@ -1357,3 +1357,37 @@ html[data-mws-motion=reduced] #operationM .op-tactical-scan{transform:none;trans
 #operationM .op-config-footer button.op-primary:disabled{color:#82939f!important;background:#24323b!important;border-color:#475965!important;box-shadow:none!important;opacity:1}
 @media(min-width:1080px){#operationM dialog.op-config{width:min(1400px,calc(100vw - 48px));max-height:calc(100dvh - 36px)}#operationM .op-config-scroll{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#operationM .op-config-main{margin:9px;max-height:calc(100dvh - 70px)}#operationM .op-config-links .op-config-players{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){#operationM .op-config-players{grid-template-columns:1fr}}
+
+/* Stage 7: original tactical table vector, shared card-back tooling and
+   rank-specific surface finishes. No hit plane, layout or resource changes. */
+#operationM .op-shell .op-guided-stage{
+  background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201600%20800%22%20preserveAspectRatio%3D%22xMidYMid%20slice%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22metal%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23476275%22%20stop-opacity%3D%22.32%22%2F%3E%3Cstop%20offset%3D%22.6%22%20stop-color%3D%22%23152b38%22%20stop-opacity%3D%22.12%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2309121b%22%20stop-opacity%3D%22.7%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22line%22%3E%3Cstop%20stop-color%3D%22%237ebbd5%22%20stop-opacity%3D%22.05%22%2F%3E%3Cstop%20offset%3D%22.5%22%20stop-color%3D%22%23b6e1ed%22%20stop-opacity%3D%22.5%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%237ebbd5%22%20stop-opacity%3D%22.05%22%2F%3E%3C%2FlinearGradient%3E%3CradialGradient%20id%3D%22light%22%3E%3Cstop%20stop-color%3D%22%2383b0ca%22%20stop-opacity%3D%22.25%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2383b0ca%22%20stop-opacity%3D%220%22%2F%3E%3C%2FradialGradient%3E%3Cpattern%20id%3D%22mesh%22%20width%3D%228%22%20height%3D%228%22%20patternUnits%3D%22userSpaceOnUse%22%3E%3Cpath%20d%3D%22M0%200h1v1H0z%22%20fill%3D%22%23a3b8cb%22%20opacity%3D%22.15%22%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Cellipse%20cx%3D%22800%22%20cy%3D%22380%22%20rx%3D%22660%22%20ry%3D%22385%22%20fill%3D%22url(%23light)%22%2F%3E%3Cpath%20d%3D%22M0%200H1600V120L1300%20232H300L0%20120Z%20M0%20120L300%20232V610L0%20800Z%20M1600%20120L1300%20232V610L1600%20800Z%20M0%20800L300%20610H1300L1600%20800Z%22%20fill%3D%22url(%23metal)%22%20stroke%3D%22%237998b0%22%20stroke-opacity%3D%22.22%22%2F%3E%3Cpath%20d%3D%22M35%20153%20268%20247V575L35%20730Z%20M1565%20153%201332%20247V575L1565%20730Z%22%20fill%3D%22url(%23mesh)%22%20stroke%3D%22%237595a9%22%20stroke-opacity%3D%22.28%22%2F%3E%3Cpath%20d%3D%22M300%20232H1300V610H300Z%20M330%20260H1270V582H330Z%22%20fill%3D%22none%22%20stroke%3D%22%2393b5c7%22%20stroke-opacity%3D%22.15%22%2F%3E%3Cpath%20d%3D%22M0%2090%20300%20215H1300L1600%2090%20M0%20750%20300%20595H1300L1600%20750%20M80%200%20440%20232%20M1520%200%201160%20232%20M180%20800%20470%20610%20M1420%20800%201130%20610%20M460%20800%20630%20610%20M1140%20800%20970%20610%22%20fill%3D%22none%22%20stroke%3D%22url(%23line)%22%20stroke-width%3D%222%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%238ac9e3%22%20stroke-opacity%3D%22.18%22%3E%3Cellipse%20cx%3D%22800%22%20cy%3D%22420%22%20rx%3D%22355%22%20ry%3D%22198%22%2F%3E%3Cellipse%20cx%3D%22800%22%20cy%3D%22420%22%20rx%3D%22300%22%20ry%3D%22166%22%20stroke-dasharray%3D%224%2011%22%2F%3E%3Cellipse%20cx%3D%22800%22%20cy%3D%22420%22%20rx%3D%22238%22%20ry%3D%22135%22%2F%3E%3Cpath%20d%3D%22M420%20420H1180%20M800%20208V632%20M505%20280%201095%20560%20M1095%20280%20505%20560%22%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%22%23acd0df%22%20opacity%3D%22.36%22%3E%3Cpath%20d%3D%22M50%20169h45v2H50z%20M50%20178h27v2H50z%20M1505%20169h45v2h-45z%20M1523%20178h27v2h-27z%20M710%2026h180v2H710z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") center / cover no-repeat,
+    radial-gradient(ellipse at 50% 48%,#34475380,transparent 65%),linear-gradient(160deg,#1c2934,#0b131c)!important;
+  box-shadow:inset 0 1px #9ab4c333,inset 0 -4px #0008,0 8px 22px #0005;
+}
+#operationM .op-single-stage .op-stage-halo{
+  background:radial-gradient(ellipse,#89b5d320 0,#5a749c14 42%,transparent 72%);
+}
+#operationM .op-card-back{
+  background:radial-gradient(ellipse at 48% 38%,#495973 0,transparent 55%) padding-box,
+    repeating-linear-gradient(45deg,#15202c 0 2px,#202c3b 2px 4px) padding-box,
+    linear-gradient(135deg,#e1e6ef,#8292a8 21%,#2f4150 48%,#53687d 73%,#c3d1dc) border-box;
+  color:#c9d9e9;
+  box-shadow:inset 0 0 0 3px #1f2b3a,inset 0 0 0 4px #a3bdce70,inset 0 0 18px #0007,0 5px 12px #0005;
+}
+#operationM .op-card-back svg{filter:none}
+#operationM .op-shuffle-token{box-shadow:0 4px 10px #0006}
+#operationM .op-shuffle-token .op-card-back,#operationM .op-draft-token .op-card-back{
+  box-shadow:inset 0 0 0 2px #273643,inset 0 0 0 3px #aec8d65c;
+}
+#operationM .op-shuffle-token .op-card-back::after,#operationM .op-draft-token .op-card-back::after{background:linear-gradient(125deg,#ffffff16,transparent 35%,transparent 72%,#b7d3e318)}
+#operationM [data-rarity="holo"] .op-rarity-art i{background:linear-gradient(135deg,#fff6d3,#9edced 35%,#c7a9fc 64%,#e9c77d)}
+#operationM [data-rarity="gold"] .op-rarity-art i{background:linear-gradient(135deg,#fff4ca,#e6b653 44%,#865416 70%,#e4be71)}
+#operationM [data-rarity="crystal"] .op-rarity-art i{background:linear-gradient(135deg,#e5d4ff,#9d70ea 42%,#4d348f 65%,#c2a2ff)}
+#operationM [data-rarity="steel"] .op-rarity-art i{border-color:#9ec6e4}
+#operationM [data-rarity="silver"] .op-rarity-art i{border-color:#a9b7c3}
+#operationM .op-completed-slot{box-shadow:inset 0 1px #c7d8e222,0 2px 6px #0004}
+#operationM .op-completed-slot:focus-visible,#operationM button.op-guide-rank:focus-visible{outline:2px solid #d6edff;outline-offset:2px}
+@media(hover:hover) and (pointer:fine){
+  #operationM .op-completed-slot:hover{border-color:var(--tier);box-shadow:inset 0 0 0 1px var(--tier),0 3px 8px #0006}
+}

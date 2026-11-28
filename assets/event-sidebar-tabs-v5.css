@@ -46,7 +46,7 @@
 }
 #eventModal .event-side-tabpanel-v5{min-width:0;min-height:0;overflow:visible!important;display:block}
 #eventModal .event-side-tabpanel-v5[hidden],#eventModal [hidden]{display:none!important}
-#eventModal .event-side-tabpanel-v5.active{animation:editorPaneIn .16s ease-out both}
+#eventModal .event-side-tabpanel-v5.active{animation:none}
 #eventModal .repeat-panel-open .event-memo-panel{display:none!important}
 #eventModal .mws-event-editor-v6 .event-repeat-panel{
  border:0;border-radius:0;background:none;padding:0!important;overflow:visible!important;min-height:0!important;animation:editorPaneIn .16s ease-out both;
@@ -82,16 +82,18 @@
 #eventModal #evCategoryColorButton{min-width:64px;min-height:var(--editor-control)}
 #eventModal .event-broadcast-duration-v1{
  display:flex!important;flex-direction:row!important;align-items:center;flex-wrap:wrap;gap:8px!important;
- padding:0!important;background:none!important;border:0!important;
+ padding:7px 10px!important;background:var(--mws-material-well,var(--input))!important;border:1px solid var(--border)!important;border-radius:8px;
+ justify-content:space-between;min-height:38px;
 }
-#eventModal .event-broadcast-duration-output-v1{padding:0!important;min-height:0!important;border:0!important;background:none!important;font-size:calc(13px * var(--ui-text-scale,1))}
+#eventModal .event-broadcast-duration-output-v1{padding:0!important;min-height:0!important;border:0!important;background:none!important;font-size:calc(13px * var(--ui-text-scale,1));text-align:right;flex:1 1 150px}
+#eventModal #evBroadcastDurationValueV1[data-available=true]{font-size:calc(16px * var(--ui-text-scale,1));font-variant-numeric:tabular-nums;font-weight:750;color:var(--text)}
 #eventModal .event-fold-v7{display:block!important;border-top:1px solid var(--border);padding:6px 0;margin:0}
 #eventModal .event-fold-v7 summary{cursor:pointer;font-size:calc(13px * var(--ui-text-scale,1));font-weight:650;padding:6px 0;line-height:1.5}
 #eventModal .event-fold-v7[open]>:not(summary){animation:editorPaneIn .16s ease-out both;margin-top:8px}
 #eventModal .event-advanced-grid-v7{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
 #eventModal .event-datetime-quick-v177{padding:0!important;background:none!important;border:0!important}
 #eventModal .event-datetime-quick-grid-v177{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-#eventModal .participant-box{padding:0!important;border:0!important;background:none!important;display:flex;flex-direction:column;gap:8px}
+#eventModal .participant-box{padding:10px!important;border:0!important;background:none!important;display:flex;flex-direction:column;gap:8px;border-radius:10px}
 #eventModal .participant-topline{display:flex;align-items:center;justify-content:space-between;gap:8px}
 #eventModal .selected-people{min-height:0!important;margin:0!important;max-height:168px;overflow:auto;scrollbar-width:thin;align-content:start;gap:5px}
 #eventModal .selected-people .muted.small:only-child{padding:3px 0}
@@ -186,3 +188,201 @@ body[data-device-mode="mobile"] #eventModal .mws-event-editor-v6 .event-actions{
 body[data-device-mode="mobile"]:has(#eventModal.open) :is(#datePickerPopover,#timePickerPopover,#categoryColorPalette){z-index:5300!important}
 html[data-mws-motion=reduced] #eventModal *{animation-duration:0s!important;transition-duration:0s!important}
 @media(prefers-reduced-motion:reduce){#eventModal *{animation-duration:0s!important;transition-duration:0s!important}}
+
+/* Stage 4: editor as one physical instrument, with distinct work surface,
+   recessed tool dock and fixed action rail. Existing layout owns geometry. */
+body.mws-premium #eventModal .modalbox.mws-event-editor-v6{
+  --editor-metal:color-mix(in srgb,var(--sidebar) 92%,var(--text));
+  --editor-rim:var(--mws-material-edge);
+  --editor-glint:var(--mws-material-light);
+  --editor-well:var(--mws-material-well);
+  background:var(--sidebar)!important;
+  border-color:var(--editor-rim)!important;
+  box-shadow:inset 0 1px var(--editor-glint),inset 0 0 0 1px var(--editor-rim),0 12px 28px #0006,0 28px 80px #0008!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-modal-header,
+body.mws-premium #eventModal .mws-event-editor-v6 .event-actions{
+  background:linear-gradient(170deg,var(--editor-metal),var(--sidebar) 85%)!important;
+  border-color:var(--editor-rim)!important;
+  box-shadow:inset 0 1px var(--editor-glint),inset 0 -1px #0003;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-info-panel{
+  background:linear-gradient(155deg,color-mix(in srgb,var(--panel) 70%,var(--sidebar)),var(--sidebar) 78%);
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-editor-tools-v6{
+  background:var(--mws-material-raised);
+  border-inline-start-color:var(--editor-rim)!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 :is(.event-side-tablist-v5,.participant-box){
+  background:var(--editor-well)!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--border) 85%,transparent),inset 0 2px 6px #0003!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-side-tab-v5[aria-selected=true]{
+  background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 22%,var(--editor-metal)),var(--panel))!important;
+  border-color:color-mix(in srgb,var(--accent) 45%,var(--border))!important;
+  box-shadow:inset 0 1px var(--editor-glint),inset 0 -2px var(--accent),0 2px 5px #0003!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .field :is(input:not([type=hidden],[type=checkbox],[type=color],[type=file],[type=radio],[type=range]),select:not(.calendar-group-underlying-select-v3),textarea,.picker-button,.repeat-launch-button){
+  background:var(--editor-well)!important;
+  border-color:color-mix(in srgb,var(--border) 75%,var(--text) 9%)!important;
+  box-shadow:inset 0 1px 4px #0002!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .field :is(input:not([type=hidden],[type=checkbox],[type=color],[type=file],[type=radio],[type=range]),select:not(.calendar-group-underlying-select-v3),textarea,.picker-button,.repeat-launch-button):focus-visible{
+  border-color:var(--accent)!important;
+  outline:2px solid color-mix(in srgb,var(--accent) 65%,transparent);
+  outline-offset:1px;
+  box-shadow:inset 0 1px 4px #0002,0 0 0 3px color-mix(in srgb,var(--accent) 10%,transparent)!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-actions #saveEventBtn{
+  background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 83%,var(--text)),var(--accent2))!important;
+  border-color:color-mix(in srgb,var(--accent) 70%,var(--text))!important;
+  box-shadow:inset 0 1px #ffffff36,0 3px 10px #0003!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-actions #saveEventBtn:disabled{
+  opacity:.55;box-shadow:none!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 :is(.event-modal-header,.event-actions,.event-side-tablist-v5) button:not(:disabled):active{
+  transform:none!important;scale:none!important;box-shadow:inset 0 2px 5px #0005!important;
+}
+@media(hover:hover) and (pointer:fine){
+  body.mws-premium #eventModal .mws-event-editor-v6 :is(.event-modal-header,.event-actions,.event-side-tablist-v5) button:not(:disabled):hover{
+    border-color:color-mix(in srgb,var(--accent) 55%,var(--border))!important;
+    box-shadow:inset 0 1px var(--editor-glint),0 3px 8px #0003!important;
+  }
+}
+/* A panel is animated once by modal-motion; switching tools does not replay
+   the outer frame. No painted overlay can intercept a field or action. */
+body.mws-premium #eventModal .mws-event-editor-v6 .event-side-tabpanel-v5.active{
+  animation:none;
+}
+html[data-mws-motion=reduced] body.mws-premium #eventModal .mws-event-editor-v6 .event-side-tabpanel-v5.active{animation:none!important}
+@media(prefers-reduced-motion:reduce){body.mws-premium #eventModal .mws-event-editor-v6 .event-side-tabpanel-v5.active{animation:none!important}}
+
+body.mws-premium #eventModal .mws-event-editor-v6 .field :is(input,select,textarea)[aria-invalid=true]{
+ border-color:var(--danger,#e35e68)!important;
+ outline:1px solid var(--danger,#e35e68);outline-offset:0;
+}
+
+/* Pass M: actual form hierarchy. Keep two-pane scrolling and all existing
+   field IDs. No new observers, requests, or outer-frame animations. */
+body.mws-premium #eventModal .mws-event-editor-v6 #evTitle{
+ font-size:calc(17px * var(--ui-text-scale,1));font-weight:700;min-height:44px;letter-spacing:-.015em;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-title-row{align-items:end}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-title-row :is(#evDevice,#evFavoriteBtn){min-height:44px}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 .picker-button{font-variant-numeric:tabular-nums;min-height:42px}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-info-panel .field>label{color:color-mix(in srgb,var(--text) 72%,var(--muted))}
+body.mws-premium #eventModal .mws-event-editor-v6 .participant-topline{border-bottom:1px solid var(--editor-rim);padding-bottom:6px}
+body.mws-premium #eventModal .mws-event-editor-v6 .person-chip{
+ border-color:var(--editor-rim);background:var(--mws-material-raised);animation:none;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 #eventEditorCancelV13{background:var(--editor-well)!important;border-color:var(--editor-rim)!important}
+body.mws-premium #eventModal .mws-event-editor-v6 #deleteEventBtn{background:transparent!important;border-color:color-mix(in srgb,var(--danger,#e35e68) 45%,var(--border))!important;color:var(--danger,#e35e68)!important}
+body.mws-premium #eventModal .mws-event-editor-v6 #saveEventBtn{min-width:116px}
+@media(max-width:560px){
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions{justify-content:space-between}
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions>.row:last-child{margin-left:auto}
+ body.mws-premium #eventModal .mws-event-editor-v6 #saveEventBtn{min-width:96px}
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-broadcast-duration-output-v1{flex-basis:120px}
+}
+
+/* Pass O: mobile editor keeps an accessible action rail without squeezing
+   five controls into one row. Desktop retains its existing two-pane layout. */
+@media(max-width:560px){
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions{display:grid!important;grid-template-columns:minmax(0,1fr);gap:6px!important}
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions>.row{display:flex!important;flex-wrap:nowrap!important;margin:0!important;min-width:0}
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions>.row:first-child button{flex:1;min-width:0;min-height:36px;padding-inline:5px}
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions>.row:last-child button{flex:1;min-width:0;min-height:44px}
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions>.row:last-child #saveEventBtn{flex:2}
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 .picker-button{min-height:44px}
+}
+
+/* Pass V: one physical editor. No new layout wrapper, controls or
+   separate entrance animations; keep the established two-pane and mobile rules. */
+body.mws-premium #eventModal{
+ --mws-modal-ease:cubic-bezier(.22,.68,.25,1);
+ --mws-modal-exit-ease:cubic-bezier(.4,0,.65,1);
+}
+body.mws-premium #eventModal .mws-event-editor-v6 #evTitle{
+ box-shadow:inset 0 1px 4px #0004,inset 0 -1px var(--editor-glint)!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 .picker-button{
+ background:linear-gradient(165deg,var(--editor-metal),var(--editor-well) 60%)!important;
+ box-shadow:inset 0 1px var(--editor-glint),inset 0 -1px #0004!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-broadcast-duration-v1{
+ border-color:var(--editor-rim)!important;box-shadow:inset 2px 0 var(--accent),inset 0 1px 4px #0003!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 :is(.person-chip,.person-result,.mws-game-result-v112,.mws-game-library-choose-v1,.event-memo-library-box){
+ background:var(--mws-material-raised)!important;border-color:var(--editor-rim)!important;
+ box-shadow:inset 0 1px var(--editor-glint),0 2px 4px #0003!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 :is(.person-chip,.person-result) .participant-status-select{
+ background:var(--editor-well)!important;border-color:var(--editor-rim)!important;
+ font-variant-numeric:tabular-nums;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .mws-game-preview-v112.has-game{
+ background:var(--mws-material-raised)!important;box-shadow:inset 0 1px var(--editor-glint),0 2px 4px #0003!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 :is(#participantSearch,#evContentGroupSearchV3,#evMemoContent,#evDescription){
+ background:var(--editor-well)!important;border-color:var(--editor-rim)!important;box-shadow:inset 0 2px 4px #0004!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 :is(#participantSearch,#evContentGroupSearchV3,#evMemoContent,#evDescription):focus-visible{
+ border-color:var(--accent)!important;outline:2px solid color-mix(in srgb,var(--accent) 65%,transparent);outline-offset:1px;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 #checklistEditor:not(:empty){
+ border-radius:8px;box-shadow:inset 0 0 0 1px var(--editor-rim);
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-actions #eventEditorCancelV13{
+ background:var(--mws-material-raised)!important;box-shadow:inset 0 1px var(--editor-glint),0 2px 4px #0003!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-actions #saveEventBtn:not(:disabled){
+ box-shadow:inset 0 1px #ffffff50,inset 0 -2px #0003,0 3px 8px #0005!important;
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-actions #deleteEventBtn:not(:disabled):focus-visible{
+ outline-color:var(--danger,#e35e68);
+}
+@media(hover:hover) and (pointer:fine){
+ body.mws-premium #eventModal .mws-event-editor-v6 :is(.person-result,.mws-game-result-v112,.mws-game-library-choose-v1):hover{
+  border-color:color-mix(in srgb,var(--accent) 65%,var(--editor-rim))!important;
+  box-shadow:inset 0 1px var(--editor-glint),0 3px 6px #0005!important;
+ }
+}
+body.mws-premium #eventModal .mws-event-editor-v6 .event-actions :is(#saveEventBtn,#eventEditorCancelV13,#deleteEventBtn):not(:disabled):active{
+ box-shadow:inset 0 2px 5px #0006!important;
+}
+
+/* Match the desktop editor's real header/footer to the calendar instrument,
+   without replacing its underlying responsive layout or theme support. */
+@media(min-width:901px){
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) #eventModal .mws-event-editor-v6 :is(.event-modal-header,.event-actions){
+   background:var(--mws-calendar-metal-raised)!important;
+   border-color:var(--mws-calendar-rim)!important;
+ }
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) #eventModal .mws-event-editor-v6 .event-actions #eventEditorCancelV13{
+   background:var(--mws-calendar-metal-control)!important;
+ }
+}
+
+/* Full-width phone editor: keep all primary and secondary footer actions
+   touchable, and the most-used participant search and tools accessible. */
+@media(max-width:560px){
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions>.row:first-child button{
+   min-height:44px!important;
+ }
+ body.mws-premium #eventModal .mws-event-editor-v6 :is(#participantSearch,.event-side-tab-v5,.mws-game-search-row-v112 button,#clearParticipantsBtn){
+   min-height:44px!important;
+ }
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-modal-layout{
+   scroll-padding-bottom:12px;
+ }
+}
+
+/* Keep text and form inputs clean: grain belongs to the metal header/footer,
+   and the input cavity has a simple machined edge. */
+@media(min-width:901px){
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) #eventModal .mws-event-editor-v6 :is(.event-modal-header,.event-actions){
+  background-size:64px 64px,100% 100%!important;
+  background-repeat:repeat,no-repeat!important;
+ }
+}

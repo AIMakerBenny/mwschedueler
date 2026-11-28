@@ -631,7 +631,7 @@ body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="mon
 }
 body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] .mws-calendar-tabs{margin-bottom:8px!important}
 body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .day{
-  position:relative!important;min-height:91px!important;height:auto!important;padding:5px 2px 4px!important;gap:0!important;
+  position:relative!important;min-height:102px!important;height:auto!important;padding:5px 2px 4px!important;gap:0!important;
 }
 body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .daynum{
   margin-bottom:3px!important;padding:0 1px!important;box-sizing:border-box!important;
@@ -641,8 +641,8 @@ body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="mon
   margin:0!important;padding:0!important;overflow:visible!important;gap:3px!important;
 }
 body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .mini-event[data-evid]{
-  display:block!important;box-sizing:border-box!important;min-height:23px!important;height:23px!important;max-height:23px!important;
-  padding:3px 1px!important;margin:0!important;line-height:15px!important;font-size:10px!important;border-left-width:2px!important;
+  display:block!important;box-sizing:border-box!important;min-height:30px!important;height:30px!important;max-height:30px!important;
+  padding:2px 1px!important;margin:0!important;line-height:12px!important;font-size:10px!important;border-left-width:2px!important;
 }
 body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .mini-event[data-evid].mws-mobile-event-hidden-v130{display:none!important}
 body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .mini-event[data-evid] .mini-event-main{
@@ -658,4 +658,71 @@ body[data-device-mode="mobile"][data-resolution="mobile"]:has(.mws-mobile-tabs) 
 @media(max-width:350px){
   body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] .calendar-topbar-v4 :is(.calendar-view-tabs-v172,.calendar-group-toolbar-v2) button{width:32px!important;min-width:32px!important}
   body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .mini-event[data-evid]{font-size:9px!important}
+}
+
+/* Visual review B: the month is a title-only compact overview on mobile.
+   Desktop's VR and Steam reservations previously consumed the entire text
+   track even though both controls were hidden. Keep their actual functionality
+   in the existing mobile day-detail sheet, not in the tiny month cells. */
+body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid].mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4)),
+body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid].mws-steam-host-v111.calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4)){
+  padding-inline:2px!important;
+  min-width:0!important;
+}
+body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid] .mini-event-main{
+  display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  overflow:hidden!important;white-space:normal!important;line-height:12px!important;
+}
+body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid] .calendar-card-title-v2{
+  display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:2;width:100%!important;min-width:0!important;max-width:100%!important;
+  font-size:inherit!important;line-height:12px!important;max-height:24px!important;white-space:normal!important;overflow-wrap:anywhere;word-break:normal;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid]>:is(.calendar-vr-badge-v1,.mws-steam-slot-v111){
+  display:none!important;
+}
+
+/* Pass I: retain the full date sheet as the source for long titles, while
+   using both lines in the month. The +N row stays in normal flow. */
+body[data-device-mode=mobile] #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day[data-mobile-more]:not([data-mobile-more=""]){
+ min-height:112px!important;
+}
+body.mws-premium .mws-mobile-calendar-day-detail-v130 .mws-mobile-day-event-title-v130{
+ overflow-wrap:anywhere;font-weight:750;
+}
+
+/* Pass AB: phone month is a compact overview, not a miniature desktop.
+   Three title lines on narrow phones; keep two cards and the overflow count
+   in normal flow. No extra image slots or duplicated day-detail data. */
+@media(max-width:420px){
+ body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day{
+   padding-inline:1px!important;
+ }
+ body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day:has(.mini-event[data-evid]:not(.mws-mobile-event-hidden-v130)~.mini-event[data-evid]:not(.mws-mobile-event-hidden-v130)){
+   min-height:112px!important;
+ }
+ body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day[data-mobile-more]:not([data-mobile-more=""]){
+   min-height:126px!important;
+ }
+ body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid]{
+   height:38px!important;min-height:38px!important;max-height:38px!important;
+   padding-block:2px!important;
+ }
+ body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid] .calendar-card-title-v2{
+   -webkit-line-clamp:3;line-height:11px!important;max-height:33px!important;
+   word-break:normal;overflow-wrap:anywhere;
+ }
+}
+
+/* Optional device-local wallpaper on the actual mobile calendar surface.
+   Retain opaque default UI and existing layout/hit targets. No new asset. */
+html body.mws-premium[data-background-custom=true]:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section.active[data-mobile-calendar-view=month] #calendarGrid.calendar{
+  background-image:linear-gradient(rgb(0 0 0 / var(--custom-bg-dim)),rgb(0 0 0 / var(--custom-bg-dim))),var(--custom-bg-image)!important;
+  background-position:center!important;background-size:cover!important;
+  background-repeat:no-repeat!important;
+}
+html body.mws-premium[data-background-custom=true]:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section.active[data-mobile-calendar-view=month] #calendarGrid .day:not(.out):not(.drag-over):not(.template-drag-over){
+  background:color-mix(in srgb,var(--panel) 78%,transparent)!important;
+}
+html body.mws-premium[data-background-custom=true]:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section.active[data-mobile-calendar-view=month] #calendarGrid .day.out{
+  background:color-mix(in srgb,var(--panel) 90%,transparent)!important;
 }

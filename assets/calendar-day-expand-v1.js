@@ -45,7 +45,10 @@
     list.style.setProperty('--mws-day-list-left',(base.left-cell.left-day.clientLeft)+'px');
     list.style.setProperty('--mws-day-list-width',base.width+'px');
     list.style.setProperty('--mws-day-list-height',(base.height+extra)+'px');
-    list.style.setProperty('--mws-day-list-bg',getComputedStyle(day).backgroundColor);
+    // The expanded list overlays another date. Do not inherit the new
+    // translucent landscape glass: underlying events must never show through.
+    const panel=getComputedStyle(document.body).getPropertyValue('--panel').trim();
+    list.style.setProperty('--mws-day-list-bg',panel||'#171920');
     day.classList.add('mws-day-expand-v1');list.classList.add('mws-day-list-expand-v1');
     if(!reduced()&&list.animate){
       state.motion=list.animate([{clipPath:clip(extra,up)},{clipPath:clip(0,up)}],{duration:160,easing:'cubic-bezier(.2,.75,.25,1)',fill:'both'});
