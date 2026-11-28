@@ -416,8 +416,9 @@ body.mws-premium .event-details-popover-v2 .calendar-preview-person .avatar{
    Keep the established 88% shell alpha and whole-frame WAAPI animation.
    The legacy hover preview and mobile day sheet retain their own layout. */
 body.mws-premium .event-details-popover-v2{
-  background-image:linear-gradient(155deg,var(--mws-material-light),transparent 24%,color-mix(in srgb,var(--bg) 12%,transparent))!important;
+  background-image:linear-gradient(155deg,color-mix(in srgb,var(--text) 11%,transparent),transparent 22%,color-mix(in srgb,var(--bg) 18%,transparent))!important;
   border-radius:17px;
+  box-shadow:inset 0 1px var(--mws-material-light),inset 0 -1px #0005,0 4px 10px #0006,0 16px 38px #0009!important;
 }
 body.mws-premium .event-details-popover-v2 .event-details-body-v1{
   padding:4px 18px 18px 18px;scrollbar-color:var(--mws-material-edge) transparent;
@@ -431,8 +432,8 @@ body.mws-premium .event-details-popover-v2 .event-details-body-v1>.space:first-c
 body.mws-premium .event-details-popover-v2 .mws-detail-time-v1{
   display:grid;grid-template-columns:minmax(0,1fr);gap:5px;
   padding:11px 13px;margin:12px 0 10px!important;
-  background:var(--mws-material-well);border-radius:10px;
-  box-shadow:var(--mws-material-inset);line-height:1.4;
+  background:linear-gradient(165deg,color-mix(in srgb,var(--panel) 91%,var(--text)),var(--mws-material-well) 32%,var(--mws-material-well));border-radius:10px;
+  box-shadow:inset 0 1px 4px #0005,inset 2px 0 var(--event-detail-color,var(--accent)),inset 0 -1px var(--mws-material-light);line-height:1.4;
 }
 body.mws-premium .event-details-popover-v2 .mws-detail-date-v1{font-size:12px;color:var(--muted)}
 body.mws-premium .event-details-popover-v2 .mws-detail-clock-v1{
@@ -449,7 +450,7 @@ body.mws-premium .event-details-popover-v2 .event-details-game-v1{
   display:grid;grid-template-columns:minmax(0,1fr);gap:0;font-size:14px;
 }
 body.mws-premium .event-details-popover-v2 .event-details-game-v1 img{
-  width:100%;height:auto;aspect-ratio:460/215;object-fit:cover;border-radius:0;
+  width:100%;height:auto;aspect-ratio:460/215;object-fit:contain;border-radius:0;background:var(--mws-material-well);
 }
 body.mws-premium .event-details-popover-v2 .event-details-game-v1>span{padding:9px 12px;overflow-wrap:anywhere}
 body.mws-premium .event-details-popover-v2 .calendar-preview-people{
@@ -458,7 +459,7 @@ body.mws-premium .event-details-popover-v2 .calendar-preview-people{
 body.mws-premium .event-details-popover-v2 .calendar-preview-person{
   display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:8px!important;
   min-height:60px;padding:7px!important;border-radius:8px!important;
-  background:color-mix(in srgb,var(--panel) 94%,var(--text));border-color:var(--mws-material-edge);
+  background:var(--mws-material-raised);border-color:var(--mws-material-edge);box-shadow:inset 0 1px var(--mws-material-light),0 2px 4px #0003;
 }
 body.mws-premium .event-details-popover-v2 .calendar-preview-person .avatar{width:44px!important;height:44px!important;border-radius:8px!important}
 body.mws-premium .event-details-popover-v2 .calendar-preview-person-name{
@@ -577,3 +578,27 @@ body.mws-premium .event-details-popover-v2 .event-details-section-v1 h3{font-siz
 html[data-mws-motion=reduced] body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]{transition:none!important}
 @media(prefers-reduced-motion:reduce){body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]{transition:none!important}}
 
+
+/* Pass V: detail document shares the calendar housing's light direction.
+   Keep the existing shell opacity and scroll geometry. */
+body.mws-premium .event-details-popover-v2 .event-details-head-v1{
+ background:linear-gradient(180deg,color-mix(in srgb,var(--text) 6%,transparent),transparent);
+}
+body.mws-premium .event-details-popover-v2 .event-details-action-v2:not([hidden]){
+ border-radius:9px!important;background:var(--mws-material-raised)!important;
+ box-shadow:inset 0 1px var(--mws-material-light),0 2px 4px #0003!important;
+}
+body.mws-premium .event-details-popover-v2 #calendarDetailsEditV1{
+ color:var(--text);box-shadow:inset 0 1px var(--mws-material-light),inset 0 -2px var(--event-detail-color,var(--accent)),0 2px 4px #0003!important;
+}
+body.mws-premium .event-details-popover-v2 .event-details-action-v2:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+body.mws-premium .event-details-popover-v2 .event-details-action-v2:not(:disabled):active{box-shadow:var(--mws-material-inset)!important}
+body.mws-premium .event-details-popover-v2 .calendar-preview-person .avatar{box-shadow:0 1px 4px #0005;outline:1px solid var(--mws-material-edge);outline-offset:-1px}
+body.mws-premium .event-details-popover-v2 .calendar-preview-person .status-badge{font-variant-numeric:tabular-nums;box-shadow:inset 0 1px #ffffff12}
+body.mws-premium .event-details-popover-v2 .event-details-section-v1{border-top-color:var(--mws-material-edge)}
+body.mws-premium .event-details-popover-v2 .event-details-text-v1{color:var(--text);line-height:1.7;overflow-wrap:anywhere}
+@media(hover:hover) and (pointer:fine){
+ body.mws-premium .event-details-popover-v2 .event-details-action-v2:not(:disabled):hover{
+  color:var(--text);background:var(--mws-material-selected)!important;box-shadow:var(--mws-material-depth)!important;
+ }
+}

@@ -228,6 +228,8 @@ try{
    await until(()=>browser.evaluate("window.mwsCalendarDetailsV1?.isOpen()===true"),'Calendar detail open');
    geom.detailLayout=await browser.evaluate(`(()=>{const pop=document.getElementById('calendarEventDetailsV1'),clock=pop.querySelector('.mws-detail-clock-v1'),date=pop.querySelector('.mws-detail-date-v1'),body=pop.querySelector('.event-details-body-v1'),r=pop.getBoundingClientRect(),c=clock?.getBoundingClientRect(),d=date?.getBoundingClientRect();return {clock:clock?.textContent,date:date?.textContent,ordered:!!(c&&d&&c.top>=d.bottom-1),inside:r.left>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1,overflow:body.scrollWidth-body.clientWidth,people:[...pop.querySelectorAll('.calendar-preview-person-name')].every(n=>n.scrollWidth<=n.clientWidth+1)}})()`);
    assert(geom.detailLayout.clock&&geom.detailLayout.date&&geom.detailLayout.ordered&&geom.detailLayout.inside&&geom.detailLayout.overflow<=1&&geom.detailLayout.people,'Detail layout '+JSON.stringify(geom.detailLayout));
+   geom.detailMaterial=await browser.evaluate(`(()=>{const d=document.getElementById('calendarEventDetailsV1'),t=d.querySelector('.mws-detail-time-v1'),edit=document.getElementById('calendarDetailsEditV1'),s=n=>getComputedStyle(n);return {glass:s(d).backgroundImage.includes('linear-gradient'),time:s(t).backgroundImage.includes('linear-gradient'),timeRecess:s(t).boxShadow.includes('inset'),action:s(edit).boxShadow!=='none'}})()`);
+   assert(Object.values(geom.detailMaterial).every(Boolean),'Detail material '+JSON.stringify(geom.detailMaterial));
    await capture('calendar-detail');
    const savedBeforeEditor=await browser.evaluate("JSON.stringify(activeEvents())");
    await browser.evaluate("document.getElementById('calendarDetailsEditV1').click()");
@@ -235,10 +237,14 @@ try{
    await capture('calendar-editor');
    geom.editor=await browser.evaluate(`(()=>{const q=id=>document.getElementById(id),modal=q('eventModal'),box=modal.querySelector('.mws-event-editor-v6'),r=box.getBoundingClientRect(),save=q('saveEventBtn').getBoundingClientRect(),cancel=q('eventEditorCancelV13').getBoundingClientRect(),duration=q('evBroadcastDurationWrapV1'),dates=modal.querySelector('.event-date-time-v7');return {title:q('evTitle').value,duration:q('evBroadcastDurationValueV1').textContent,adjacent:dates.nextElementSibling===duration,inside:r.left>=-1&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1,actions:save.width>0&&cancel.width>0&&cancel.right<=save.left+1&&save.bottom<=r.bottom+1}})()`);
    assert(geom.editor.title&&geom.editor.adjacent&&geom.editor.inside&&geom.editor.actions,'Editor geometry '+JSON.stringify(geom.editor));
+   geom.editorMaterial=await browser.evaluate(`(()=>{const m=document.getElementById('eventModal'),s=n=>getComputedStyle(n),q=id=>document.getElementById(id);return {shell:s(m.querySelector('.mws-event-editor-v6')).boxShadow!=='none',title:s(q('evTitle')).boxShadow.includes('inset'),date:s(q('evDateDisplay')).backgroundImage.includes('linear-gradient'),save:s(q('saveEventBtn')).backgroundImage.includes('linear-gradient'),cancel:s(q('eventEditorCancelV13')).backgroundImage.includes('linear-gradient')}})()`);
+   assert(Object.values(geom.editorMaterial).every(Boolean),'Editor material '+JSON.stringify(geom.editorMaterial));
    await browser.evaluate("document.getElementById('eventEditorCancelV13').click()");
    await until(()=>browser.evaluate("!document.getElementById('eventModal').classList.contains('open')"),'Cancel closes without saving');
    assert.equal(await browser.evaluate("JSON.stringify(activeEvents())"),savedBeforeEditor,'Editor open/cancel must not mutate schedules');
   }
+  // Both mobile and desktop retain actual editor action hit targets.
+  // The dedicated modal regression covers opening, closing and rapid re-entry.
   if(viewport[0]>=1700){
    const beforeAgenda=calls.length;
    const originalEvents=await browser.evaluate("JSON.stringify(activeEvents())");
