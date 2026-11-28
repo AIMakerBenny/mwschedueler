@@ -522,17 +522,58 @@ body.mws-premium .event-details-popover-v2 .event-details-section-v1 h3{font-siz
  }
 }
 
-/* Pass P: physical response of the card, without moving the calendar tracks.
-   Keep group selection, pointer dragging and agenda-linked styles independent. */
+/* Pass U: matte schedule instruments with separate physical interaction
+   states. Paint inside the existing card bounds; no scale, translate, layout
+   changes, blur, extra DOM, timers, or new image resources. */
 @media(min-width:901px){
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]{
+   --event-ink:var(--content-group-color,var(--accent));
+   transition:background-color 110ms ease,box-shadow 110ms ease!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]:not(.rest-event):has(.calendar-start-v2[data-clock-state=unknown]) .calendar-start-v2{
+   color:color-mix(in srgb,var(--text) 62%,#e3b66b)!important;
+   font-style:italic;
+   text-decoration:underline dotted;
+   text-underline-offset:2px;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid].rest-event{
+   background:color-mix(in srgb,var(--panel) 88%,var(--event-ink))!important;
+   color:color-mix(in srgb,var(--text) 86%,var(--muted))!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111.linked{
+   outline:1px solid color-mix(in srgb,var(--event-ink) 35%,var(--mws-material-edge));outline-offset:-1px;
+   box-shadow:0 1px 3px #0005;
+ }
  @media(hover:hover) and (pointer:fine){
-  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]:not(.rest-event):not(.mws-ui-group-highlight):not(.event-details-selected-v1):not(.calendar-group-selected-v2):not(.mws-calendar-event-pointer-dragging-v174):not(.mws-agenda-link-v1):hover{
-   outline:1px solid color-mix(in srgb,var(--content-group-color,var(--accent)) 65%,var(--text))!important;
-   outline-offset:-1px;filter:brightness(1.08)!important;
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]:not(.mws-ui-group-highlight):not(.event-details-selected-v1):not(.calendar-group-selected-v2):not(.mws-calendar-event-pointer-dragging-v174):not(.mws-agenda-link-v1):hover{
+   outline:1px solid color-mix(in srgb,var(--event-ink) 55%,var(--text))!important;outline-offset:-1px;
+   background:color-mix(in srgb,var(--event-ink) 31%,var(--panel))!important;
+   box-shadow:inset 0 1px color-mix(in srgb,var(--text) 18%,transparent),inset 0 -1px #0004,0 2px 4px #0005,0 4px 8px #0004!important;
+   filter:none!important;
   }
   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]:not(.mws-ui-group-highlight):not(.event-details-selected-v1):not(.calendar-group-selected-v2):not(.mws-calendar-event-pointer-dragging-v174):not(.mws-agenda-link-v1):active{
-   filter:brightness(.92)!important;
+   background:color-mix(in srgb,var(--event-ink) 22%,var(--panel))!important;
+   box-shadow:inset 0 2px 5px #0007,inset 0 -1px color-mix(in srgb,var(--text) 13%,transparent),0 1px 2px #0003!important;
+   filter:none!important;
   }
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid].event-details-selected-v1:not(.calendar-group-selected-v2):not(.mws-calendar-event-pointer-dragging-v174){
+   background:color-mix(in srgb,var(--event-ink) 35%,var(--panel))!important;
+   outline:1px solid color-mix(in srgb,var(--event-ink) 60%,var(--text))!important;outline-offset:-1px;
+   box-shadow:inset 0 1px color-mix(in srgb,var(--text) 24%,transparent),inset 0 -2px color-mix(in srgb,var(--event-ink) 50%,transparent),0 3px 6px #0005!important;
+   filter:none!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid].calendar-group-selected-v2:not(.mws-calendar-event-pointer-dragging-v174){
+   outline:2px solid #f8fafc!important;outline-offset:-2px;
+   background:color-mix(in srgb,var(--event-ink) 36%,var(--panel))!important;
+   box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--event-ink) 45%,transparent),0 3px 6px #0005!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid].mws-calendar-event-pointer-dragging-v174{
+   outline:1px dashed color-mix(in srgb,var(--event-ink) 55%,var(--text))!important;outline-offset:-1px;
+   box-shadow:inset 0 2px 6px #0006!important;transition:none!important;
  }
  body.mws-premium #calendar.section.active #calendarGrid .mini-event[data-evid]:focus-visible{outline:2px solid var(--accent)!important;outline-offset:-2px}
 }
+html[data-mws-motion=reduced] body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]{transition:none!important}
+@media(prefers-reduced-motion:reduce){body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]{transition:none!important}}
+
