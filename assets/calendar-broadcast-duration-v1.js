@@ -53,3 +53,29 @@
   }
   root.mwsDashboardScheduleStatsV1=Object.freeze({summarize});
 })(typeof window!=='undefined'?window:globalThis);
+
+/* Agenda time distribution. All known non-rest schedule entries, including
+   off-stream entries, are counted as scheduled time, not measured airtime.
+   Overlaps are summed; overnight segments are clipped to the start day. */
+(function(root){
+  'use strict';
+  const clock=value=>{
+    const m=/^([01]\d|2[0-3]):([0-5]\d)$/.exec(String(value||'').trim());
+    return m?Number(m[1])*60+Number(m[2]):null;
+  };
+  function summarize(events){
+    const entries=[],items=Array.isArray(events)?events:[];
+    let minutes=0,unknown=0,overnight=0,rest=0;
+    for(const e of items){
+      if(!e)continue;
+      if(e.restDay){rest++;continue}
+      const start=clock(e.start),duration=root.mwsCalendarBroadcastDurationV1.minutes(e.start,e.end);
+      if(start===null||duration===null){unknown++;continue}
+      const end=start+duration,spill=Math.max(0,end-1440);
+      entries.push({id:String(e.id),start,end:Math.min(1440,end),duration,spill});
+      minutes+=duration;if(spill)overnight++;
+    }
+    return {entries,minutes,unknown,overnight,rest,count:entries.length+unknown};
+  }
+  root.mwsCalendarAgendaTimeV1=Object.freeze({summarize});
+})(typeof window!=='undefined'?window:globalThis);
