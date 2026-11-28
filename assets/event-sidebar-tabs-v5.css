@@ -351,3 +351,15 @@ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions #deleteEventBtn
 body.mws-premium #eventModal .mws-event-editor-v6 .event-actions :is(#saveEventBtn,#eventEditorCancelV13,#deleteEventBtn):not(:disabled):active{
  box-shadow:inset 0 2px 5px #0006!important;
 }
+
+/* Match the desktop editor's real header/footer to the calendar instrument,
+   without replacing its underlying responsive layout or theme support. */
+@media(min-width:901px){
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) #eventModal .mws-event-editor-v6 :is(.event-modal-header,.event-actions){
+   background:var(--mws-calendar-metal-raised)!important;
+   border-color:var(--mws-calendar-rim)!important;
+ }
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) #eventModal .mws-event-editor-v6 .event-actions #eventEditorCancelV13{
+   background:var(--mws-calendar-metal-control)!important;
+ }
+}

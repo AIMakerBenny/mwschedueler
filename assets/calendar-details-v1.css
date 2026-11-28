@@ -609,3 +609,13 @@ body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 :is(#evDat
  background:linear-gradient(165deg,var(--editor-metal),var(--editor-well) 60%)!important;
  box-shadow:inset 0 1px var(--editor-glint),inset 0 -1px #0004!important;
 }
+
+/* Match detail action surfaces to calendar toolbar, preserve 88% glass. */
+@media(min-width:901px){
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) .event-details-popover-v2 .event-details-action-v2:not([hidden]){
+   background:var(--mws-calendar-metal-control)!important;
+ }
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) .event-details-popover-v2 .mws-detail-date-v1{
+   color:color-mix(in srgb,var(--text) 78%,var(--muted));
+ }
+}
