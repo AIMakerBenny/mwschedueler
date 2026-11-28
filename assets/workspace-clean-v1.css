@@ -323,7 +323,7 @@ body.mws-premium :is(input,textarea,[contenteditable]:not([contenteditable="fals
   }
   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) .app>.main{
     background:var(--mws-studio-art) center top / 100% auto no-repeat,
-      radial-gradient(ellipse at 73% 0%,color-mix(in srgb,var(--accent) 11%,var(--bg)),var(--bg) 72%)!important;
+      radial-gradient(ellipse at 73% 0%,color-mix(in srgb,var(--accent) 11%,var(--bg)),var(--bg) 72%) var(--bg)!important;
     border-color:color-mix(in srgb,var(--border) 80%,transparent)!important;
     box-shadow:inset 0 1px var(--mws-studio-glint)!important;
   }
@@ -347,7 +347,7 @@ body.mws-premium :is(input,textarea,[contenteditable]:not([contenteditable="fals
     border-radius:8px 8px 0 0;
   }
   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out){
-    background:linear-gradient(155deg,var(--mws-studio-surface),var(--panel) 55%,color-mix(in srgb,var(--panel) 88%,var(--bg)))!important;
+    background:linear-gradient(155deg,color-mix(in srgb,var(--calendar-grid-surface,var(--panel)) 96%,var(--text)),var(--calendar-grid-surface,var(--panel)) 65%) var(--calendar-grid-surface,var(--panel))!important;
     box-shadow:inset 0 1px var(--mws-studio-glint),inset 0 -1px #0002!important;
   }
   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.today{
@@ -358,14 +358,14 @@ body.mws-premium :is(input,textarea,[contenteditable]:not([contenteditable="fals
     box-shadow:inset 0 0 0 2px var(--accent)!important;
   }
   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]:not(.mws-ui-group-highlight):not(.event-details-selected-v1):not(.calendar-group-selected-v2):not(.mws-calendar-event-pointer-dragging-v174){
-    box-shadow:inset 0 1px #ffffff19,inset 0 -1px #0002,0 2px 4px #0003!important;
+    box-shadow:0 1px 2px #0003,0 2px 4px #0002!important;
   }
   @media(hover:hover) and (pointer:fine){
     body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out):not(.drag-over):not(.template-drag-over):hover{
-      background:linear-gradient(155deg,color-mix(in srgb,var(--accent) 6%,var(--mws-studio-surface)),var(--panel))!important;
+      background:linear-gradient(155deg,color-mix(in srgb,var(--accent) 6%,var(--mws-studio-surface)),var(--calendar-grid-surface,var(--panel))) var(--calendar-grid-surface,var(--panel))!important;
     }
     body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]:not(.mws-calendar-event-pointer-dragging-v174):not(.mws-ui-group-highlight):not(.event-details-selected-v1):not(.calendar-group-selected-v2):hover{
-      box-shadow:inset 0 1px #ffffff30,0 4px 9px #0005!important;
+      box-shadow:0 2px 3px #0003,0 4px 9px #0005!important;
     }
   }
 }
@@ -384,7 +384,7 @@ body.mws-premium :is(input,textarea,[contenteditable]:not([contenteditable="fals
   }
   body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]):has(#dashboard.section.active #dashboardOverviewMode.active) .app>.main{
     background:var(--mws-controlroom-art) center top / 100% auto no-repeat,
-      radial-gradient(ellipse at 76% 4%,color-mix(in srgb,var(--accent) 10%,var(--bg)),var(--bg) 74%)!important;
+      radial-gradient(ellipse at 76% 4%,color-mix(in srgb,var(--accent) 10%,var(--bg)),var(--bg) 74%) var(--bg)!important;
     border-color:color-mix(in srgb,var(--border) 85%,transparent)!important;
     box-shadow:inset 0 1px var(--mws-controlroom-glint)!important;
   }
