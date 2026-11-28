@@ -58,7 +58,7 @@
     const y=x?0:source&&panel.bottom<=source.top+1?6:-6;
     const offset=x+'px '+y+'px';
     const start=previousOffset&&previousOffset!=='none'?previousOffset:open?offset:'0px 0px';
-    motion=drawer.animate([{opacity:from,translate:start},{opacity:open?1:0,translate:open?'0px 0px':offset}],{duration:open?220:150,easing:open?'cubic-bezier(.18,.72,.25,1)':'cubic-bezier(.4,0,.65,1)',fill:'both'});
+    motion=drawer.animate([{opacity:from,translate:start},{opacity:open?1:0,translate:open?'0px 0px':offset}],{duration:open?240:140,easing:open?'cubic-bezier(.18,.72,.25,1)':'cubic-bezier(.4,0,.65,1)',fill:'both'});
     motion.finished.then(complete,()=>{});
   }
   function markSelected(id){

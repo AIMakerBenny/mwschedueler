@@ -602,3 +602,10 @@ body.mws-premium .event-details-popover-v2 .event-details-text-v1{color:var(--te
   color:var(--text);background:var(--mws-material-selected)!important;box-shadow:var(--mws-material-depth)!important;
  }
 }
+
+/* Calendar editor date controls: override the shared field surface by its
+   actual control IDs, keeping the existing picker behavior and geometry. */
+body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 :is(#evDateDisplay,#evStartDisplay,#evEndDisplay){
+ background:linear-gradient(165deg,var(--editor-metal),var(--editor-well) 60%)!important;
+ box-shadow:inset 0 1px var(--editor-glint),inset 0 -1px #0004!important;
+}

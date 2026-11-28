@@ -266,6 +266,8 @@ try{
    for(const track of timeInstrument.tracks){const e=timeInstrument.expected.find(x=>x.id===track.id);assert(e&&Math.abs(track.left-e.start/14.4)<.01&&Math.abs(track.width-(e.end-e.start)/14.4)<.01)}
    assert(timeInstrument.listHeight>200,JSON.stringify(timeInstrument));
    agenda.timeInstrument=timeInstrument;
+   agenda.instrumentMaterial=await browser.evaluate(`(()=>{const p=document.getElementById('calendarAgendaV1'),track=p.querySelector('[data-agenda-track]'),axis=p.querySelector('.mws-agenda-time-axis-v1'),bar=track.firstElementChild,s=n=>getComputedStyle(n);return {housing:s(p).backgroundImage.includes('linear-gradient'),ticks:s(track).backgroundImage.split('repeating-linear-gradient').length===3,bar:s(bar).backgroundImage.includes('linear-gradient'),labels:axis.children.length===5,axisGrid:s(axis).display==='grid'}})()`);
+   assert(Object.values(agenda.instrumentMaterial).every(Boolean),'Agenda material '+JSON.stringify(agenda.instrumentMaterial));
    const linkCheck=await browser.evaluate(`(()=>{
      const panel=document.getElementById('calendarAgendaV1'),track=panel.querySelector('[data-agenda-track]'),id=track.dataset.agendaTrack,card=[...panel.querySelectorAll('[data-agenda-event]')].find(x=>x.dataset.agendaEvent===id),grid=[...document.querySelectorAll('#calendarGrid .mini-event[data-evid]')].find(x=>x.dataset.evid===id),nodes=[track,card,grid],rects=()=>nodes.map(n=>{const r=n.getBoundingClientRect();return [r.x,r.y,r.width,r.height]}),before=JSON.stringify(rects());
      const linked=()=>nodes.every(n=>n.classList.contains('mws-agenda-link-v1'));
