@@ -638,3 +638,28 @@ body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 :is(#evDat
   box-shadow:inset 0 1px 4px #0006!important;transform:none!important;scale:none!important;
  }
 }
+
+/* Pass AB: use genuine spare room on tall high-resolution displays.
+   Keep the compact 1366/FHD and short ultrawide card contract untouched. */
+@media(min-width:2200px) and (min-height:1200px){
+ @container mws-calendar-day (min-width:235px){
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid] .calendar-card-title-v2{
+    font-size:calc(14px * var(--ui-text-scale,1))!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid] .calendar-start-v2{
+    font-size:calc(12px * var(--ui-text-scale,1))!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4))[data-calendar-game-reserved=true]{
+    padding-right:53px!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111.calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4))[data-calendar-game-reserved=true]{
+    padding-right:76px!important;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid][data-calendar-game-reserved=true]>.calendar-vr-badge-v1{
+    right:51px;
+  }
+  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4))[data-calendar-game-reserved=true]>.mws-steam-slot-v111{
+    width:42px!important;min-width:42px!important;
+  }
+ }
+}

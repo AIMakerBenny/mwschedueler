@@ -798,3 +798,13 @@ body #calendar.section .calendar-topbar-v4 #calendarAgendaToggleV1{display:none!
    color:color-mix(in srgb,var(--text) 75%,var(--muted));
  }
 }
+
+/* Pass AB: the optional agenda has more room on tall QHD and above.
+   Increase text, not panel width or grid columns; retain proportional bars. */
+@media(min-width:2200px) and (min-height:1200px){
+ #calendarAgendaV1 .mws-agenda-head-v1 h2{font-size:18px!important}
+ #calendarAgendaV1 .mws-agenda-event-v1 strong{font-size:16px}
+ #calendarAgendaV1 .mws-agenda-event-meta-v1,#calendarAgendaV1 .mws-agenda-event-v1 small{font-size:12px}
+ #calendarAgendaV1 .mws-agenda-track-label-v1,#calendarAgendaV1 .mws-agenda-time-axis-v1{font-size:11px}
+ #calendarAgendaV1 [data-agenda-date]{font-size:13px}
+}

@@ -689,3 +689,26 @@ body[data-device-mode=mobile] #calendar.section[data-mobile-calendar-view=month]
 body.mws-premium .mws-mobile-calendar-day-detail-v130 .mws-mobile-day-event-title-v130{
  overflow-wrap:anywhere;font-weight:750;
 }
+
+/* Pass AB: phone month is a compact overview, not a miniature desktop.
+   Three title lines on narrow phones; keep two cards and the overflow count
+   in normal flow. No extra image slots or duplicated day-detail data. */
+@media(max-width:420px){
+ body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day{
+   padding-inline:1px!important;
+ }
+ body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day:has(.mini-event[data-evid]:not(.mws-mobile-event-hidden-v130)~.mini-event[data-evid]:not(.mws-mobile-event-hidden-v130)){
+   min-height:112px!important;
+ }
+ body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day[data-mobile-more]:not([data-mobile-more=""]){
+   min-height:126px!important;
+ }
+ body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid]{
+   height:38px!important;min-height:38px!important;max-height:38px!important;
+   padding-block:2px!important;
+ }
+ body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid] .calendar-card-title-v2{
+   -webkit-line-clamp:3;line-height:11px!important;max-height:33px!important;
+   word-break:normal;overflow-wrap:anywhere;
+ }
+}

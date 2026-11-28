@@ -363,3 +363,17 @@ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions :is(#saveEventB
    background:var(--mws-calendar-metal-control)!important;
  }
 }
+
+/* Full-width phone editor: keep all primary and secondary footer actions
+   touchable, and the most-used participant search and tools accessible. */
+@media(max-width:560px){
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions>.row:first-child button{
+   min-height:44px!important;
+ }
+ body.mws-premium #eventModal .mws-event-editor-v6 :is(#participantSearch,.event-side-tab-v5,.mws-game-search-row-v112 button,#clearParticipantsBtn){
+   min-height:44px!important;
+ }
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-modal-layout{
+   scroll-padding-bottom:12px;
+ }
+}
