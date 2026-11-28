@@ -810,3 +810,34 @@ html[data-mws-motion=reduced] #calendarGrid.calendar.calendar-redesign-v1 .mini-
  body #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid]:is(:hover,:active){transition:none!important;transform:none!important}
 }
 html[data-mws-motion=reduced] body #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid]:is(:hover,:active){transition:none!important;transform:none!important}
+
+@media(min-width:901px){
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-responsive-scroll-v1:has(>#calendarGrid.calendar-redesign-v1){
+  border:0!important;border-radius:12px!important;box-shadow:0 2px 9px #0004!important;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-responsive-scroll-v1:has(>#calendarGrid.calendar-redesign-v1)>.calendar-head{
+  border:0!important;border-radius:12px 12px 0 0!important;box-shadow:inset 0 -1px color-mix(in srgb,var(--text) 10%,transparent)!important;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(.calendar-view-tabs-v172,.calendar-toolbar>.row,.calendar-jump,.calendar-group-toolbar-v2){
+  gap:3px!important;border:0!important;border-radius:8px!important;box-shadow:inset 0 1px 3px #0003!important;padding:2px!important;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 button:not(:disabled){
+  border:0!important;border-radius:6px!important;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 button[aria-selected=true]{
+  background:color-mix(in srgb,var(--text) 13%,var(--panel))!important;
+  box-shadow:inset 0 1px color-mix(in srgb,var(--text) 15%,transparent),0 1px 3px #0003!important;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) .main:has(#calendar.section.active)>.topbar #newEventBtn{
+  border-radius:9px!important;box-shadow:inset 0 1px #ffffff35,0 2px 5px #0004!important;
+ }
+}
+body:has(#calendar.section.active) .event-details-popover-v2 .event-details-body-v1 .calendar-preview-title{
+ font-weight:700;letter-spacing:-.025em;
+}
+body:has(#calendar.section.active) .event-details-popover-v2 .event-details-section-v1{
+ border-top-color:color-mix(in srgb,var(--text) 9%,transparent);
+}
+body:has(#calendar.section.active) .event-details-popover-v2 .event-details-action-v2{
+ border-radius:8px!important;
+}
