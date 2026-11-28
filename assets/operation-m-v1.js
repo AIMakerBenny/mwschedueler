@@ -448,7 +448,7 @@ function handleConfigClick(e,b){
   }
   if(action==='config-jump-links'||action==='config-jump-art'){
     const scroll=dialog.querySelector('.op-config-scroll'),section=dialog.querySelector(action==='config-jump-art'?'.op-config-art':'.op-config-links');
-    if(scroll&&section){const top=scroll.scrollTop+section.getBoundingClientRect().top-scroll.getBoundingClientRect().top;scroll.scrollTo({top,behavior:reducedMotion()?'instant':'smooth'});section.focus({preventScroll:true})}return true;
+    if(scroll&&section){const top=scroll.scrollTop+section.getBoundingClientRect().top-scroll.getBoundingClientRect().top;scroll.scrollTo({top,behavior:interfaceMotionReduced()||Math.abs(top-scroll.scrollTop)>scroll.clientHeight?'instant':'smooth'});section.focus({preventScroll:true})}return true;
   }
   if(b.dataset.opConfig&&!configPending){showPicker(b.dataset.opConfig);return true}
   if(action==='remove-art'&&b.dataset.opArtRemove&&!configPending){const n=b.dataset.opArtRemove;if(agentArt(n)){configArt[n]='';configNotice='연락처 프로필 복귀 준비 완료';renderConfig({upload:n})}return true}
