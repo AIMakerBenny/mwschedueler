@@ -1,7 +1,8 @@
 /* Real production markup + CSS headless QA. No private Cloudflare data or writes. */
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
-import {spawnSync} from 'node:child_process';
+import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
+import {pathToFileURL} from 'node:url';
 import path from 'node:path';
 import os from 'node:os';
 const file=name=>readFileSync(new URL('../'+name,import.meta.url),'utf8');
@@ -27,9 +28,7 @@ assert(app.includes("safeRenderView('캘린더',renderCalendar)"),'Hydrated cale
 assert(app.includes('contact-card-core')&&app.includes('contact-card-avatar-lg')&&app.includes('contact-card-info'),
   'Must test production DOM classes, not hypothetical card markup');
 
-const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser']
- .map(cmd=>spawnSync('which',[cmd],{encoding:'utf8'})).find(r=>r.status===0)?.stdout.trim();
-assert(chrome,'Chromium required');
+
 
 function geometry(){
  const r=x=>x.getBoundingClientRect();
@@ -132,7 +131,9 @@ ${app.slice(app.indexOf('function renderContactTagBanner(){'),app.indexOf('windo
 ${runtime.slice(runtime.indexOf('function injectAdd(){'),runtime.indexOf('let injectQueuedV141=false;'))}`;
 
 const folder=mkdtempSync(path.join(os.tmpdir(),'mws-contact-readable-'));
+let browser;
 try {
+ browser=await launchCalendarBrowser(folder);
  for(const [width,height,resolution,scale] of [
   [1366,768,'wide',1],[1517,852,'2k',1],[1920,1080,'2k',1],
   [2560,1440,'4k',1],[1366,768,'wide',1.2],[390,844,'mobile',1]
@@ -141,17 +142,14 @@ try {
     '<style>'+css+'\n'+inline+'\n'+newSheet+'</style></head>'+
     '<body class="mws-premium" data-resolution="'+resolution+'" data-ui-frame="classic" style="--ui-text-scale:'+scale+'">'+
     '<div class="app"><aside class="sidebar"></aside><main class="main">'+contactsSection+'</main></div>'+
-    '<pre id="qa-result">pending</pre><script>'+boot+'\n('+geometry.toString()+')()</script></body></html>';
-  const dest=path.join(folder,'contact.html');writeFileSync(dest,page,'utf8');
-  const proc=spawnSync(chrome,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
-    '--no-first-run','--disable-background-networking','--virtual-time-budget=900',
-    '--window-size='+width+','+height,'--dump-dom','file://'+dest],
-    {encoding:'utf8',timeout:20000,maxBuffer:18*1024*1024});
-  assert.equal(proc.status,0,'Chromium failed at '+width+': '+proc.stderr.slice(-600));
-  const match=proc.stdout.match(/<pre id="qa-result">([^<]+)<\/pre>/);
-  assert(match,'No rendered geometry: '+proc.stdout.slice(-900));
-  const result=JSON.parse(match[1].replaceAll('&quot;','"'));
+    '<pre id="qa-result">pending</pre><script>'+boot+'</script></body></html>';
+  // Use the shared isolated CDP browser and a different URL for each
+  // viewport. Evaluate actual geometry after the page and fonts are ready.
+  const dest=path.join(folder,'contact-'+width+'-'+resolution+'-'+scale+'.html');writeFileSync(dest,page,'utf8');
+  await browser.navigate(pathToFileURL(dest).href,width,height);
+  const result=await browser.evaluate('(async()=>{await document.fonts.ready;('+geometry.toString()+')();return JSON.parse(document.getElementById("qa-result").textContent)})()');
+  assert(result&&result.cards===cards.length,'No rendered geometry at '+width+' '+resolution);
   assert(result.ok,'Card/image overlap at '+width+' '+resolution+': '+JSON.stringify(result));
   console.log('CONTACT_CARD_READABLE_OK',JSON.stringify(result));
  }
-}finally{rmSync(folder,{recursive:true,force:true})}
+}finally{await browser?.close();rmSync(folder,{recursive:true,force:true})}

@@ -14,16 +14,21 @@ export async function launchCalendarBrowser(dir){
     buffer+=chunk;let index;
     while((index=buffer.indexOf('\0'))>=0){const message=JSON.parse(buffer.slice(0,index));buffer=buffer.slice(index+1);const entry=pending.get(message.id);if(entry){pending.delete(message.id);clearTimeout(entry.timer);if(message.error)entry.reject(new Error(JSON.stringify(message.error)));else entry.resolve(message.result)}}
   });
-  function send(method,params={},sessionId){return new Promise((resolve,reject)=>{
+  function send(method,params={},sessionId,timeout=25000){return new Promise((resolve,reject)=>{
     if(browser.exitCode!==null||browser.signalCode!==null){reject(new Error('Chromium exited'));return}
-    const id=++serial,timer=setTimeout(()=>{pending.delete(id);reject(new Error(`CDP timeout: ${method}`))},25000);
+    const id=++serial,timer=setTimeout(()=>{pending.delete(id);reject(new Error(`CDP timeout: ${method}`))},timeout);
     pending.set(id,{resolve,reject,timer});browser.stdio[3].write(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})})+'\0');
   })}
   async function close(){if(browser.exitCode===null&&browser.signalCode===null){const exited=new Promise(resolve=>browser.once('exit',resolve));browser.kill();await exited}}
   try{
-    const {targetId}=await send('Target.createTarget',{url:'about:blank'});
-    const {sessionId}=await send('Target.attachToTarget',{targetId,flatten:true});
-    await send('Target.activateTarget',{targetId});
+    // Chromium already starts with about:blank. Reuse that page instead of
+    // asking an overloaded CI browser to create another renderer at startup.
+    // Allow extra time only for startup; measured application budgets remain.
+    const {targetInfos}=await send('Target.getTargets',{},undefined,60000);
+    const initial=targetInfos.find(t=>t.type==='page'&&t.url==='about:blank'&&!t.attached);
+    const targetId=initial?.targetId||(await send('Target.createTarget',{url:'about:blank'},undefined,60000)).targetId;
+    const {sessionId}=await send('Target.attachToTarget',{targetId,flatten:true},undefined,60000);
+    await send('Target.activateTarget',{targetId},undefined,60000);
     const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true},sessionId);assert(!result.exceptionDetails,JSON.stringify(result.exceptionDetails));return result.result.value};
     async function navigate(url,width,height,mobile=false){
       await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile},sessionId);

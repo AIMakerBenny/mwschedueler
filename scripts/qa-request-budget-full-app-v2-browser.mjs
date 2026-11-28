@@ -219,7 +219,7 @@ try{
    assert(labels.length>0&&labels.every(x=>x.visible&&x.width>=x.card*.65&&x.padding<=3),'Mobile VR titles clipped '+JSON.stringify(labels));
    assert(geom.labelMetrics.titles.fullyReadable>0,'Mobile titles must improve on the zero fully readable baseline '+JSON.stringify(geom.labelMetrics));
    if(viewport[0]===390){
-    assert(geom.labelMetrics.titles.fullyReadable>18,'390px title readability must exceed the stage 26 baseline '+JSON.stringify(geom.labelMetrics));
+    assert(geom.labelMetrics.titles.total>0&&geom.labelMetrics.titles.fullyReadable===geom.labelMetrics.titles.total,'390px fixture titles must remain fully readable '+JSON.stringify(geom.labelMetrics));
     geom.phoneTitleLines=await browser.evaluate("getComputedStyle(document.querySelector('#calendarGrid .calendar-card-title-v2')).webkitLineClamp");
     assert.equal(geom.phoneTitleLines,'3');
    }
