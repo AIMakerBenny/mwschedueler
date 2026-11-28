@@ -167,10 +167,11 @@ try{
    const shot=await browser.captureScreenshot();
    writeFileSync(path.join(captureDir,label+'-'+viewport[0]+'x'+viewport[1]+'.jpg'),Buffer.from(shot,'base64'));
   };
+  await browser.setFocusEmulation(true);
   await nav(['calendar']);
   await until(()=>browser.evaluate("document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length>=25"),'Representative calendar loaded');
   await browser.evaluate("document.fonts.ready.then(()=>true)");
-  const scene=await browser.evaluate(`(async()=>{const grid=document.getElementById('calendarGrid'),paint=getComputedStyle(grid),value=paint.getPropertyValue('--calendar-atmosphere-art').trim();if(!value.includes('data:image/png;base64,'))return {present:false};const uri=value.substring(value.indexOf('data:'),value.lastIndexOf('"')),img=new Image();img.src=uri;await img.decode();return {present:true,width:img.naturalWidth,height:img.naturalHeight,bytes:atob(uri.split(',')[1]).length}})()`);
+  const scene=await browser.evaluate(`(async()=>{const grid=document.getElementById('calendarGrid'),paint=getComputedStyle(grid),value=paint.getPropertyValue('--calendar-atmosphere-art').trim();if(!/data:image\\/(?:png|jpeg);base64,/.test(value))return {present:false};const uri=value.substring(value.indexOf('data:'),value.lastIndexOf('"')),img=new Image();img.src=uri;await img.decode();return {present:true,width:img.naturalWidth,height:img.naturalHeight,bytes:atob(uri.split(',')[1]).length}})()`);
   if(viewport[0]>=901)assert(scene.present&&scene.width===1280&&scene.height===720&&scene.bytes<=240000,JSON.stringify(scene));
   else assert(!scene.present,'Mobile must not render the desktop landscape');
   if(viewport[0]>=901)await until(()=>browser.evaluate("document.querySelectorAll('#calendarGrid .mws-steam-slot-v111.linked img').length>=2"),'Existing linked game images rendered');
@@ -189,7 +190,7 @@ try{
    assert(geom.labelMetrics.titles.total>0&&geom.labelMetrics.titles.fullyReadable===geom.labelMetrics.titles.total,'Fixture titles clipped '+JSON.stringify(geom.labelMetrics));
    geom.integratedMaterial=await browser.evaluate(`(()=>{const q=s=>document.querySelector(s),s=n=>getComputedStyle(n),body=s(document.body),main=s(q('.app>.main')),rail=s(q('.app>.sidebar')),header=s(q('#calendar .calendar-head'));return {token:body.getPropertyValue('--mws-calendar-metal').includes('linear-gradient'),sharedHousing:main.backgroundImage===rail.backgroundImage,headerPaint:header.backgroundImage.includes('linear-gradient')}})()`);
    assert(Object.values(geom.integratedMaterial).every(Boolean),'Integrated calendar material '+JSON.stringify(geom.integratedMaterial));
-   geom.opticalSurface=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),s=n=>getComputedStyle(n),day=grid.querySelector('.day:not(.out):not(.today)'),paint=s(grid),glass=s(day),date=s(day.querySelector('.calendar-date-number-v3')),layers=paint.backgroundImage,body=s(document.body);return {oneReflection:layers.split('radial-gradient').length===2&&layers.split('linear-gradient').length===2,embedded:layers.includes('data:image/png;base64,'),covers:paint.backgroundSize.includes('cover'),glassAlpha:glass.backgroundColor,cellWash:glass.backgroundImage.includes('linear-gradient'),noLiveBlur:glass.backdropFilter==='none'&&paint.backdropFilter==='none',dateSize:parseFloat(date.fontSize),dateShadow:date.textShadow!=='none',rim:body.getPropertyValue('--mws-calendar-rim-light').trim().length>0}})()`);
+   geom.opticalSurface=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),s=n=>getComputedStyle(n),day=grid.querySelector('.day:not(.out):not(.today)'),paint=s(grid),glass=s(day),date=s(day.querySelector('.calendar-date-number-v3')),layers=paint.backgroundImage,body=s(document.body);return {oneReflection:layers.split('radial-gradient').length===2&&layers.split('linear-gradient').length===2,embedded:layers.includes('data:image/png;base64,')||layers.includes('data:image/jpeg;base64,'),covers:paint.backgroundSize.includes('cover'),glassAlpha:glass.backgroundColor,cellWash:glass.backgroundImage.includes('linear-gradient'),noLiveBlur:glass.backdropFilter==='none'&&paint.backdropFilter==='none',dateSize:parseFloat(date.fontSize),dateShadow:date.textShadow!=='none',rim:body.getPropertyValue('--mws-calendar-rim-light').trim().length>0}})()`);
    assert(geom.opticalSurface.oneReflection&&geom.opticalSurface.embedded&&geom.opticalSurface.covers&&geom.opticalSurface.glassAlpha==='rgba(12, 14, 18, 0.32)'&&geom.opticalSurface.cellWash&&geom.opticalSurface.noLiveBlur&&geom.opticalSurface.dateSize===13&&geom.opticalSurface.dateShadow&&geom.opticalSurface.rim,'Continuous optical surface '+JSON.stringify(geom.opticalSurface));
    geom.cardMaterial=await browser.evaluate(`(()=>{
      const grid=document.getElementById('calendarGrid'),card=grid.querySelector('.mini-event[data-evid]:not(.rest-event)'),unknown=grid.querySelector('.calendar-start-v2[data-clock-state=unknown]'),rest=grid.querySelector('.mini-event.rest-event'),s=n=>getComputedStyle(n),r=n=>{const b=n.getBoundingClientRect();return [b.x,b.y,b.width,b.height]},base=JSON.stringify(r(card)),original=card.className,oldTransition=card.style.getPropertyValue('transition'),oldPriority=card.style.getPropertyPriority('transition');
@@ -290,8 +291,8 @@ try{
      const linked=()=>nodes.every(n=>n.classList.contains('mws-agenda-link-v1'));
      track.dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));const hover=linked(),stable=JSON.stringify(rects())===before;
      track.dispatchEvent(new PointerEvent('pointerout',{bubbles:true,pointerType:'mouse',relatedTarget:panel.querySelector('[data-agenda-date]')}));const cleared=nodes.every(n=>!n.classList.contains('mws-agenda-link-v1'));
-     card.focus({preventScroll:true});const focus=linked();card.blur();
-     return {hover,stable,cleared,focus,hitHeight:track.getBoundingClientRect().height};
+     card.focus({preventScroll:true});const focus=linked()&&document.activeElement===card,documentFocused=document.hasFocus(),active=document.activeElement?.outerHTML.slice(0,160),inert=!!card.closest('[inert]');card.blur();
+     return {hover,stable,cleared,focus,documentFocused,active,inert,hitHeight:track.getBoundingClientRect().height};
    })()`);
    assert(linkCheck.hover&&linkCheck.stable&&linkCheck.cleared&&linkCheck.focus&&linkCheck.hitHeight>=24,JSON.stringify(linkCheck));
    agenda.linkCheck=linkCheck;

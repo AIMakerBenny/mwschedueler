@@ -1,7 +1,8 @@
 // Deterministic 1280x720 pre-rendered mountain lake, with no runtime renderer or dependency.
 // Pass Y: perspective terrain mesh with interpolated world-space lighting, occlusion, aerial perspective and lake reflections.
 // --check validates decoded pixels; --write regenerates using standard Node zlib.
-import {readFileSync,writeFileSync} from 'node:fs';
+import {readFileSync,writeFileSync,existsSync} from 'node:fs';
+import {checkImportedScene} from './import-calendar-scene-v2.mjs';
 import {inflateSync,deflateSync} from 'node:zlib';
 import assert from 'node:assert/strict';
 function render(){
@@ -97,6 +98,10 @@ function render(){
    raw[y*(W+1)+x+1]=idx;
  }
  return {W,H,pal,raw};
+}
+if(existsSync(new URL('../assets/calendar-scene-art-v2.jpg',import.meta.url))){
+ checkImportedScene(process.argv.includes('--write'));
+ process.exit(0);
 }
 const {W,H,pal,raw}=render();
 const path=new URL('../assets/workspace-clean-v1.css',import.meta.url),css=readFileSync(path,'utf8');

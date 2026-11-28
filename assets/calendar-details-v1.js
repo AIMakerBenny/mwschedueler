@@ -322,7 +322,8 @@
     return target.dataset.evid||target.dataset.agendaEvent||target.dataset.agendaTrack||'';
   }
   function syncLinks(){
-    const id=opened&&(hoverId||focusId);
+    const active=eventId(document.activeElement);
+    const id=opened&&(hoverId||active||focusId);
     let next=[];
     if(id){
       const items=[...grid.querySelectorAll('.mini-event[data-evid]'),...panel.querySelectorAll('[data-agenda-event],[data-agenda-track]')];
@@ -347,11 +348,14 @@
     });
     surface.addEventListener('focusin',e=>{
       if(!opened)return;
-      const id=eventId(e.target);if(focusId!==id){focusId=id;syncLinks()}
+      const id=eventId(e.target);focusId=id;syncLinks()
     });
     surface.addEventListener('focusout',e=>{
       if(!opened)return;
-      const id=eventId(e.relatedTarget);if(focusId!==id){focusId=id;syncLinks()}
+      const id=eventId(e.relatedTarget);focusId=id;
+      // activeElement can still refer to the departing node during focusout.
+      // Reconcile after the browser commits focus, not by polling.
+      queueMicrotask(()=>{if(opened)syncLinks()});
     });
   }
   // One finite animation on the actual panel. Keep grid geometry unchanged

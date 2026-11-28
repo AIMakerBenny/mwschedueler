@@ -124,11 +124,11 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const sceneURL=gridPaint.getPropertyValue('--calendar-atmosphere-art').trim(),scene=new Image();
  scene.src=sceneURL.substring(sceneURL.indexOf('data:'),sceneURL.lastIndexOf('"'));await scene.decode().catch(()=>{});
  const sceneDecoded=scene.naturalWidth===1280&&scene.naturalHeight===720;
- const atmosphericGrid=gridPaint.backgroundColor==='rgb(12, 14, 18)'&&gridPaint.backgroundImage.includes('data:image/png;base64,')&&gridPaint.backgroundSize.includes('cover')&&dayPaint.backgroundColor==='rgba(12, 14, 18, 0.32)'&&dayPaint.backgroundImage.includes('linear-gradient');
+ const atmosphericGrid=gridPaint.backgroundColor==='rgb(12, 14, 18)'&&(gridPaint.backgroundImage.includes('data:image/png;base64,')||gridPaint.backgroundImage.includes('data:image/jpeg;base64,'))&&gridPaint.backgroundSize.includes('cover')&&dayPaint.backgroundColor==='rgba(12, 14, 18, 0.32)'&&dayPaint.backgroundImage.includes('linear-gradient');
  // Use an actual supported alternate theme; wait for its paint to settle.
  const originalTheme=document.body.dataset.theme;document.body.dataset.theme='ocean';await new Promise(r=>setTimeout(r,300));
  const altGrid=getComputedStyle($('#calendarGrid')),altDay=getComputedStyle($('.day:not(.out)'));
- const alternateOpaque=!altGrid.backgroundImage.includes('data:image/png;base64,')&&altDay.backgroundColor.startsWith('rgb(')&&getComputedStyle(document.body).getPropertyValue('--accent').trim()==='#22b8cf';
+ const alternateOpaque=!altGrid.backgroundImage.includes('data:image/png;base64,')&&!altGrid.backgroundImage.includes('data:image/jpeg;base64,')&&altDay.backgroundColor.startsWith('rgb(')&&getComputedStyle(document.body).getPropertyValue('--accent').trim()==='#22b8cf';
  document.body.dataset.theme=originalTheme;await new Promise(r=>setTimeout(r,300));
  const panelPushes=Math.abs(r('#calendarGrid').width-closedWidth)<1&&getComputedStyle($('.app>.main')).transform==='none';
  const popup=r('#calendarEventDetailsV1'),card=r('[data-evid="qa-18-0"]');
