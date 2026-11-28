@@ -384,25 +384,11 @@ body.mws-premium :is(input,textarea,[contenteditable]:not([contenteditable="fals
     box-shadow:inset 0 1px var(--mws-studio-glint),0 2px 5px #0002!important;
     border-radius:8px 8px 0 0;
   }
-  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out){
-    background:linear-gradient(155deg,color-mix(in srgb,var(--calendar-grid-surface,var(--panel)) 96%,var(--text)),var(--calendar-grid-surface,var(--panel)) 65%) var(--calendar-grid-surface,var(--panel))!important;
-    box-shadow:inset 0 1px var(--mws-studio-glint),inset 0 -1px #0002!important;
-  }
-  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.today{
-    box-shadow:inset 0 0 0 1px var(--accent),inset 0 3px 0 var(--accent)!important;
-  }
   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:is(.drag-over,.template-drag-over){
     background:color-mix(in srgb,var(--accent) 14%,var(--panel))!important;
     box-shadow:inset 0 0 0 2px var(--accent)!important;
   }
-  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .mini-event[data-evid]:not(.mws-ui-group-highlight):not(.event-details-selected-v1):not(.calendar-group-selected-v2):not(.mws-calendar-event-pointer-dragging-v174){
-    box-shadow:0 -1px 0 color-mix(in srgb,var(--text) 13%,transparent),0 1px 0 #080d16b3,0 2px 4px #0005!important;
-  }
-  @media(hover:hover) and (pointer:fine){
-    body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out):not(.drag-over):not(.template-drag-over):hover{
-      background:linear-gradient(155deg,color-mix(in srgb,var(--accent) 6%,var(--mws-studio-surface)),var(--calendar-grid-surface,var(--panel))) var(--calendar-grid-surface,var(--panel))!important;
-    }
-  }
+  
 }
 /* Existing motion settings own all animation; no new animation or transform. */
 
@@ -521,25 +507,7 @@ html[data-mws-motion=reduced] #dashboard .dashboard-stats-bar-v1{animation:none}
     background-position:center,center,center,center!important;
     background-size:100% 100%,100% 100%,100% 100%,cover!important;
   }
-  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out):not(.drag-over):not(.template-drag-over){
-    background:var(--mws-calendar-glass) rgba(12,14,18,.32)!important;
-    border-color:#9db7cf38!important;
-    box-shadow:inset 0 1px #c3def20b,inset 0 -1px #05091225!important;
-  }
-  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.out{
-    background:linear-gradient(180deg,#10182491,#0b101ba5)!important;
-  }
-  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.today:not(.drag-over):not(.template-drag-over){
-    box-shadow:inset 0 2px var(--accent),inset 0 0 0 1px color-mix(in srgb,var(--accent) 38%,transparent),inset 0 16px 26px -22px var(--accent)!important;
-  }
-  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .calendar-date-number-v3{
-    font-variant-numeric:tabular-nums;font-size:13px!important;font-weight:700;text-shadow:0 1px 2px #000e,0 0 5px #080c16bf;
-  }
-  @media(hover:hover) and (pointer:fine){
-    body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out):not(.drag-over):not(.template-drag-over):hover{
-      background:var(--mws-calendar-glass-hover) rgba(12,14,18,.32)!important;
-    }
-  }
+  
 }
 
 /* Visual pass S: continuous satin-metal housing and recessed calendar glass. Separate the housing from the landscape and
@@ -559,13 +527,6 @@ html[data-mws-motion=reduced] #dashboard .dashboard-stats-bar-v1{animation:none}
   }
   body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-head>*{
     font-weight:700;letter-spacing:.015em;
-  }
-  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.today .calendar-date-number-v3{
-    background:linear-gradient(145deg,#c3b5ff,var(--accent) 56%,#5944aa);
-    box-shadow:inset 0 1px #e4dcff9c,0 2px 5px #0007;
-  }
-  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out) .calendar-date-number-v3:focus-visible{
-    outline:2px solid #d8e6ff;outline-offset:-2px;
   }
 }
 
@@ -621,9 +582,6 @@ body #calendar.section .calendar-topbar-v4 #calendarAgendaToggleV1{display:none!
  .mws-agenda-empty-v1{padding:20px 8px;text-align:center;color:var(--muted);font-size:12px;line-height:1.6;border:1px dashed var(--border);border-radius:8px}
  body.mws-premium #calendar.section #calendarGrid .day.mws-agenda-date-v1:not(.drag-over):not(.template-drag-over){outline:1px solid var(--accent)!important;outline-offset:-1px}
  /* Selected agenda day uses a cool glass edge, independent of the violet today marker. */
- body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.mws-agenda-date-v1:not(.drag-over):not(.template-drag-over){outline:1px solid var(--mws-calendar-focus)!important;outline-offset:-1px;}
- body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.mws-agenda-date-v1:not(.today):not(.drag-over):not(.template-drag-over){box-shadow:inset 0 2px #8ccee9ab,inset 0 0 22px #78bad112!important;}
- body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.mws-agenda-date-v1:not(.today) .calendar-date-number-v3{color:#c4ecff;text-shadow:0 1px 4px #0b1529;}
 }
 
 /* Pass G: a compact, data-driven day instrument rather than empty chrome. */
@@ -833,24 +791,9 @@ body #calendar.section .calendar-topbar-v4 #calendarAgendaToggleV1{display:none!
 /* Pass AG / stage 37: legible calendar indices on photographic glass.
    Keep the existing 24px date control, weekday semantics, and geometry. */
 @media(min-width:901px){
-  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out):not(.today) .calendar-date-number-v3{
-    font-size:14px!important;
-    font-weight:750;
-    color:#e6eef9;
-    text-shadow:0 1px 2px #03070e,0 0 4px #03070e;
-  }
-  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out):not(.today) .calendar-date-number-v3:not(:hover):not(:focus-visible){
-    background-color:rgba(8,14,24,.74);
-    box-shadow:inset 0 1px #b8d0e61c;
-  }
-  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:nth-child(7n+1 of .day):not(.out):not(.today):not(.mws-agenda-date-v1) .calendar-date-number-v3{color:#ffb3bd}
-  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:nth-child(7n of .day):not(.out):not(.today):not(.mws-agenda-date-v1) .calendar-date-number-v3{color:#b2ccff}
-  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day.mws-agenda-date-v1:not(.today) .calendar-date-number-v3{color:#c4ecff}
   body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-head>*{
     font-size:14px!important;
     text-shadow:0 1px 2px #050a13;
   }
 }
-@media(min-width:1700px){
-  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out):not(.today) .calendar-date-number-v3{font-size:15px!important}
-}
+
