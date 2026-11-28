@@ -99,7 +99,11 @@ for(const [w,h] of [[1366,768],[1600,900],[1715,894],[1726,892],[1766,831],[1913
  // Real pointer hit testing and app-level reduced-motion setting. No layout movement on hover.
  await b.navigate(url,1726,892);
  const point=await b.evaluate(`(async()=>{const q=s=>document.querySelector(s);for(let i=0;i<100&&!q('.op-agent-row');i++)await new Promise(r=>setTimeout(r,20));const b=q('.op-agent-row'),r=b.getBoundingClientRect();window.__opHoverBounds=[r.x,r.y,r.width,r.height];return {x:r.x+r.width/2,y:r.y+r.height/2}})()`);
- await b.movePoint(point.x,point.y);await new Promise(r=>setTimeout(r,240));
+ await b.movePoint(point.x,point.y);
+ // Wait for the actual arrow transition to reach its intended displacement
+ // rather than sampling at a fixed wall-clock instant on a busy runner.
+ const arrowSettled=await b.evaluate(`(async()=>{const arrow=document.querySelector('.op-agent-row .op-tac-arrow'),deadline=performance.now()+1000;while(performance.now()<deadline){const x=Math.abs(new DOMMatrix(getComputedStyle(arrow).transform).m41);if(x>=2.5)return true;await new Promise(r=>setTimeout(r,16))}return false})()`);
+ assert(arrowSettled,'Hover arrow did not reach the existing 2.5px displacement within one second');
  const hover=await b.evaluate(`(()=>{const b=document.querySelector('.op-agent-row'),r=b.getBoundingClientRect(),old=window.__opHoverBounds,a=b.querySelector('.op-tac-arrow'),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {stable:[r.x,r.y,r.width,r.height].every((n,i)=>Math.abs(n-old[i])<.5),hit:b.contains(hit),arrow:Math.abs(new DOMMatrix(getComputedStyle(a).transform).m41)>=2.5,frame:getComputedStyle(b.closest('.op-squad-card').querySelector('.op-armor-frame')).opacity==='1'}})()`);
  assert(Object.values(hover).every(Boolean),JSON.stringify({hover,diagnostics:await b.evaluate(`(()=>{const r=document.querySelector('#operationM'),b=r.querySelector('.op-agent-row'),a=b.querySelector('.op-tac-arrow');return {pointer:r.dataset.opPointer,hover:b.matches(':hover'),fine:matchMedia('(pointer:fine)').matches,mode:document.documentElement.dataset.mwsMotion,shift:getComputedStyle(a).getPropertyValue('--op-arrow-shift'),transform:getComputedStyle(a).transform}})()`)}));await capture('command-hover',1726,892);
  await b.clickPoint(point.x,point.y);
