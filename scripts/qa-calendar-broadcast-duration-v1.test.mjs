@@ -142,3 +142,24 @@ test('dashboard history supports calendar boundaries and distinguishes missing d
   assert.equal(stats.summarize([{date:'2026-02-29',start:'10:00',end:'11:00'}],'2026-03-01',7).count,0);
   assert.equal(stats.summarize([{date:'2024-02-29',start:'10:00',end:'11:00'}],'2024-03-01',7).minutes,60);
 });
+
+test('agenda schedule time distinguishes overnight, overlapping, off-stream, unknown and rest entries',()=>{
+  const model=sandbox.mwsCalendarAgendaTimeV1;
+  const items=[
+    {id:'a',start:'12:00',end:'16:00'},
+    {id:'b',start:'15:00',end:'17:00',device:'비방'},
+    {id:'c',start:'23:00',end:'01:00'},
+    {id:'d',start:'09:00',end:'TBD'},
+    {id:'e',start:'09:00',end:'09:00'},
+    {id:'f',restDay:true,start:'10:00',end:'12:00'}
+  ];
+  const original=JSON.stringify(items),r=model.summarize(items);
+  assert.equal(r.count,5);assert.equal(r.minutes,480);assert.equal(r.unknown,2);assert.equal(r.overnight,1);assert.equal(r.rest,1);
+  assert.deepEqual(JSON.parse(JSON.stringify(r.entries)),[
+    {id:'a',start:720,end:960,duration:240,spill:0},
+    {id:'b',start:900,end:1020,duration:120,spill:0},
+    {id:'c',start:1380,end:1440,duration:120,spill:60}
+  ]);
+  assert.equal(JSON.stringify(items),original);
+  assert.equal(model.summarize([]).count,0);
+});
