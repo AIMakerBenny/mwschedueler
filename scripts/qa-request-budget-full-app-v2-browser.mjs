@@ -170,6 +170,9 @@ try{
   await nav(['calendar']);
   await until(()=>browser.evaluate("document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length>=25"),'Representative calendar loaded');
   await browser.evaluate("document.fonts.ready.then(()=>true)");
+  const scene=await browser.evaluate(`(async()=>{const grid=document.getElementById('calendarGrid'),paint=getComputedStyle(grid),value=paint.getPropertyValue('--calendar-atmosphere-art').trim();if(!value.includes('data:image/png;base64,'))return {present:false};const uri=value.substring(value.indexOf('data:'),value.lastIndexOf('"')),img=new Image();img.src=uri;await img.decode();return {present:true,width:img.naturalWidth,height:img.naturalHeight,bytes:atob(uri.split(',')[1]).length}})()`);
+  if(viewport[0]>=901)assert(scene.present&&scene.width===800&&scene.height===450&&scene.bytes<=240000,JSON.stringify(scene));
+  else assert(!scene.present,'Mobile must not render the desktop landscape');
   await capture('calendar');
   const geom=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),main=document.querySelector('.app>.main'),r=grid.getBoundingClientRect(),m=main.getBoundingClientRect();return {cards:grid.querySelectorAll('.mini-event[data-evid]').length,rootOverflow:document.documentElement.scrollWidth-innerWidth,gridWidth:r.width,mainWidth:m.width,gridHeight:r.height,theme:document.body.dataset.theme,font:getComputedStyle(grid).fontFamily}})()`);
   assert(geom.cards>=25&&geom.rootOverflow<=2&&geom.gridWidth>0,JSON.stringify(geom));
@@ -199,7 +202,7 @@ try{
   await nav(['dashboard']);await capture('dashboard');
   await nav(['calendar']);await browser.evaluate("document.body.dataset.theme='ocean'");await capture('calendar-ocean');
   assert.equal(errors.length,0,JSON.stringify(errors));
-  writeFileSync(path.join(captureDir,'geometry-'+viewport[0]+'.json'),JSON.stringify({viewport,geom,requests:summary(calls)},null,2));
+  writeFileSync(path.join(captureDir,'geometry-'+viewport[0]+'.json'),JSON.stringify({viewport,geom,scene,requests:summary(calls)},null,2));
   console.log('CALENDAR_VISUAL_CAPTURE_OK '+JSON.stringify({viewport,geom}));
  }else if(operationMQA){
   const captureDir=process.env.MWS_OPERATION_M_CAPTURE;
