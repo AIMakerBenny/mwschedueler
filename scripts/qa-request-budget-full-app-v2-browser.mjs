@@ -198,6 +198,10 @@ try{
 
   const geom=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),main=document.querySelector('.app>.main'),r=grid.getBoundingClientRect(),m=main.getBoundingClientRect();return {cards:grid.querySelectorAll('.mini-event[data-evid]').length,rootOverflow:document.documentElement.scrollWidth-innerWidth,gridWidth:r.width,mainWidth:m.width,gridHeight:r.height,theme:document.body.dataset.theme,font:getComputedStyle(grid).fontFamily}})()`);
   assert(geom.cards>=25&&geom.rootOverflow<=2&&geom.gridWidth>0,JSON.stringify(geom));
+  if(viewport[0]===768){
+   geom.tablet=await browser.evaluate(`(()=>{const g=document.getElementById('calendarGrid'),h=[...document.querySelectorAll('#calendar .calendar-head>*')],d=[...g.querySelectorAll('.day')].slice(0,7),r=n=>n.getBoundingClientRect(),wrap=g.parentElement;return {columns:d.length,allVisible:d.every(n=>r(n).left>=0&&r(n).right<=innerWidth+1),aligned:h.length===7&&h.every((n,i)=>Math.abs(r(n).left-r(d[i]).left)<2&&Math.abs(r(n).width-r(d[i]).width)<2),noScroll:wrap.scrollWidth<=wrap.clientWidth+1,minimumWidth:Math.min(...d.map(n=>r(n).width))}})()`);
+   assert(geom.tablet.columns===7&&geom.tablet.allVisible&&geom.tablet.aligned&&geom.tablet.noScroll&&geom.tablet.minimumWidth>40,'All seven tablet dates must fit without horizontal scrolling '+JSON.stringify(geom.tablet));
+  }
   geom.labelMetrics=await browser.evaluate(`(()=>{
    const titles=[...document.querySelectorAll('#calendarGrid .calendar-card-title-v2')].filter(el=>el.getBoundingClientRect().width>0),vr=titles.filter(el=>el.closest('.calendar-event-vr-v1'));
    const dense=[...document.querySelectorAll('#calendarGrid .calendar-day-events-v2')].filter(el=>el.querySelectorAll('.mini-event[data-evid]').length===3);

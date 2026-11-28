@@ -246,6 +246,22 @@ body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #ca
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .mini-event-people,
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .mws-steam-slot-v111{display:none!important}
 
+/* Redesigned mobile calendar: shared continuous surface, not seven
+   individually framed tiles. Keep the existing touch and overflow model. */
+html body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section.active[data-mobile-calendar-view=month] .calendar-responsive-scroll-v1:has(>#calendarGrid.calendar-redesign-v1)>:is(.calendar-head,#calendarGrid){
+ gap:2px!important;padding-inline:0!important;
+}
+html body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section.active[data-mobile-calendar-view=month] #calendarGrid.calendar-redesign-v1 .day:not(.drag-over):not(.template-drag-over){
+ border:0!important;border-radius:3px!important;outline:none!important;
+ background:var(--cal-well,var(--panel))!important;
+ box-shadow:inset -1px 0 var(--cal-seam,transparent),inset 0 -1px var(--cal-seam,transparent)!important;
+}
+html body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section.active[data-mobile-calendar-view=month] #calendarGrid.calendar-redesign-v1 .day.today .calendar-date-number-v3{
+ background:var(--text)!important;color:var(--bg)!important;border-radius:6px!important;
+}
+html body[data-background-custom=true]:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section.active[data-mobile-calendar-view=month] #calendarGrid.calendar-redesign-v1 .day:not(.drag-over):not(.template-drag-over){
+ background:color-mix(in srgb,var(--cal-well,var(--panel)) 78%,transparent)!important;
+}
 /* Latest overflow indicator: two visible events plus +N. */
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .day::after{
   content:none!important;
