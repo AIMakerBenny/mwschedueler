@@ -294,6 +294,7 @@ function sync(){
 }
 function showEnteredWorkspace(){
   if(!root.classList.contains('active'))return;
+  if(!workspaceReady){render();return}
   if(resumeOnEnter){
     resumeOnEnter=false;
     if(tab==='tier'&&guidedResume&&resumeGuided())return;
@@ -304,7 +305,7 @@ function showEnteredWorkspace(){
 async function enter(){
   if(!root.classList.contains('active'))return;
   workspaceWasActive=true;
-  if(report()?.loadedParts?.includes('miniGames')){workspaceReady=true;workspaceError=false;showEnteredWorkspace();return}
+  if(report()?.loadedParts?.includes('miniGames')){if(workspaceLoading){++workspaceLoadEpoch;workspaceLoading=false}workspaceReady=true;workspaceError=false;showEnteredWorkspace();return}
   if(workspaceLoading)return;
   const epoch=++workspaceLoadEpoch;
   workspaceLoading=true;workspaceError=false;render();
@@ -589,7 +590,7 @@ function openDraw(card,epoch){
   card.classList.remove('op-face-down','op-is-flipping','op-deal-flow');card.classList.add('op-face-open');deckPhase='reveal';markMotion('reveal');refreshGuided();
 }
 function drawCard(i=0){
-  if(resetHold||!guided||deckPhase!=='pick'||rankLock||!queue.length||!Number.isInteger(i)||i<0||i>=queue.length)return;
+  if(!root.classList.contains('active')||resetHold||!guided||deckPhase!=='pick'||rankLock||!queue.length||!Number.isInteger(i)||i<0||i>=queue.length)return;
   const n=queue[i];if(!current(n)||state.tiers[n]){shuffleDeck();return}
   const panel=root.querySelector('.op-guided'),stack=panel?.querySelector('.op-deck-reserve'),center=panel?.querySelector('.op-single-center');
   if(!stack||!center)return;
@@ -1106,6 +1107,7 @@ root.addEventListener('click',e=>{
   if(n){if(b.dataset.opResult||tab!=='tier'||!current(n))return;selected=selected===n?'':n;notice='';updateSelection();return}
   if(b.hasAttribute('data-op-tier')){if(selected)move(selected,b.dataset.opTier);return}
   if(b.dataset.opAssign){if(e.detail<=1)confirmRank(b.dataset.opAssign,b);return}
+  if(guided&&['tab-tier','tab-draft'].includes(b.dataset.opAction))return;
   if(rankLock&&b.dataset.opAction==='skip-guided'){skipGuidedMotion();return}
   if(rankLock&&b.dataset.opAction==='toggle-pause'){paused=!paused;b.textContent=paused?'계속 진행':'일시정지';b.setAttribute('aria-pressed',String(paused));return}
   if(rankLock&&b.dataset.opAction!=='reset'){if(!['choose-mode','exit-guided','tab-command','tab-draft','tab-roster','tab-tier','tab-result'].includes(b.dataset.opAction))return;clearRankMotion();rankLock=false;deckPhase='pick';}
