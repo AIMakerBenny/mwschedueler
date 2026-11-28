@@ -172,8 +172,8 @@ for(const [w,h] of [[1366,768],[1600,900],[1715,894],[1726,892],[1766,831],[1913
  click('[data-op-action=tab-draft]');click('[data-op-action=tab-tier]');click('[data-op-action=start-guided]');
  navigate('calendar');await wait(1800);navigate('operationM');skip();const first=card(),shuffleRestored=!!first&&!!q('.op-deck-phase-reveal');
  const live=q('[data-op-current]');navigate('operationM');const duplicateEnter=live===q('[data-op-current]');
- click('[data-op-action=toggle-pause]');navigate('contacts');const firstContact=data.contacts.find(x=>x.name===(first==='리냐_LIN…'?'리냐_LINA':first));firstContact.image=firstContact.image.replace('blue','green');window.mwsOperationM.refresh();navigate('operationM');
- const pauseRestored=card()===first&&window.mwsOperationM.motionReport().paused&&q('[data-op-current] img').getAttribute('src')===firstContact.image;
+ click('[data-op-action=toggle-pause]');navigate('contacts');const firstContact=data.contacts.find(x=>x.name===(first==='리냐_LIN…'?'리냐_LINA':first));firstContact.image=firstContact.image.replace('blue','green');firstContact.name='변경된 연락처 닉네임';window.mwsOperationM.refresh();navigate('operationM');
+ const pauseRestored=card()===first&&window.mwsOperationM.motionReport().paused&&q('[data-op-current] img').getAttribute('src')===firstContact.image&&q('[data-op-current] .op-player-name').textContent===firstContact.name;
  click('[data-op-action=tab-roster]');click('[data-op-action=tab-tier]');const internal=card()===first&&window.mwsOperationM.motionReport().paused;
  click('[data-op-action=toggle-pause]');click('[data-op-assign=S]');navigate('calendar');await wait(1200);navigate('operationM');skip();const committed=tiers()[first]==='S'&&card()!==first&&!!card();
  const seen=[first];while(q('.op-deck-phase-reveal')&&seen.length<20){const n=card();if(seen.includes(n))throw Error('duplicate '+n);seen.push(n);click('[data-op-assign=A]');if(q('.op-deck-phase-confirm'))skip();if(q('.op-deck-phase-draw,.op-deck-phase-flip'))skip()}
