@@ -516,7 +516,7 @@ body.mws-premium .event-details-popover-v2 .event-details-section-v1 h3{font-siz
    body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid][data-calendar-game-reserved=true]>.calendar-vr-badge-v1{
      right:45px;
    }
-   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4))>.mws-steam-slot-v111{
+   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4))[data-calendar-game-reserved=true]>.mws-steam-slot-v111{
      width:36px!important;min-width:36px!important;
    }
  }
