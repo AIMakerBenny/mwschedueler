@@ -36,8 +36,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Verify embedded landscape matches approved source
-        run: node scripts/render-calendar-scene-v1.mjs --check
+      - name: Verify default calendar has no compulsory image
+        run: |
+          node --check assets/app-core.js
+          node --check scripts/qa-request-budget-full-app-v2-browser.mjs
+          ! grep -q -- '--calendar-atmosphere-art:' assets/workspace-clean-v1.css
+          ! grep -q 'data-calendar-scene="photo"' index.html
       - name: Install Korean glyphs for accurate visual review
         run: |
           sudo apt-get update -qq
