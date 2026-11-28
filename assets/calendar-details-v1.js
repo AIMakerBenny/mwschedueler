@@ -266,22 +266,23 @@
     const timeById=new Map((time?.entries||[]).map(entry=>[entry.id,entry]));
     for(const item of view){
       const button=document.createElement('button');button.type='button';button.className='mws-agenda-event-v1';button.dataset.agendaEvent=item.id;
+      if(item.rest)button.dataset.agendaState='rest';else if(!timeById.has(item.id))button.dataset.agendaState='unknown';
       button.setAttribute('aria-haspopup','dialog');
       const isSelected=window.mwsCalendarDetailsV1?.currentId()===item.id;
       button.setAttribute('aria-expanded',String(isSelected));button.classList.toggle('mws-agenda-selected-v1',isSelected);
       if(/^#[0-9a-f]{3,8}$/i.test(item.color))button.style.setProperty('--agenda-event-color',item.color);
       const meta=document.createElement('span');meta.className='mws-agenda-event-meta-v1';
-      const time=document.createElement('time');time.textContent=item.time;meta.append(time);
+      const clock=document.createElement('time');clock.textContent=item.time;meta.append(clock);
       if(item.device){const device=document.createElement('span');device.textContent=item.device;meta.append(device)}
       const title=document.createElement('strong');title.textContent=item.title;
       button.append(meta,title);
       const info=document.createElement('span');info.className='mws-agenda-card-foot-v1';
       if(!item.rest&&item.people){const people=document.createElement('small');people.textContent='참가자 '+item.people+'명';info.append(people)}
-      if(!item.rest&&time){const entry=timeById.get(item.id);if(!entry||entry.spill){const flag=document.createElement('small');flag.className='mws-agenda-time-flag-v1';flag.textContent=entry?'다음 날 종료':'시간 합계 미정';info.append(flag)}}
+      if(!item.rest&&time){const entry=timeById.get(item.id);if(entry){const duration=document.createElement('small');duration.className='mws-agenda-card-duration-v1';duration.textContent=Math.floor(entry.duration/60)+'시간 '+entry.duration%60+'분';info.append(duration)}if(!entry||entry.spill){const flag=document.createElement('small');flag.className='mws-agenda-time-flag-v1';flag.textContent=entry?'다음 날 종료':'시간 합계 미정';info.append(flag)}}
       if(info.childElementCount)button.append(info);
       fragment.append(button);
     }
-    if(!view.length){const empty=document.createElement('div');empty.className='mws-agenda-empty-v1';empty.textContent='등록된 일정이 없습니다.';fragment.append(empty)}
+    if(!view.length){const empty=document.createElement('div');empty.className='mws-agenda-empty-v1';const icon=document.createElement('span');icon.className='mws-agenda-empty-icon-v1';icon.setAttribute('aria-hidden','true');const label=document.createElement('strong');label.textContent='등록된 일정 없음';empty.append(icon,label);fragment.append(empty)}
     list.replaceChildren(fragment);list.scrollTop=scrollTop;syncLinks();
     if(focused)[...list.querySelectorAll('[data-agenda-event]')].find(el=>el.dataset.agendaEvent===focused)?.focus({preventScroll:true});
   }
@@ -289,6 +290,8 @@
     const section=q('[data-agenda-time-section]'),tracks=q('[data-agenda-tracks]'),total=q('[data-agenda-duration]'),note=q('[data-agenda-time-note]');
     if(!section||!tracks||!total||!note)return;
     section.hidden=!time||!time.count;
+    const hasTracks=!!time?.entries.length;tracks.hidden=!hasTracks;
+    const axis=section.querySelector('.mws-agenda-time-axis-v1');if(axis)axis.hidden=!hasTracks;
     tracks.replaceChildren();
     if(!time||!time.count){total.textContent='';note.textContent='';return}
     const duration=n=>Math.floor(n/60)+'시간 '+n%60+'분';
@@ -305,7 +308,9 @@
       const bar=document.createElement('span');bar.className='mws-agenda-track-bar-v1';bar.style.left=e.start/14.4+'%';bar.style.width=(e.end-e.start)/14.4+'%';
       if(/^#[0-9a-f]{3,8}$/i.test(item.color))bar.style.setProperty('--agenda-event-color',item.color);
       if(e.spill)bar.classList.add('is-overnight');
-      row.append(bar);tracks.append(row);
+      const line=document.createElement('div');line.className='mws-agenda-track-line-v1';
+      const labelTime=document.createElement('span');labelTime.className='mws-agenda-track-label-v1';labelTime.textContent=item.time.split(' - ')[0];labelTime.setAttribute('aria-hidden','true');
+      row.append(bar);line.append(labelTime,row);tracks.append(line);
     }
   }
   // One matching identity, paint-only linking between real calendar cards,

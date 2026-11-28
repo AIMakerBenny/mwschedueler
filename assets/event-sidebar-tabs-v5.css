@@ -285,3 +285,14 @@ body.mws-premium #eventModal .mws-event-editor-v6 #saveEventBtn{min-width:116px}
  body.mws-premium #eventModal .mws-event-editor-v6 #saveEventBtn{min-width:96px}
  body.mws-premium #eventModal .mws-event-editor-v6 .event-broadcast-duration-output-v1{flex-basis:120px}
 }
+
+/* Pass O: mobile editor keeps an accessible action rail without squeezing
+   five controls into one row. Desktop retains its existing two-pane layout. */
+@media(max-width:560px){
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions{display:grid!important;grid-template-columns:minmax(0,1fr);gap:6px!important}
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions>.row{display:flex!important;flex-wrap:nowrap!important;margin:0!important;min-width:0}
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions>.row:first-child button{flex:1;min-width:0;min-height:36px;padding-inline:5px}
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions>.row:last-child button{flex:1;min-width:0;min-height:44px}
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-actions>.row:last-child #saveEventBtn{flex:2}
+ body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 .picker-button{min-height:44px}
+}

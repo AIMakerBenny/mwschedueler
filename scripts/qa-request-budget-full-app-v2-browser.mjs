@@ -87,7 +87,7 @@ if(calendarVisualQA){
   if(d%5===0)continue;
   for(let n=0;n<(d%4===0?3:1);n++){
    const c=categories[(d+n)%categories.length];
-   parts.events.push({id:'visual-event-'+d+'-'+n,title:titles[(d+n)%titles.length],date:month+'-'+String(d).padStart(2,'0'),categoryId:c.id,color:c.color,start:['12:00','17:00','20:30'][n],end:['16:00','19:30','23:00'][n],device:n===0?'VR':'PC',participants:['qa0','qa1'],checklist:[],...(d===1&&n===0||d===4&&n===1?{steamGame:{source:'manual',id:'manual:visual-fixture',name:'검증용 게임',platform:'PC',image:'data:image/png;base64,'+png.toString('base64')}}:{})});
+   parts.events.push({id:'visual-event-'+d+'-'+n,title:titles[(d+n)%titles.length],date:month+'-'+String(d).padStart(2,'0'),categoryId:c.id,color:c.color,start:d===2?'23:00':d===3?'TBD':['12:00','17:00','20:30'][n],end:d===2?'01:00':d===3?'TBD':['16:00','19:30','23:00'][n],device:n===0?'VR':'PC',participants:['qa0','qa1'],checklist:[],...(d===1&&n===0||d===4&&n===1?{steamGame:{source:'manual',id:'manual:visual-fixture',name:'검증용 게임',platform:'PC',image:'data:image/png;base64,'+png.toString('base64')}}:{})});
   }
  }
 }
@@ -199,7 +199,15 @@ try{
    await browser.evaluate("document.querySelector('#calendarGrid .day:has(.mini-event[data-evid])').click()");
    await until(()=>browser.evaluate("!!document.querySelector('.mws-mobile-calendar-day-detail-v130.open')"),'Mobile day sheet open');
    await capture('calendar-detail');
-   await browser.evaluate("document.querySelector('.mws-mobile-day-close-v130').click()");
+   const savedBeforeEditor=await browser.evaluate("JSON.stringify(activeEvents())");
+   await browser.evaluate("document.querySelector('.mws-mobile-calendar-day-detail-v130.open [data-mws-event-id]').click()");
+   await until(()=>browser.evaluate("document.getElementById('eventModal').classList.contains('open')"),'Mobile day card opens real editor');
+   await capture('calendar-editor');
+   geom.mobileEditor=await browser.evaluate(`(()=>{const q=id=>document.getElementById(id),modal=q('eventModal'),box=modal.querySelector('.mws-event-editor-v6'),r=box.getBoundingClientRect(),layout=modal.querySelector('.event-modal-layout'),save=q('saveEventBtn').getBoundingClientRect(),cancel=q('eventEditorCancelV13').getBoundingClientRect();return {title:q('evTitle').value,inside:r.left>=-1&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1,scrollable:layout.scrollHeight>layout.clientHeight,overflow:layout.scrollWidth-layout.clientWidth,saveHeight:save.height,cancelHeight:cancel.height,actions:cancel.right<=save.left+1&&save.bottom<=r.bottom+1&&save.right<=r.right+1}})()`);
+   assert(geom.mobileEditor.title&&geom.mobileEditor.inside&&geom.mobileEditor.scrollable&&geom.mobileEditor.overflow<=1&&geom.mobileEditor.saveHeight>=44&&geom.mobileEditor.cancelHeight>=44&&geom.mobileEditor.actions,'Mobile editor geometry '+JSON.stringify(geom.mobileEditor));
+   await browser.evaluate("document.getElementById('eventEditorCancelV13').click()");
+   await until(()=>browser.evaluate("!document.getElementById('eventModal').classList.contains('open')"),'Mobile editor cancel closes');
+   assert.equal(await browser.evaluate("JSON.stringify(activeEvents())"),savedBeforeEditor,'Mobile editor cancel must not mutate schedules');
   }else{
    await browser.evaluate("document.querySelector('#calendarGrid .mini-event[data-evid]').click()");
    await until(()=>browser.evaluate("window.mwsCalendarDetailsV1?.isOpen()===true"),'Calendar detail open');
@@ -260,6 +268,14 @@ try{
    assert.notEqual(await browser.evaluate("document.querySelector('[data-agenda-date]').value"),date);
    await browser.evaluate("document.querySelector('[data-agenda-prev]').click()");
    assert.equal(await browser.evaluate("document.querySelector('[data-agenda-date]').value"),date);
+   const dayPrefix=date.slice(0,8);
+   const choose=async d=>browser.evaluate("(date=>{const input=document.querySelector('[data-agenda-date]');input.value=date;input.dispatchEvent(new Event('change',{bubbles:true}))})("+JSON.stringify(dayPrefix+d)+")");
+   const inspectState=()=>browser.evaluate(`(()=>{const p=document.getElementById('calendarAgendaV1');return {count:p.querySelectorAll('[data-agenda-event]').length,tracks:p.querySelectorAll('[data-agenda-track]').length,hidden:p.querySelector('[data-agenda-time-section]').hidden,axisHidden:p.querySelector('.mws-agenda-time-axis-v1').hidden,total:p.querySelector('[data-agenda-duration]').textContent,empty:!!p.querySelector('.mws-agenda-empty-v1'),rest:!!p.querySelector('[data-agenda-state=rest]'),flag:p.querySelector('.mws-agenda-time-flag-v1')?.textContent,labels:[...p.querySelectorAll('.mws-agenda-track-label-v1')].map(n=>n.textContent)}})()`);
+   await choose('02');const overnight=await inspectState();assert(overnight.count===1&&overnight.tracks===1&&overnight.total==='2시간 0분'&&overnight.flag==='다음 날 종료'&&overnight.labels[0]==='23:00',JSON.stringify(overnight));await capture('calendar-agenda-overnight');
+   await choose('03');const unknown=await inspectState();assert(unknown.count===1&&unknown.tracks===0&&!unknown.hidden&&unknown.axisHidden&&unknown.total==='시간 미정'&&unknown.flag==='시간 합계 미정',JSON.stringify(unknown));await capture('calendar-agenda-unknown');
+   await choose('05');const empty=await inspectState();assert(empty.count===0&&empty.tracks===0&&empty.hidden&&empty.empty,JSON.stringify(empty));await capture('calendar-agenda-empty');
+   await choose('07');const rest=await inspectState();assert(rest.count===1&&rest.hidden&&rest.rest&&!rest.empty,JSON.stringify(rest));await capture('calendar-agenda-rest');
+   agenda.states={overnight,unknown,empty,rest};
    await browser.evaluate("document.querySelector('[data-agenda-close]').click()");
    await until(()=>browser.evaluate("document.getElementById('calendarAgendaV1').hidden"),'Agenda closed');
    assert(await browser.evaluate("!document.querySelector('.mws-agenda-link-v1,.mws-agenda-selected-v1')"),'Closing agenda must clear linked and selected state');

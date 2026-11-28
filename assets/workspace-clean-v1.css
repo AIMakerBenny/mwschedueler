@@ -700,3 +700,20 @@ body #calendar.section .calendar-topbar-v4 #calendarAgendaToggleV1{display:none!
  #calendarAgendaV1 .mws-agenda-card-foot-v1 .mws-agenda-time-flag-v1{color:var(--text);border:1px solid var(--mws-material-edge);border-radius:4px;padding:1px 5px}
  #calendarAgendaV1 .mws-agenda-event-v1 .mws-agenda-event-meta-v1 time{font-variant-numeric:tabular-nums;color:color-mix(in srgb,var(--text) 83%,var(--muted))}
 }
+
+/* Pass O: time-scale labels are in a dedicated rail, leaving the 24-hour
+   track itself proportional and the existing event button as its only owner. */
+@media(min-width:1700px){
+ #calendarAgendaV1 .mws-agenda-time-axis-v1{padding-inline-start:42px}
+ #calendarAgendaV1 .mws-agenda-track-line-v1{display:grid;grid-template-columns:36px minmax(0,1fr);gap:6px;align-items:center;min-width:0;flex:none}
+ #calendarAgendaV1 .mws-agenda-track-label-v1{font-variant-numeric:tabular-nums;font-size:10px;color:var(--muted);white-space:nowrap}
+ #calendarAgendaV1 .mws-agenda-track-line-v1:has(.mws-agenda-link-v1) .mws-agenda-track-label-v1,
+ #calendarAgendaV1 .mws-agenda-track-line-v1:has(.mws-agenda-selected-v1) .mws-agenda-track-label-v1{color:var(--text)}
+ #calendarAgendaV1 .mws-agenda-time-axis-v1[hidden],#calendarAgendaV1 [data-agenda-tracks][hidden]{display:none!important}
+ #calendarAgendaV1 .mws-agenda-card-duration-v1{font-variant-numeric:tabular-nums;color:var(--text)!important}
+ #calendarAgendaV1 .mws-agenda-event-v1[data-agenda-state=rest]{background:var(--mws-material-well)!important}
+ #calendarAgendaV1 .mws-agenda-event-v1[data-agenda-state=unknown] .mws-agenda-time-flag-v1{color:color-mix(in srgb,var(--text) 70%,#d8a64b)}
+ #calendarAgendaV1 .mws-agenda-empty-v1{gap:9px;min-height:138px}
+ #calendarAgendaV1 .mws-agenda-empty-v1 strong{font-weight:600;color:var(--muted)}
+ #calendarAgendaV1 .mws-agenda-empty-icon-v1{width:35px;height:35px;justify-self:center;background:var(--muted);opacity:.65;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'%3E%3Crect x='4' y='7' width='24' height='21' rx='4'/%3E%3Cpath d='M4 13h24M10 4v6M22 4v6M12 20h8'/%3E%3C/svg%3E") center/contain no-repeat}
+}
