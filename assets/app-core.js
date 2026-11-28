@@ -2121,13 +2121,13 @@ function renderCalendar(){
       const at=a.start==='TBD'?'99:99':(a.start||'99:99'),bt=b.start==='TBD'?'99:99':(b.start||'99:99');
       return at.localeCompare(bt)
     });
-    out+=`<div class="day ${inMonth?'':'out'} ${today?'today':''} ${dow===0?'sun':''} ${dow===6?'sat':''}" data-date="${ds}">
+    out+=`<div class="day ${inMonth?'':'out'} ${today?'today':''} ${dow===0?'sun':''} ${dow===6?'sat':''}" data-date="${ds}" data-calendar-density="${evs.length>=3?'dense':evs.length?'normal':'empty'}">
       <div class="daynum"><button type="button" class="calendar-date-number-v3" data-calendar-people-date="${ds}" aria-label="${ds} 오늘 함께한 사람 보기 및 수정">${d.getDate()}</button></div>
       <div class="calendar-day-events-v2" tabindex="0" aria-label="${ds} 일정 ${evs.length}개">${evs.map(e=>{
         const groupColor=groupColors.get(e.contentGroupId);
         const color=e.restDay?'#e85d75':(groupColor||e.color||category(e.categoryId)?.color||'#64748b');
         const startLabel=e.start&&e.start!=='TBD'?String(e.start).slice(0,5):e.historicalRecord?.basis==='publication'?'공개':e.historicalRecord?.basis==='announcement'?'공지':'미정';
-        const label=e.restDay?'휴방':`<time class="calendar-start-v2" data-clock-state="${startLabel==='미정'?'unknown':startLabel==='공개'||startLabel==='공지'?'record':'known'}">${esc(startLabel)}</time><span class="calendar-card-title-v2">${esc(e.title)}</span>`;
+        const label=e.restDay?'<span class="calendar-card-title-v2">휴방</span>':`<span class="calendar-card-title-v2">${esc(e.title)}</span><time class="calendar-start-v2" data-clock-state="${startLabel==='미정'?'unknown':startLabel==='공개'||startLabel==='공지'?'record':'known'}">${esc(startLabel)}</time>`;
         const isVR=!e.restDay&&e.device==='VR';
         return `<div class="mini-event ${e.restDay?'rest-event':''} ${groupColor?'calendar-content-group-event-v2':''} ${e.restDay?'':'mws-steam-host-v111'}${isVR?' calendar-event-vr-v1':''}"
           draggable="false"
@@ -2141,7 +2141,7 @@ function renderCalendar(){
       }).join('')}</div>
     </div>`;
   }
-  const grid=document.getElementById('calendarGrid');grid.innerHTML=out;
+  const grid=document.getElementById('calendarGrid');grid.classList.add('calendar-redesign-v1');grid.innerHTML=out;
   // Record actual month DOM replacements, bounded to the first few renders.
   // This makes startup regressions observable on cold and repeat navigation.
   const startupHistory=window.__mwsCalendarRenderHistoryV2??=[];
