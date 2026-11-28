@@ -200,6 +200,8 @@ try{
   }else{
    await browser.evaluate("document.querySelector('#calendarGrid .mini-event[data-evid]').click()");
    await until(()=>browser.evaluate("window.mwsCalendarDetailsV1?.isOpen()===true"),'Calendar detail open');
+   geom.detailLayout=await browser.evaluate(`(()=>{const pop=document.getElementById('calendarEventDetailsV1'),clock=pop.querySelector('.mws-detail-clock-v1'),date=pop.querySelector('.mws-detail-date-v1'),body=pop.querySelector('.event-details-body-v1'),r=pop.getBoundingClientRect(),c=clock?.getBoundingClientRect(),d=date?.getBoundingClientRect();return {clock:clock?.textContent,date:date?.textContent,ordered:!!(c&&d&&c.top>=d.bottom-1),inside:r.left>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1,overflow:body.scrollWidth-body.clientWidth,people:[...pop.querySelectorAll('.calendar-preview-person-name')].every(n=>n.scrollWidth<=n.clientWidth+1)}})()`);
+   assert(geom.detailLayout.clock&&geom.detailLayout.date&&geom.detailLayout.ordered&&geom.detailLayout.inside&&geom.detailLayout.overflow<=1&&geom.detailLayout.people,'Detail layout '+JSON.stringify(geom.detailLayout));
    await capture('calendar-detail');
    await browser.evaluate("window.mwsCalendarDetailsV1.close({restoreFocus:false})");
   }

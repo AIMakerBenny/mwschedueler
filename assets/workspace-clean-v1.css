@@ -527,7 +527,7 @@ html[data-mws-motion=reduced] #dashboard .dashboard-stats-bar-v1{animation:none}
 @media(min-width:901px){
   body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) .app>.main{
     background:
-      linear-gradient(155deg,color-mix(in srgb,var(--panel) 91%,var(--text)),var(--panel) 23%,var(--bg) 86%)!important;
+      linear-gradient(155deg,color-mix(in srgb,var(--panel) 91%,var(--text)),var(--panel) 23%,var(--bg) 86%) var(--bg)!important;
     box-shadow:inset 0 1px #b9cce73b,inset 0 0 0 1px #41526a45,inset 0 -3px #0007,0 8px 24px #0004!important;
   }
   body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-responsive-scroll-v1{
@@ -692,4 +692,11 @@ body #calendar.section .calendar-topbar-v4 #calendarAgendaToggleV1{display:none!
  #calendarAgendaV1 .mws-agenda-list-v1{scrollbar-color:var(--mws-material-edge) transparent}
  #calendarAgendaV1 .mws-agenda-track-v1{background-color:var(--mws-material-well)!important}
  #calendarAgendaV1 .mws-agenda-track-bar-v1.is-overnight{border-radius:3px 0 0 3px;box-shadow:inset -3px 0 color-mix(in srgb,var(--text) 75%,transparent)}
+}
+
+/* Pass L: separate participant information from exceptional time states. */
+@media(min-width:1700px){
+ #calendarAgendaV1 .mws-agenda-card-foot-v1{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px 8px;min-width:0}
+ #calendarAgendaV1 .mws-agenda-card-foot-v1 .mws-agenda-time-flag-v1{color:var(--text);border:1px solid var(--mws-material-edge);border-radius:4px;padding:1px 5px}
+ #calendarAgendaV1 .mws-agenda-event-v1 .mws-agenda-event-meta-v1 time{font-variant-numeric:tabular-nums;color:color-mix(in srgb,var(--text) 83%,var(--muted))}
 }

@@ -263,6 +263,7 @@
     renderTime(time,view);
     const focused=list.contains(document.activeElement)?document.activeElement.dataset.agendaEvent:'',scrollTop=list.scrollTop;
     const fragment=document.createDocumentFragment();
+    const timeById=new Map((time?.entries||[]).map(entry=>[entry.id,entry]));
     for(const item of view){
       const button=document.createElement('button');button.type='button';button.className='mws-agenda-event-v1';button.dataset.agendaEvent=item.id;
       button.setAttribute('aria-haspopup','dialog');
@@ -274,7 +275,10 @@
       if(item.device){const device=document.createElement('span');device.textContent=item.device;meta.append(device)}
       const title=document.createElement('strong');title.textContent=item.title;
       button.append(meta,title);
-      if(!item.rest&&item.people){const people=document.createElement('small');people.textContent='참가자 '+item.people+'명';button.append(people)}
+      const info=document.createElement('span');info.className='mws-agenda-card-foot-v1';
+      if(!item.rest&&item.people){const people=document.createElement('small');people.textContent='참가자 '+item.people+'명';info.append(people)}
+      if(!item.rest&&time){const entry=timeById.get(item.id);if(!entry||entry.spill){const flag=document.createElement('small');flag.className='mws-agenda-time-flag-v1';flag.textContent=entry?'다음 날 종료':'시간 합계 미정';info.append(flag)}}
+      if(info.childElementCount)button.append(info);
       fragment.append(button);
     }
     if(!view.length){const empty=document.createElement('div');empty.className='mws-agenda-empty-v1';empty.textContent='등록된 일정이 없습니다.';fragment.append(empty)}

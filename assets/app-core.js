@@ -1270,7 +1270,7 @@ function calendarGamePreviewHTMLV3(event){
   const game=calendarGamePreviewV3(event);if(!game?.name)return '';
   return `<section class="calendar-preview-game-v3"><div class="event-details-game-v1">${game.image?`<img src="${esc(game.image)}" alt="${esc(game.name)}" loading="eager">`:''}<span>${esc(game.name)}</span></div></section>`;
 }
-function calendarPreviewHTML(e){
+function calendarPreviewHTML(e,{detail=false}={}){
   const cat=category(e.categoryId),linkedGroup=data.contentGroups?.find(g=>g.id===e.contentGroupId);
   const color=e.restDay?'#e85d75':(linkedGroup?.color||e.color||cat?.color||'#64748b');
   if(e.restDay){
@@ -1278,21 +1278,29 @@ function calendarPreviewHTML(e){
       <div class="calendar-preview-title">휴방</div>
       <span class="chip" style="border-color:${color}">휴방</span>
     </div>
-    <div class="event-meta"><span>${formatDateWeekday(e.date)}</span><span>하루 종일</span></div>`;
+    ${detail?`<div class="event-meta mws-detail-time-v1"><span class="mws-detail-date-v1">${formatDateWeekday(e.date)}</span><strong class="mws-detail-clock-v1">하루 종일</strong></div>`:`<div class="event-meta"><span>${formatDateWeekday(e.date)}</span><span>하루 종일</span></div>`}`;
   }
   const people=eventParticipantRows(e);
   const gamePreview=typeof calendarGamePreviewHTMLV3==='function'?calendarGamePreviewHTMLV3(e):'';
   const broadcastDuration=window.mwsCalendarBroadcastDurationV1?.label(e.start,e.end)||'';
+  const clock=val=>/^([01]\d|2[0-3]):[0-5]\d$/.test(String(val||'').trim())?String(val).trim():'';
+  const start=clock(e.start),end=clock(e.end),overnight=!!(start&&end&&end<start);
+  const detailTime=detail?`<div class="event-meta mws-detail-time-v1">
+    <span class="mws-detail-date-v1">${formatDateWeekday(e.date)}</span>
+    <strong class="mws-detail-clock-v1">${start?esc(start):'시간 미정'}${start&&end?` <span aria-hidden="true">–</span> ${esc(end)}`:''}</strong>
+    <div class="mws-detail-time-foot-v1">${broadcastDuration?`<span class="calendar-preview-broadcast-duration-v1">${esc(broadcastDuration)}</span>`:start?`<span>${end?'시간 합계 미확정':'종료 시간 미정'}</span>`:''}${overnight?'<span class="mws-detail-nextday-v1">다음 날 종료</span>':''}</div>
+    ${linkedGroup?`<span class="calendar-preview-content-group-v2" style="border-color:${color}">${esc(linkedGroup.name)}</span>`:''}
+  </div>`:'';
   return `<div class="space" style="align-items:flex-start">
     <div class="calendar-preview-title">${esc(e.title)}</div>
     <div class="row">${deviceChip(e)}${cat?`<span class="chip" style="border-color:${color}">${esc(cat.name)}</span>`:''}</div>
   </div>
-  <div class="event-meta">
+  ${detail?detailTime:`<div class="event-meta">
     <span>${formatDateWeekday(e.date)}</span>
     ${e.start==='TBD'?'':`<span>${formatTimeKorean(e.start)}${e.end&&e.end!=='TBD'?` - ${formatTimeKorean(e.end)}`:''}</span>`}
     ${broadcastDuration?`<span class="calendar-preview-broadcast-duration-v1">${esc(broadcastDuration)}</span>`:''}
     ${linkedGroup?`<span class="calendar-preview-content-group-v2" style="border-color:${color}">${esc(linkedGroup.name)}</span>`:''}
-  </div>
+  </div>`}
   ${gamePreview}
   <div class="reminder-section" style="margin-top:10px;padding-top:9px">
     <div class="reminder-label">참가자 ${people.length?`· ${people.length}명`:''}</div>
@@ -1915,7 +1923,7 @@ function openCalendarEventDetailsV1(id){
   const checklist=Array.isArray(event.checklist)&&event.checklist.length?section('체크리스트',`<ul>${event.checklist.map(item=>`<li>${item.done?'완료 · ':''}${esc(item.text||'')}</li>`).join('')}</ul>`):'';
   const url=link?section('공지',`<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">공지 열기</a>`):'';
   window.mwsCalendarDetailsV1?.open({id:String(event.id),title:event.restDay?'휴방':event.title,anchor:anchor?.isConnected?anchor:undefined,
-    html:calendarPreviewHTML(event)+description+memo+checklist+url,
+    html:calendarPreviewHTML(event,{detail:true})+description+memo+checklist+url,
     onRefresh:()=>openCalendarEventDetailsV1(event.id),
     onEdit:()=>{openEvent(event.id);requestAnimationFrame(()=>document.getElementById('evTitle')?.focus())}});
 }
