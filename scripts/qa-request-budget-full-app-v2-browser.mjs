@@ -381,6 +381,34 @@ try{
   }else{
    assert(await browser.evaluate("document.getElementById('calendarAgendaV1').hidden&&getComputedStyle(document.getElementById('calendarAgendaToggleV1')).display==='none'"),'Narrow view keeps original calendar');
   }
+  // Exercise groups in the real application, after the ordinary month and
+  // agenda geometry contracts. This isolated in-memory fixture is never saved.
+  if(viewport[0]>=901){
+   const original=await browser.evaluate("JSON.stringify({events:data.events,groups:data.contentGroups})");
+   const beforeGroup=calls.length;
+   try{
+    await browser.evaluate(`(()=>{const a=data.events.find(e=>e.id==='visual-event-1-0'),b=data.events.find(e=>e.id==='visual-event-2-0');if(!a||!b)throw Error('Missing group fixture');data.contentGroups.push({id:'qa-visual-group',name:'연속 콘텐츠 검증',color:'#38bdb1'});a.contentGroupId=b.contentGroupId='qa-visual-group';renderCalendar()})()`);
+    await until(()=>browser.evaluate("document.querySelectorAll('#calendarGrid [data-mws-ui-group=qa-visual-group]').length===2&&!!document.querySelector('#calendarGrid [data-group-id=qa-visual-group]')"),'Actual group rendered');
+    await browser.movePoint(2,2);
+    geom.groupInteraction=await browser.evaluate(`(()=>{const g=document.getElementById('calendarGrid'),cards=[...g.querySelectorAll('[data-mws-ui-group=qa-visual-group]')],bars=[...g.querySelectorAll('.calendar-continuous-ribbon-v1[data-group-id=qa-visual-group]')],all=[...cards,...bars],rects=()=>all.map(n=>[n.offsetLeft,n.offsetTop,n.offsetWidth,n.offsetHeight]),before=JSON.stringify(rects());cards[0].focus({preventScroll:true});const focused=document.activeElement===cards[0]&&all.every(n=>n.classList.contains('mws-ui-group-highlight'));const stable=before===JSON.stringify(rects());return {cards:cards.length,bars:bars.length,focused,stable,distinct:cards[0].querySelector('.calendar-card-title-v2').textContent!==cards[1].querySelector('.calendar-card-title-v2').textContent,unrelated:![...g.querySelectorAll('.mws-ui-group-highlight')].some(n=>!all.includes(n))}})()`);
+    assert(geom.groupInteraction.cards===2&&geom.groupInteraction.bars>=1&&geom.groupInteraction.focused&&geom.groupInteraction.stable&&geom.groupInteraction.distinct&&geom.groupInteraction.unrelated,'Full app group focus '+JSON.stringify(geom.groupInteraction));
+    await capture('calendar-group-focus');
+    await browser.keyPress('Escape');
+    assert(await browser.evaluate("!document.querySelector('#calendarGrid .mws-ui-group-highlight')"),'Escape clears full group focus');
+    await browser.evaluate("document.querySelector('#calendarGrid [data-mws-ui-group=qa-visual-group]').click()");
+    await until(()=>browser.evaluate("window.mwsCalendarDetailsV1?.isOpen()===true"),'Group detail opened');
+    const range=await browser.evaluate("document.querySelector('#calendarEventDetailsV1 .mws-group-range-v2')?.textContent");
+    assert(range?.includes('2일 연속'),'Actual consecutive range '+range);
+    geom.groupInteraction.range=range;
+    await capture('calendar-group-detail');
+    await browser.evaluate("window.mwsCalendarDetailsV1.close({restoreFocus:false})");
+   }finally{
+    await browser.evaluate("(saved=>{data.events=saved.events;data.contentGroups=saved.groups;renderCalendar()})("+original+")");
+   }
+   assert.equal(await browser.evaluate("JSON.stringify({events:data.events,groups:data.contentGroups})"),original,'Group fixture restored without persistence');
+   geom.groupInteraction.apiRequests=calls.slice(beforeGroup).filter(x=>String(x.path||x.url||'').includes('/api/')).length;
+   assert.equal(geom.groupInteraction.apiRequests,0,'Group interaction must not request API data');
+  }
   await nav(['dashboard']);await capture('dashboard');
   await nav(['calendar']);await browser.evaluate("document.body.dataset.theme='ocean'");await capture('calendar-ocean');
   // Run real reload tests after the interaction budget and standard captures,
