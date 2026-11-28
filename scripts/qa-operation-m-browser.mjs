@@ -159,6 +159,30 @@ for(const [w,h] of [[1366,768],[1600,900],[1715,894],[1726,892],[1766,831],[1913
  return {shuffleHeld,resumed,finalHeld,cancelPreserved,resetClears:Object.keys(JSON.parse(saved())).length===0}})()`);
  assert(Object.values(modalRace).every(Boolean),JSON.stringify(modalRace));console.log('OPERATION_M_MODAL_RACE_OK',JSON.stringify(modalRace));
 
+
+ // Category and internal-tab navigation must preserve the live logical deck,
+ // including a partially drawn card, a paused session and a committed rank.
+ await b.navigate(url,1726,892);
+ await b.evaluate("localStorage.removeItem('mws.operationM.simulation.v1')");
+ await b.navigate(url,1726,892);
+ const continuity=await b.evaluate(`(async()=>{
+ const q=s=>document.querySelector(s),click=s=>q(s).click(),skip=()=>click('[data-op-action=skip-guided]'),wait=ms=>new Promise(r=>setTimeout(r,ms)),root=q('#operationM'),key='mws.operationM.simulation.v1',tiers=()=>JSON.parse(localStorage.getItem(key)).tiers,card=()=>q('[data-op-current]')?.dataset.opCurrent;
+ const navigate=tab=>{root.classList.toggle('active',tab==='operationM');window.dispatchEvent(new CustomEvent('mws:workspace-tab-v1',{detail:{tab}}))};
+ for(let i=0;i<100&&!q('.op-command-grid');i++)await wait(20);
+ click('[data-op-action=tab-draft]');click('[data-op-action=tab-tier]');click('[data-op-action=start-guided]');
+ navigate('calendar');await wait(1800);navigate('operationM');skip();const first=card(),shuffleRestored=!!first&&!!q('.op-deck-phase-reveal');
+ const live=q('[data-op-current]');navigate('operationM');const duplicateEnter=live===q('[data-op-current]');
+ click('[data-op-action=toggle-pause]');navigate('contacts');const firstContact=data.contacts.find(x=>x.name===(first==='리냐_LIN…'?'리냐_LINA':first));firstContact.image=firstContact.image.replace('blue','green');window.mwsOperationM.refresh();navigate('operationM');
+ const pauseRestored=card()===first&&window.mwsOperationM.motionReport().paused&&q('[data-op-current] img').getAttribute('src')===firstContact.image;
+ click('[data-op-action=tab-roster]');click('[data-op-action=tab-tier]');const internal=card()===first&&window.mwsOperationM.motionReport().paused;
+ click('[data-op-action=toggle-pause]');click('[data-op-assign=S]');navigate('calendar');await wait(1200);navigate('operationM');skip();const committed=tiers()[first]==='S'&&card()!==first&&!!card();
+ const seen=[first];while(q('.op-deck-phase-reveal')&&seen.length<20){const n=card();if(seen.includes(n))throw Error('duplicate '+n);seen.push(n);click('[data-op-assign=A]');if(q('.op-deck-phase-confirm'))skip();if(q('.op-deck-phase-draw,.op-deck-phase-flip'))skip()}
+ const complete=seen.length===20&&Object.keys(tiers()).length===20&&!!q('.op-tier-workspace');
+ click('[data-op-action=tab-command]');click('[data-op-squad=mudok]');click('.op-agent-tile');navigate('calendar');navigate('operationM');const dossier=q('.op-agent-detail h2')?.textContent==='마왕';
+ return {shuffleRestored,duplicateEnter,pauseRestored,internal,committed,complete,dossier,unique:new Set(seen).size===20,saves:saves===0}
+ })()`);
+ assert(Object.values(continuity).every(Boolean),JSON.stringify(continuity));console.log('OPERATION_M_SESSION_CONTINUITY_OK',JSON.stringify(continuity));await b.evaluate("localStorage.removeItem('mws.operationM.simulation.v1')");
+
 // The command-only job makes visual artifacts available without waiting for the long simulation suite.
 if(process.env.MWS_COMMAND_ONLY==='1'){
  // 11 desktop viewport sizes × sidebar pinned/hidden × three zoom values.
