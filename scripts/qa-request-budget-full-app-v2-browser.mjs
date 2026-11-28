@@ -178,11 +178,15 @@ try{
   // Real upload and removal through the existing settings handlers.
   // Synthetic image is confined to isolated QA; never a product asset.
   const wallpaperBefore=calls.length;
-  await browser.evaluate(`(async()=>{const c=document.createElement('canvas');c.width=32;c.height=16;const ctx=c.getContext('2d');ctx.fillStyle='#ebebeb';ctx.fillRect(0,0,32,16);const b=await new Promise(r=>c.toBlob(r,'image/png'));const dt=new DataTransfer();dt.items.add(new File([b],'qa-wallpaper.png',{type:'image/png'}));const input=document.getElementById('backgroundImageInput');input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);
+  const uploadWallpaper=()=>browser.evaluate(`(async()=>{const c=document.createElement('canvas');c.width=32;c.height=16;const ctx=c.getContext('2d');ctx.fillStyle='#ebebeb';ctx.fillRect(0,0,32,16);const b=await new Promise(r=>c.toBlob(r,'image/png'));const dt=new DataTransfer();dt.items.add(new File([b],'qa-wallpaper.png',{type:'image/png'}));const input=document.getElementById('backgroundImageInput');input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));return true})()`);
+  await uploadWallpaper();
   await until(()=>browser.evaluate("document.body.dataset.backgroundCustom==='true'"),'Wallpaper upload applied');
   const wallpaper=await browser.evaluate(`(()=>{const b=document.body,g=document.getElementById('calendarGrid'),prefs=JSON.parse(localStorage.getItem('mws_device_preferences_v1')||'{}'),s=getComputedStyle(g);return {stored:prefs.backgroundImage?.startsWith('data:image/'),body:getComputedStyle(b).backgroundImage.includes('data:image/'),grid:s.backgroundImage.includes('data:image/'),preview:document.getElementById('backgroundPreview').style.backgroundImage.includes('data:image/')}})()`);
   assert(wallpaper.stored&&wallpaper.body&&wallpaper.preview,'Uploaded wallpaper must be local and visible '+JSON.stringify(wallpaper));
-  if(viewport[0]>=901)assert(wallpaper.grid,'Desktop calendar must use the user wallpaper');
+  assert(wallpaper.grid,'Calendar must use user wallpaper at every tested viewport');
+  const wallpaperAlpha=await browser.evaluate(`(()=>{const d=document.querySelector('#calendarGrid .day:not(.out):not(.today)'),c=document.createElement('canvas');c.width=c.height=1;const x=c.getContext('2d');x.fillStyle=getComputedStyle(d).backgroundColor;x.fillRect(0,0,1,1);return x.getImageData(0,0,1,1).data[3]})()`);
+  assert(wallpaperAlpha<255,'Calendar day must not hide the custom wallpaper');
+  await capture('calendar-custom-background');
   await browser.evaluate("document.getElementById('removeBackgroundBtn').click()");
   await until(()=>browser.evaluate("document.body.dataset.backgroundCustom==='false'"),'Wallpaper removed');
   assert(await browser.evaluate("(()=>{const p=JSON.parse(localStorage.getItem('mws_device_preferences_v1')||'{}');return p.backgroundImage===''&&getComputedStyle(document.body).getPropertyValue('--custom-bg-image').trim()==='none'&&!getComputedStyle(document.getElementById('calendarGrid')).backgroundImage.includes('url(')})()"),'Removal must restore the image-free surface');
@@ -367,6 +371,25 @@ try{
   }
   await nav(['dashboard']);await capture('dashboard');
   await nav(['calendar']);await browser.evaluate("document.body.dataset.theme='ocean'");await capture('calendar-ocean');
+  // Run real reload tests after the interaction budget and standard captures,
+  // so startup traffic is not mistaken for background-setting traffic.
+  await browser.evaluate("document.body.dataset.theme='neon'");
+  await uploadWallpaper();
+  await until(()=>browser.evaluate("document.body.dataset.backgroundCustom==='true'"),'Wallpaper uploaded before reload');
+  await browser.evaluate("(()=>{const s=document.getElementById('backgroundDim');s.value='65';s.dispatchEvent(new Event('input',{bubbles:true}));s.dispatchEvent(new Event('change',{bubbles:true}))})()");
+  const beforeReloadPrefs=await browser.evaluate("JSON.parse(localStorage.getItem('mws_device_preferences_v1'))");
+  assert(beforeReloadPrefs.backgroundImage?.startsWith('data:image/')&&beforeReloadPrefs.backgroundDim===65);
+  const reloadReady=async()=>{const origin=await browser.evaluate('performance.timeOrigin');await browser.reload(false);await until(async()=>{try{return await browser.evaluate("(()=>{document.querySelector('#mwsAnnouncementDialog[open] .mws-notice-close')?.click();return performance.timeOrigin!=="+origin+"&&!!window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading')&&!document.body.classList.contains('mws-gated')})()")}catch{return false}},'Wallpaper reload ready');await nav(['calendar']);await until(()=>browser.evaluate("document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length>=25"),'Calendar restored after wallpaper reload')};
+  await reloadReady();
+  const restoredWallpaper=await browser.evaluate(`(()=>{const b=document.body,p=JSON.parse(localStorage.getItem('mws_device_preferences_v1')),s=getComputedStyle(b);return {image:p.backgroundImage,dim:p.backgroundDim,active:b.dataset.backgroundCustom==='true',paint:getComputedStyle(document.getElementById('calendarGrid')).backgroundImage.includes('data:image/'),cssDim:s.getPropertyValue('--custom-bg-dim').trim(),slider:document.getElementById('backgroundDim').value}})()`);
+  assert(restoredWallpaper.image===beforeReloadPrefs.backgroundImage&&restoredWallpaper.dim===65&&restoredWallpaper.active&&restoredWallpaper.paint&&Number(restoredWallpaper.cssDim)===.65&&restoredWallpaper.slider==='65','Wallpaper and darkness must survive reload');
+  await capture('calendar-custom-background-reload');
+  await browser.evaluate("document.getElementById('removeBackgroundBtn').click()");
+  await reloadReady();
+  const removedAfterReload=await browser.evaluate("(()=>{const p=JSON.parse(localStorage.getItem('mws_device_preferences_v1'));return p.backgroundImage===''&&document.body.dataset.backgroundCustom==='false'&&!getComputedStyle(document.getElementById('calendarGrid')).backgroundImage.includes('url(')})()");
+  assert(removedAfterReload,'Wallpaper removal must survive reload');
+  geom.wallpaperPersistence={uploaded:wallpaper.stored,visible:wallpaper.grid,dayAlpha:wallpaperAlpha,restored:true,dim:65,removedAfterReload};
+  console.log('CALENDAR_WALLPAPER_PERSISTENCE_OK '+JSON.stringify({viewport,...geom.wallpaperPersistence}));
   assert.equal(errors.length,0,JSON.stringify(errors));
   writeFileSync(path.join(captureDir,'geometry-'+viewport[0]+'.json'),JSON.stringify({viewport,geom,scene,requests:summary(calls)},null,2));
   console.log('CALENDAR_VISUAL_CAPTURE_OK '+JSON.stringify({viewport,geom}));
