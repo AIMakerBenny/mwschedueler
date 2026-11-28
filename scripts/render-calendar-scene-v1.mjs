@@ -1,114 +1,94 @@
 // Deterministic 1280x720 pre-rendered mountain lake, with no runtime renderer or dependency.
-// Pass R: sculpted alpine relief, directional ridges, warm atmospheric light and shore reflections.
+// Pass Y: perspective terrain mesh with interpolated world-space lighting, occlusion, aerial perspective and lake reflections.
 // --check validates decoded pixels; --write regenerates using standard Node zlib.
 import {readFileSync,writeFileSync} from 'node:fs';
 import {inflateSync,deflateSync} from 'node:zlib';
 import assert from 'node:assert/strict';
 function render(){
- const W=1280,H=720,horizon=.66;
+ const W=1280,H=720,horizon=438,F=680,cam=2.1;
  const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),mix=(a,b,t)=>a+(b-a)*t,sm=t=>t*t*(3-2*t);
  function hash(x,y){let n=Math.imul(x,374761393)+Math.imul(y,668265263)|0;n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295}
  function noise(x,y){const X=Math.floor(x),Y=Math.floor(y),a=sm(x-X),b=sm(y-Y);return mix(mix(hash(X,Y),hash(X+1,Y),a),mix(hash(X,Y+1),hash(X+1,Y+1),a),b)}
- function fb(x,y){let v=0,a=.56;for(let k=0;k<4;k++){v+=a*noise(x,y);x=x*2.03+13.7;y=y*2.11-8.1;a*=.46}return v}
- const rgb=new Uint8Array(W*H*3);
- function put(x,y,r,g,b){const i=(y*W+x)*3;rgb[i]=clamp(Math.round(r),0,255);rgb[i+1]=clamp(Math.round(g),0,255);rgb[i+2]=clamp(Math.round(b),0,255)}
- // Quiet dusk sky with broken cloud strata lit from the upper left.
+ function fb(x,y,n=4){let v=0,a=.55;for(let k=0;k<n;k++){v+=a*noise(x,y);x=x*2.03+13.7;y=y*2.11-8.1;a*=.47}return v}
+ const peaks=[[-17,30,16,13,20],[-31,51,28,22,28],[-11,69,27,18,24],[1,100,36,25,24],[25,67,30,24,30],[15,33,15,12,19],[39,44,27,20,23],[-6,13,3.8,6,10],[9,17,5,7,11]];
+ function terrain(x,z){
+   const bend=2.4*Math.sin(z*.068)+1.1*Math.sin(z*.14),width=2.5+Math.min(z,45)*.115;
+   const shore=(Math.abs(x-bend)-width)+(fb(x*.33,z*.29,3)-.45)*3;
+   const bank=sm(clamp(shore/5));
+   const far=sm(clamp((z-58)/24));
+   let mass=0;
+   const wx=x+(fb(x*.06,z*.06,3)-.45)*8,wz=z+(fb(x*.08+30,z*.08,3)-.45)*9;
+   for(const [px,pz,h,rx,rz] of peaks){
+     const dx=(wx-px)/rx,dz=(wz-pz)/rz;
+     mass=Math.max(mass,h*Math.max(0,1-Math.sqrt(dx*dx+dz*dz))**.85);
+   }
+   const ridged=1-Math.abs(2*noise(x*.27+z*.12,z*.20)-1);
+   const ridge2=1-Math.abs(2*noise(x*.63-z*.19,z*.47)-1);
+   const shape=mass*(.64+.24*sm(ridged)+.05*sm(ridge2))+1.8*fb(x*.45,z*.43,3)+.22;
+   const land=Math.max(bank,far);
+   return shore<=0&&far<.02?-0.1:shape*land-.28;
+ }
+ const rgb=new Uint8Array(W*H*3),water=new Uint8Array(W*H);
+ const put=(x,y,r,g,b)=>{const i=(y*W+x)*3;rgb[i]=clamp(Math.round(r),0,255);rgb[i+1]=clamp(Math.round(g),0,255);rgb[i+2]=clamp(Math.round(b),0,255)};
  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
-   const u=x/W,v=y/H,t=clamp(v/horizon);
-   const glow=Math.exp(-(((u-.23)/.45)**2+((v-.54)/.25)**2)*1.55);
-   const flow=fb(u*5.7+8,v*15+fb(u*4,v*9)*2.2);
-   const cloud=sm(clamp((flow-.40)/.25))*Math.exp(-((v-.29)**2)/.052);
-   const edge=sm(clamp((flow-.38)/.12))*(1-sm(clamp((flow-.51)/.15)));
-   const rim=edge*glow*17, veil=fb(u*3+44,v*12+2);
-   put(x,y,21+41*t+glow*48-cloud*15+rim+veil*4,31+47*t+glow*26-cloud*12+rim*.65+veil*4,47+55*t+glow*13-cloud*8+rim*.35+veil*5);
+   const u=x/W,v=y/H,t=clamp(y/horizon);
+   const glow=Math.exp(-(((u-.29)/.43)**2+((v-.55)/.30)**2)*1.6);
+   const flow=fb(u*6+18,v*19+fb(u*4,v*10)*2.3);
+   const cloud=sm(clamp((flow-.40)/.24))*Math.exp(-((v-.28)**2)/.055);
+   const rim=sm(clamp((flow-.36)/.15))*(1-sm(clamp((flow-.51)/.18)))*glow;
+   put(x,y,23+51*t+glow*61-cloud*24+rim*16,35+57*t+glow*30-cloud*19+rim*10,56+64*t+glow*8-cloud*12+rim*4);
  }
- // Overlapping, asymmetric massifs. Terrain shading uses an oblique relief field
- // sampled on both axes, rather than extruding a silhouette into vertical bands.
- const layers=[
- {seed:23,base:.665,foot:.685,amp:.34,peaks:[[.00,.63,.19],[.17,.43,.13],[.36,.70,.15],[.49,.45,.10],[.62,.80,.16],[.75,.58,.14],[.91,.85,.20]],c:[76,94,117],fog:[95,113,134],detail:.48},
- {seed:41,base:.674,foot:.700,amp:.39,peaks:[[.00,.70,.22],[.12,.98,.15],[.25,.53,.13],[.40,.22,.11],[.73,.48,.16],[.87,.85,.14],[1.00,.97,.20]],c:[43,62,82],fog:[73,94,112],detail:.78},
- {seed:67,base:.688,foot:.741,amp:.34,peaks:[[.02,.84,.25],[.17,.69,.18],[.31,.32,.18],[.76,.34,.13],[.91,.72,.18],[1.04,.92,.23]],c:[23,40,51],fog:[47,68,82],detail:1},
- {seed:91,base:.70,foot:.83,amp:.26,peaks:[[-.06,.98,.27],[.08,.49,.17],[.96,.58,.18],[1.05,.93,.25]],c:[12,29,36],fog:[27,48,59],detail:1}
- ];
- for(const layer of layers){
-   function profile(u){
-     const warp=(fb(u*7+layer.seed,9)-.45)*.065;
-     let p=0;
-     for(const [center,ht,w] of layer.peaks){const offset=u+warp-center,d=offset/(w*(.96+.20*Math.tanh(offset/.035)));p=Math.max(p,ht*Math.max(0,1-Math.abs(d))**.79)}
-     const small=fb(u*39+layer.seed,7),rough=fb(u*109+layer.seed,31);
-     return layer.base-layer.amp*(p+.13*fb(u*15+layer.seed,5)+.085*small+.028*rough);
-   }
-   function relief(u,v,top){
-     const skew=u+v*(.36+.14*noise(u*10+layer.seed,4));
-     const bend=fb(u*9+layer.seed,v*10)*.027;
-     const mass=fb((skew+bend)*26+layer.seed,v*19+layer.seed);
-     const strata=fb((u-v*.41+bend)*36+layer.seed,v*24+4);
-     const gully=1-Math.abs(2*noise((skew+bend)*48+layer.seed,v*21)-1);
-     return mass*.62+strata*.25+gully*.13;
-   }
+ // Project a continuous terrain mesh. Each depth strip is drawn back to
+ // front, interpolating both world-space lighting and projected elevation
+ // across its vertices. This removes the former flat per-ray color bands.
+ const step=4,N=Math.ceil(W/step)+1;
+ function vertex(x,z){
+   const wx=(x-W*.5)/F*z,h=terrain(wx,z),wet=h<=0;
+   const y=horizon+F*(cam-Math.max(0,h))/z;
+   if(wet)return [y,12,28,40,1];
+   const d=.26,dx=(terrain(wx+d,z)-terrain(wx-d,z))/(2*d),dz=(terrain(wx,z+d)-terrain(wx,z-d))/(2*d);
+   const norm=Math.hypot(dx,1,dz),direct=clamp((dx*.58+.68+dz*.44)/norm,0,1);
+   const slope=Math.hypot(dx,dz),grain=fb(wx*1.1+10,z*1.05,3),strata=noise(wx*.44+z*.3,h*.7);
+   const stone=sm(clamp((h-4)/11)),snow=sm(clamp((h-13)/8))*sm(clamp((1.9-slope)/1.5))*sm(clamp((grain-.20)/.45));
+   const veg=sm(clamp((5.3-h)/4.2))*sm(clamp((1.8-slope)/1.6));
+   const forest=veg*sm(clamp((fb(wx*2.2,z*2.1,3)-.32)/.4));
+   const lit=.57+.64*direct,variation=(grain-.45)*20+(strata-.5)*7-forest*10;
+   const local=[mix(23,76,stone)-veg*7,mix(43,88,stone)+veg*6,mix(46,105,stone)-veg*3].map((c,i)=>mix(c*lit+variation+(i===0?direct*7:i===1?direct*3:0),[153,169,184][i]*(.70+.30*direct),snow));
+   const fog=1-Math.exp(-z*.0087),fogColor=[96,119,140];
+   const c=local.map((v,i)=>mix(v,fogColor[i],fog));
+   return [y,...c,0];
+ }
+ const depths=[];for(let z=1.7;z<132;z+=Math.max(.085,z*.0075))depths.push(z);
+ const row=z=>Array.from({length:N},(_,i)=>vertex(i*step,z));
+ let far=row(depths.at(-1));
+ for(let zi=depths.length-2;zi>=0;zi--){
+   const near=row(depths[zi]);
    for(let x=0;x<W;x++){
-     const u=x/W,top=profile(u),side=(profile(u+.024)-profile(u-.024))/.048;
-     const face=clamp(.52-side*.27,.20,.82);
-     const edge=clamp((Math.abs(u-.5)-.20)/.30);
-     let foot=layer.foot;
-     if(layer.seed>=67)foot=mix(.682,layer.foot,sm(edge));
-     if(layer.seed===91)foot=mix(top,foot,sm(clamp((Math.abs(u-.5)-.21)/.18)));
-     for(let y=Math.max(0,Math.floor(top*H));y<Math.min(H,Math.ceil(foot*H));y++){
-       const v=y/H,t=clamp((v-top)/Math.max(.01,foot-top));
-       const r=relief(u,v,top);
-       const dx=relief(u+.003,v,top)-relief(u-.003,v,top);
-       const dy=relief(u,v+.004,top)-relief(u,v-.004,top);
-       const rock=fb(u*66+layer.seed,v*59+7);
-       const light=clamp(.5+(dx*.78+dy*.54)*3.5,0,1);
-       const ridge=sm(clamp((r-.42)/.24));
-       const snow=sm(clamp((.49-v)*6))*sm(clamp((r-.49)/.20))*sm(clamp((face-.24)/.60));
-       const lit=((face-.47)*13+(light-.47)*43+(ridge-.45)*21+(rock-.45)*10+snow*35)*layer.detail;
-       const trees=sm(clamp((t-.43)/.55))*sm(clamp((.61-r)/.3))*layer.detail;
-       const haze=sm(clamp((t-.24)/.76))*(layer.seed===23?.77:.45);
-       const color=layer.c.map((c,i)=>mix(c+lit+(i===0?-10:i===1?3:-4)*trees+(i===0?9:i===1?4:0)*Math.max(0,face-.45),layer.fog[i],haze));
-       const alpha=clamp((v-top)*H+.45),i=(y*W+x)*3;
-       put(x,y,mix(rgb[i],color[0],alpha),mix(rgb[i+1],color[1],alpha),mix(rgb[i+2],color[2],alpha));
+     const j=Math.floor(x/step),t=(x%step)/step;
+     const a=far[j].map((v,k)=>mix(v,far[j+1][k],t)),b=near[j].map((v,k)=>mix(v,near[j+1][k],t));
+     const low=Math.max(0,Math.floor(Math.min(a[0],b[0]))),high=Math.min(H-1,Math.ceil(Math.max(a[0],b[0])));
+     for(let y=low;y<=high;y++){
+       const p=Math.abs(b[0]-a[0])<.001?.5:clamp((y+.5-a[0])/(b[0]-a[0]));
+       const wet=mix(a[4],b[4],p)>.5;water[y*W+x]=wet?1:0;
+       if(!wet)put(x,y,mix(a[1],b[1],p),mix(a[2],b[2],p),mix(a[3],b[3],p));
      }
    }
+   far=near;
  }
- // Clustered conifers along irregular banks, with tiered branches and depth.
- for(let side=0;side<2;side++){
-   for(let n=0;n<162;n++){
-     const u=(n+hash(n,side+85)*.85)/162*.34;
-     const x=Math.floor((side?1-u:u)*W);
-     const edge=clamp((Math.abs(x/W-.5)-.21)/.29);
-     const bank=horizon+.13*sm(edge);
-     const cluster=fb(u*25+side*21,8),depth=hash(n,side+12);
-     const y=Math.floor((bank-.004-depth*.025)*H);
-     const ht=Math.floor(3+hash(n,side+7)*17*(.22+.78*edge)*(.45+.55*cluster));
-     const half=Math.max(1,Math.round(ht*.23));
-     for(let dy=0;dy<ht;dy++){
-       const tier=.62+.38*Math.sin(dy*1.8+hash(n,5)*3);
-       const span=Math.max(0,Math.round(half*dy/ht*tier));
-       for(let dx=-span;dx<=span;dx++){
-         const xx=x+dx,yy=y-ht+dy;if(xx<0||xx>=W||yy<0||yy>=H)continue;
-         const i=(yy*W+xx)*3,t=.64+.25*edge,light=(dx<0?5:0)+depth*5;
-         put(xx,yy,mix(rgb[i],11+light,t),mix(rgb[i+1],28+light,t),mix(rgb[i+2],33+light,t));
-       }
-     }
-   }
- }
- // Reflected far bank and sky, with compressed vertical perspective and soft horizontal wave ribbons.
+ // Surface water is filled only where the heightfield has exposed lake;
+ // directional reflection samples the completed terrain and sky image.
  const src=rgb.slice();
- for(let y=Math.ceil(horizon*H);y<H;y++)for(let x=0;x<W;x++){
-   const u=x/W,v=y/H,t=(v-horizon)/(1-horizon),edge=clamp((Math.abs(u-.5)-.21)/.29);
-   const bank=horizon+.13*sm(edge);
-   if(v<bank)continue;
-   const wave=noise(u*11+3,v*95),ripple=noise(u*26+9,v*57+13);
-   const sy=Math.floor(clamp((horizon-(v-horizon)*.82+(wave-.5)*(.002+.012*t))*H,0,H-1));
+ for(let y=horizon;y<H;y++)for(let x=0;x<W;x++){
+   if(!water[y*W+x])continue;
+   const u=x/W,t=(y-horizon)/(H-horizon);
+   const wave=noise(u*14+3,y*.13),ripple=noise(u*49+9,y*.071+13);
+   const sy=Math.floor(clamp(horizon-(y-horizon)*.87+(wave-.5)*(1+7*t),0,H-1));
    const sx=Math.floor(clamp(x+(ripple-.5)*(2+13*t),0,W-1)),i=(sy*W+sx)*3;
-   const fresnel=.83-.37*t,glow=Math.exp(-((u-.25)**2)/.07),streak=sm(clamp((wave-.56)/.35))*glow*(4+5*t);
-   const cols=[mix(10,src[i]*.91,fresnel)+streak,mix(23,src[i+1]*.94,fresnel)+streak*.8,mix(33,src[i+2]*.96,fresnel)+streak*.55];
-   const alpha=clamp((v-bank)*H/2+.3),j=(y*W+x)*3;
-   put(x,y,mix(rgb[j],cols[0],alpha),mix(rgb[j+1],cols[1],alpha),mix(rgb[j+2],cols[2],alpha));
+   const reflect=.80-.33*t,shine=Math.exp(-((u-.29)**2)/.048)*sm(clamp((wave-.57)/.32))*8;
+   put(x,y,mix(12,src[i]*.91,reflect)+shine,mix(28,src[i+1]*.94,reflect)+shine*.8,mix(40,src[i+2]*.98,reflect)+shine*.5);
  }
- // Chromatic ramps with moderate precision: spatial detail, not random texture.
- const pal=[],ramps=[[10,20,33,128,157,186],[9,23,30,98,139,155],[16,25,38,157,155,154],[12,24,32,130,142,149]];
+ // Palette quantization: four chromatic ramps, 64 luminance steps each.
+ const pal=[],ramps=[[10,20,33,150,179,208],[9,23,30,111,151,164],[16,25,38,174,169,163],[12,24,32,150,165,177]];
  for(let i=0;i<256;i++){const l=(i%64)/63,c=ramps[i>>6];pal.push(...[0,1,2].map(j=>Math.round(mix(c[j],c[j+3],l))))}
  const raw=new Uint8Array((W+1)*H);
  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
