@@ -294,9 +294,30 @@ for(const [w,h] of [[1366,768],[1726,892],[1715,894],[1920,1080],[2560,1440],[25
  assert(geometry.card>=130&&geometry.cardBottom<geometry.ranksTop&&geometry.same&&geometry.open&&geometry.enabled,JSON.stringify(geometry));if(w>=1366){assert(geometry.ranksBottom<=geometry.limit+2,JSON.stringify(geometry));assert(geometry.stage>=geometry.available*.58&&geometry.card>=Math.min(250,geometry.stage*.65),JSON.stringify(geometry))}
  await capture('guided',w,h);
  const first=await b.evaluate("document.querySelector('[data-op-current]').dataset.opCurrent");
+ // Arm sampling before the real keyboard action, not after two CDP round trips.
+ // This preserves the frame-gap thresholds and captures the start of the
+ // synchronized material reveal even on a busy runner.
+ await b.evaluate(`(()=>{window.qaRankCapture=new Promise(resolve=>{
+  document.addEventListener('keydown',async event=>{
+   if(event.key!=='1')return;
+   await new Promise(requestAnimationFrame);
+   const card=window.qaMoving,frame=card.querySelector('.op-flow-frame'),seal=card.querySelector('.op-portrait-seal'),badge=card.querySelector('.op-flow-badge'),plate=card.querySelector('.op-flow-plate');
+   const charge={locked:[...document.querySelectorAll('[data-op-assign]')].every(x=>x.disabled),saved:Object.keys(JSON.parse(localStorage.getItem('mws.operationM.simulation.v1')).tiers).length};
+   const noSegments=!card.querySelector('.op-portrait-trace,.op-flow-frame i,.op-rank-beam');
+   const vals=[],gaps=[];let previous=null,lastSample=-Infinity;
+   while(card.isConnected){
+    const ts=await new Promise(requestAnimationFrame);if(!card.isConnected)break;
+    if(previous!==null)gaps.push(ts-previous);previous=ts;
+    if(ts-lastSample<45)continue;lastSample=ts;
+    const op=e=>Number(getComputedStyle(e).opacity),r=card.getBoundingClientRect();
+    vals.push({t:ts,seal:op(seal),frame:op(frame),plate:op(plate),badge:op(badge),width:r.width})
+   }
+   resolve({vals,gaps,noSegments,charge});
+  },{capture:true,once:true});
+ });return true})()`);
  await b.keyPress('1');
- const charge=await b.evaluate(`(()=>({locked:[...document.querySelectorAll('[data-op-assign]')].every(x=>x.disabled),saved:Object.keys(JSON.parse(localStorage.getItem('mws.operationM.simulation.v1')).tiers).length}))()`);assert(charge.locked&&charge.saved===1);
- const visual=await b.evaluate(`(async()=>{const card=window.qaMoving,frame=card.querySelector('.op-flow-frame'),seal=card.querySelector('.op-portrait-seal'),badge=card.querySelector('.op-flow-badge'),plate=card.querySelector('.op-flow-plate');const noSegments=!card.querySelector('.op-portrait-trace,.op-flow-frame i,.op-rank-beam');const vals=[],gaps=[];let previous=null,lastSample=-Infinity;while(card.isConnected){const ts=await new Promise(requestAnimationFrame);if(!card.isConnected)break;if(previous!==null)gaps.push(ts-previous);previous=ts;if(ts-lastSample<45)continue;lastSample=ts;const op=e=>Number(getComputedStyle(e).opacity),r=card.getBoundingClientRect();vals.push({t:ts,seal:op(seal),frame:op(frame),plate:op(plate),badge:op(badge),width:r.width})}return {vals,gaps,noSegments}})()`);
+ const visual=await b.evaluate('window.qaRankCapture');
+ assert(visual.charge.locked&&visual.charge.saved===1);
  assert(visual.noSegments&&visual.gaps.length>15&&visual.vals.length>=12,JSON.stringify(visual));const samplesVisual=visual.vals;assert(samplesVisual.some(x=>x.seal>.1&&x.seal<.95&&Math.abs(x.seal-x.frame)<.08&&Math.abs(x.plate-x.badge)<.08),JSON.stringify(visual));assert(samplesVisual.some(x=>x.seal>.98&&x.frame>.98&&x.plate>.98&&x.badge>.98),JSON.stringify(visual));assert(samplesVisual.some(x=>x.width<samplesVisual[0].width*.8),JSON.stringify(visual));
  const frameGaps=visual.gaps.sort((a,b)=>a-b),p95=frameGaps[Math.floor(frameGaps.length*.95)],max=frameGaps.at(-1);assert(p95<=50&&max<=116.8,JSON.stringify({w,h,p95,max}));console.log('OPERATION_M_FRAME_CONTINUITY',w,h,JSON.stringify({frames:visual.gaps.length+1,p95,max,overlap:true}));
  const next=await b.evaluate(`(async()=>{for(let i=0;i<300&&!document.querySelector('.op-deck-phase-reveal');i++)await new Promise(r=>setTimeout(r,15));return{n:document.querySelector('[data-op-current]')?.dataset.opCurrent,one:document.querySelectorAll('[data-op-current]').length,stack:document.querySelectorAll('[data-op-draw]').length,stage:document.querySelector('.op-guided-stage')===window.qaStage,count:document.querySelector('[data-op-completed=S] b').textContent}})()`);assert.notEqual(next.n,first);assert(next.n&&next.one===1&&next.stack===1&&next.stage&&next.count==='1',JSON.stringify(next));
