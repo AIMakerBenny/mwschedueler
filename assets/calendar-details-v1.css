@@ -744,15 +744,15 @@ body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 :is(#evDat
   transform:none!important;border-radius:5px!important;outline:none!important;box-shadow:none!important;
  }
  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid]:not([data-calendar-game-reserved=true])>.mws-steam-slot-v111{
-  position:absolute!important;inset:auto 3px 2px auto!important;width:17px!important;min-width:17px!important;height:14px!important;min-height:14px!important;transform:none!important;
+  position:absolute!important;inset:50% 3px auto auto!important;width:24px!important;min-width:24px!important;height:24px!important;min-height:24px!important;transform:translateY(-50%)!important;
   background:transparent!important;box-shadow:none!important;border:0!important;font-size:12px!important;
  }
  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid]>.calendar-vr-badge-v1{
-  inset:auto 23px 3px auto!important;width:17px;height:11px;transform:none;border-radius:3px;font-size:8px;border:0;
+  inset:auto 30px 3px auto!important;width:17px;height:11px;transform:none;border-radius:3px;font-size:8px;border:0;
  }
  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid][data-calendar-game-reserved=true]>.calendar-vr-badge-v1{right:4px!important}
- body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid]:not([data-calendar-game-reserved=true]) .calendar-start-v2{padding-right:19px}
- body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid].calendar-event-vr-v1 .calendar-start-v2{padding-right:37px}
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid]:not([data-calendar-game-reserved=true]) .calendar-start-v2{padding-right:0}
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid].calendar-event-vr-v1 .calendar-start-v2{padding-right:19px}
  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid][data-calendar-game-reserved=true].calendar-event-vr-v1 .calendar-start-v2{padding-right:19px}
  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day[data-calendar-density=dense] .mini-event[data-evid]:not(.rest-event):not(:has(.calendar-event-drag-handle-v4)){
   min-height:28px!important;padding-block:2px!important;margin-block:1px!important;
@@ -785,3 +785,28 @@ html[data-mws-motion=reduced] #calendarGrid.calendar.calendar-redesign-v1 .mini-
  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid]:focus-visible{outline:2px solid var(--accent)!important;outline-offset:-2px}
  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid]>.mws-steam-slot-v111:focus-visible{outline:2px solid var(--text)!important;outline-offset:-2px}
 }
+
+@media(min-width:901px){
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid].mws-steam-host-v111:not([data-calendar-game-reserved=true]):not(:has(.calendar-event-drag-handle-v4)){
+   padding-right:30px!important;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid].calendar-event-vr-v1 .calendar-start-v2{padding-right:19px}
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid][data-calendar-game-reserved=true]>.mws-steam-slot-v111{min-height:24px!important}
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid].mws-calendar-event-pointer-dragging-v174{outline:1px dashed var(--text)!important;outline-offset:-1px}
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .calendar-date-number-v3:focus-visible{outline:2px solid var(--accent)!important;outline-offset:1px}
+ @container mws-calendar-day (min-width:220px){
+  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid][data-calendar-game-reserved=true]:not(:has(.calendar-event-drag-handle-v4)){padding-left:44px!important}
+  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid][data-calendar-game-reserved=true]>.mws-steam-slot-v111{width:36px!important;min-width:36px!important}
+ }
+}
+@media(min-width:2200px) and (min-height:1200px){
+ @container mws-calendar-day (min-width:235px){
+  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid] .calendar-card-title-v2{font-size:calc(14px * var(--ui-text-scale,1))!important}
+  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid][data-calendar-game-reserved=true]:not(:has(.calendar-event-drag-handle-v4)){padding-left:50px!important}
+  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid][data-calendar-game-reserved=true]>.mws-steam-slot-v111{width:42px!important;min-width:42px!important}
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid]:is(:hover,:active){transition:none!important;transform:none!important}
+}
+html[data-mws-motion=reduced] body #calendar.section.active #calendarGrid.calendar.calendar-redesign-v1 .day .mini-event[data-evid]:is(:hover,:active){transition:none!important;transform:none!important}
