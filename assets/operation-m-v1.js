@@ -8,6 +8,7 @@ let state=read(),tab='command',selected='',dragName='',picker='',query='',notice
 let configDraft=null,configSaving=false,configBaseline=null,configArt={},configDiscard=false,configPending=false,configNotice='',workspaceReady=false,workspaceLoading=false,workspaceError=false;
 let arrived='',layoutFrame=0,queue=[],guided=false,choosingMode=false,rankLock=false,rankTimer=0;
 let lastView='',guidedHistory=[],lastMove=null;
+let guidedResume=null,workspaceLoadEpoch=0,workspaceWasActive=root.classList.contains('active'),resumeOnEnter=false;
 let resetDialog=null,resetHold=false,pendingRefresh=false,lastPermission=false,commandImageKeys=new Map();
 let rankEffects=[],rankClock=0,rankCompletion=null;
 let draftRun=null,draftRender=false;
@@ -223,7 +224,7 @@ function goCommand(squad='',agent='',origin=null){
   const keepAgentSwitch=origin?.closest('.op-agent-switch-grid')&&sameAgentView;
   const step=origin?.dataset.opStep;
   const main=root.closest('.main'),scroll=main?.scrollTop||0;
-  finishDraft(false);stopShuffle();clearRankMotion();stopCommandTransitions();rankLock=false;guided=false;choosingMode=false;selected='';tab='command';activeSquad=squad;activeAgent=agent;artNotice='';
+  suspendGuided();finishDraft(false);stopShuffle();clearRankMotion();stopCommandTransitions();rankLock=false;guided=false;choosingMode=false;selected='';tab='command';activeSquad=squad;activeAgent=agent;artNotice='';
   const patched=sameAgentView&&squadFor(agent)&&patchAgentDetail(squadFor(agent),agent);
   if(!patched)render();
   const heading=root.querySelector('.op-command-workspace h2');
@@ -291,14 +292,25 @@ function sync(){
   if(missing.length&&state.teams.length){state.teams=[];save()}
   if(changed)save();
 }
+function showEnteredWorkspace(){
+  if(!root.classList.contains('active'))return;
+  if(resumeOnEnter){
+    resumeOnEnter=false;
+    if(tab==='tier'&&guidedResume&&resumeGuided())return;
+    render();return;
+  }
+  if(root.querySelector('.op-shell[data-view]'))refreshView();else render();
+}
 async function enter(){
   if(!root.classList.contains('active'))return;
-  if(report()?.loadedParts?.includes('miniGames')){workspaceReady=true;workspaceError=false;render();return}
+  workspaceWasActive=true;
+  if(report()?.loadedParts?.includes('miniGames')){workspaceReady=true;workspaceError=false;showEnteredWorkspace();return}
   if(workspaceLoading)return;
+  const epoch=++workspaceLoadEpoch;
   workspaceLoading=true;workspaceError=false;render();
-  try{workspaceReady=typeof window.mwsV55EnsureParts==='function'&&await window.mwsV55EnsureParts('toolTier')===true;workspaceError=!workspaceReady}
-  catch(_){workspaceReady=false;workspaceError=true}
-  finally{workspaceLoading=false;render()}
+  try{const ok=typeof window.mwsV55EnsureParts==='function'&&await window.mwsV55EnsureParts('toolTier')===true;if(epoch!==workspaceLoadEpoch)return;workspaceReady=ok;workspaceError=!ok}
+  catch(_){if(epoch!==workspaceLoadEpoch)return;workspaceReady=false;workspaceError=true}
+  finally{if(epoch===workspaceLoadEpoch){workspaceLoading=false;showEnteredWorkspace()}}
 }
 const current=n=>byId.get(state.links[n]);
 const display=n=>current(n)?.name||n;
@@ -336,7 +348,7 @@ function modeChoice(){
   return '<section class="op-mode-choice" aria-label="티어 분류 방식 선택"><div class="op-mode-options">'+[['guided','한 장씩 분류','카드를 한 장씩 공개하고 티어를 결정합니다.','start-guided'],['list','전체 목록 분류','원하는 참가자를 자유롭게 티어에 배치합니다.','start-list']].map(([mode,title,description,action])=>'<button type="button" class="op-mode-card" data-mode="'+mode+'" data-op-action="'+action+'">'+tacFrame()+modePreview(mode)+'<span class="op-mode-caption"><strong>'+title+'</strong><span>'+description+'</span></span></button>').join('')+'</div></section>';
 }
 function chooseMode(focus=false){
-  stopShuffle();tab='tier';guided=false;choosingMode=true;selected='';notice='';render();
+  guidedResume=null;stopShuffle();tab='tier';guided=false;choosingMode=true;selected='';notice='';render();
   if(focus)root.querySelector('.op-mode-card')?.focus({preventScroll:true});
 }
 function sameConfig(a,b){return !!a&&!!b&&ROSTER.every(n=>(a.links[n]||'')===(b.links[n]||''))&&a.roles.every((id,i)=>id===b.roles[i])}
@@ -465,7 +477,7 @@ function openResetDialog(trigger){
       flushPendingRefresh();return;
     }
     stopShuffle();clearRankMotion();rankLock=false;deckPhase='pick';
-    state.tiers={};state.teams=[];lastMove=null;guidedHistory=[];choosingMode=false;selected='';notice='';save();
+    guidedResume=null;state.tiers={};state.teams=[];lastMove=null;guidedHistory=[];choosingMode=false;selected='';notice='';save();
     if(wasGuided)startGuided();else{guided=false;render()}
   };
   // Real form submissions settle in the same task; native close/Escape remain supported.
@@ -525,7 +537,7 @@ function finishShuffle(epoch){
   if(!paused&&!document.hidden)drawCard(0);
 }
 function startGuided(){
-  tab='tier';choosingMode=false;guided=ROSTER.some(n=>current(n)&&!state.tiers[n]);guidedHistory=[];selected='';notice=guided?'':'분류할 미분류 참가자가 없습니다.';paused=false;guidedMode=motionPreference();motionTrace=[];
+  guidedResume=null;tab='tier';choosingMode=false;guided=ROSTER.some(n=>current(n)&&!state.tiers[n]);guidedHistory=[];selected='';notice=guided?'':'분류할 미분류 참가자가 없습니다.';paused=false;guidedMode=motionPreference();motionTrace=[];
   if(guided)shuffleDeck();else render();
 }
 function stackMarkup(count){
@@ -618,6 +630,29 @@ function drawCard(i=0){
   }
 }
 
+// Retain the logical deck, never detached animation nodes or stale timers.
+// A partially drawn card is restored face-up; a committed rank stays committed.
+function suspendGuided(){
+  if(!guided)return;
+  const phase=['draw','flip','reveal'].includes(deckPhase)?'reveal':'pick';
+  guidedResume={queue:[...queue],history:[...guidedHistory],paused,phase,links:{...state.links}};
+  stopShuffle();clearRankMotion();rankLock=false;guided=false;deckPhase='pick';
+}
+function resumeGuided(){
+  const saved=guidedResume;if(!saved)return false;
+  guidedResume=null;sync();
+  const eligible=ROSTER.filter(n=>current(n)&&!state.tiers[n]);
+  if(!eligible.length){guided=false;choosingMode=false;tab='tier';render();return true}
+  const valid=new Set(eligible);
+  queue=[...new Set(saved.queue.filter(n=>valid.has(n)&&saved.links[n]===state.links[n]))];
+  for(const n of eligible)if(!queue.includes(n))queue.push(n);
+  guidedHistory=saved.history.filter(n=>state.tiers[n]&&saved.links[n]===state.links[n]);
+  paused=saved.paused;guided=true;choosingMode=false;tab='tier';selected='';notice='';
+  deckPhase=saved.phase==='reveal'&&queue[0]===saved.queue[0]&&saved.links[queue[0]]===state.links[queue[0]]?'reveal':'pick';
+  rebuildingGuided=true;try{render()}finally{rebuildingGuided=false}
+  if(deckPhase==='pick'&&!paused&&!document.hidden)drawCard(0);
+  return true;
+}
 function nextGuided(){
   clearRankMotion();rankLock=false;deckPhase='pick';
   if(!queue.length){stopShuffle();const n=guidedHistory.at(-1);if(n)lastMove={n,from:'',to:state.tiers[n]};guided=false;render();return}
@@ -787,7 +822,7 @@ function finishDraft(show=true){
   if(show){tab='result';render();flushPendingRefresh()}
 }
 function startDraft(){
-  if(draftRun||rankLock||configDraft)return;sync();if(!available())return;
+  if(draftRun||rankLock||configDraft)return;sync();if(!available())return;guidedResume=null;
   const oldCards=new Map([...root.querySelectorAll('.op-board .op-player,.op-team .op-player')].map(c=>[c.dataset.opPlayer,c]));
   const teams=balancedDraft(state.tiers);
   if(teams.length!==4||teams.some(t=>t.length!==5)||new Set(teams.flat()).size!==20)return;
@@ -1078,20 +1113,20 @@ root.addEventListener('click',e=>{
     case 'tab-command':if(!artBusy)goCommand();break;
     case 'command-back':if(!artBusy)goCommand();break;
     case 'command-team-back':if(!artBusy)goCommand(activeSquad);break;
-    case 'tab-draft':if(artBusy)break;stopShuffle();clearRankMotion();rankLock=false;choosingMode=false;guided=false;tab='roster';selected='';notice='';render();break;
+    case 'tab-draft':if(artBusy)break;if(guided)break;if(guidedResume&&resumeGuided())break;stopShuffle();clearRankMotion();rankLock=false;choosingMode=false;guided=false;tab='roster';selected='';notice='';render();break;
     case 'choose-mode':chooseMode(e.detail===0);break;
     case 'start-guided':lastMove=null;startGuided();break;
     case 'shuffle-guided':if(guided&&['pick','reveal'].includes(deckPhase))shuffleDeck();break;
     case 'toggle-pause':if(guided){paused=!paused;refreshGuided();if(!paused&&deckPhase==='pick')drawCard(0)}break;
     case 'skip-guided':if(guided)skipGuidedMotion();break;
-    case 'start-list':stopShuffle();choosingMode=false;guided=false;tab='tier';selected='';notice='';render();break;
+    case 'start-list':guidedResume=null;stopShuffle();choosingMode=false;guided=false;tab='tier';selected='';notice='';render();break;
     case 'undo-move':{const m=lastMove;lastMove=null;if(m&&current(m.n)&&(state.tiers[m.n]||'')===m.to){if(m.from)state.tiers[m.n]=m.from;else delete state.tiers[m.n];state.teams=[];selected='';save();refreshBoard(m.n,m.to,m.from)}break;}
-    case 'exit-guided':stopShuffle();choosingMode=false;guided=false;render();break;
+    case 'exit-guided':guidedResume=null;stopShuffle();choosingMode=false;guided=false;render();break;
     case 'undo-guided':{if(!['pick','reveal'].includes(deckPhase))break;const n=guidedHistory.pop();if(n){stopShuffle();delete state.tiers[n];state.teams=[];queue=[n,...queue.filter(x=>x!==n)];guided=true;deckPhase='reveal';save();const center=root.querySelector('.op-single-center'),card=guidedCard(n);center?.replaceChildren(card);refreshGuided();if(card.animate)deckAnimate(card,[{transform:'translateY(12px) scale(.94)',opacity:.5},{transform:'none',opacity:1}],{duration:250,easing:'ease-out'})}break;}
     case 'retry':void enter();break;
-    case 'tab-roster':stopShuffle();choosingMode=false;guided=false;tab='roster';selected='';notice='';render();break;
-    case 'tab-tier':chooseMode(e.detail===0);break;
-    case 'tab-result':stopShuffle();choosingMode=false;guided=false;tab='result';selected='';notice='';render();break;
+    case 'tab-roster':suspendGuided();stopShuffle();choosingMode=false;guided=false;tab='roster';selected='';notice='';render();break;
+    case 'tab-tier':if(guided)break;if(!resumeGuided())chooseMode(e.detail===0);break;
+    case 'tab-result':suspendGuided();stopShuffle();choosingMode=false;guided=false;tab='result';selected='';notice='';render();break;
     case 'open-config':openConfig();break;
     case 'reset':{openResetDialog(b);break;}
     case 'draft':startDraft();break;
@@ -1149,12 +1184,30 @@ function renderExternal(){
   if(!workspaceReady||!root.querySelector('.op-shell[data-view]')){render();return}
   refreshView();
 }
-window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{clearResetDialog();clearHover();stopCommandTransitions();finishDraft(false);stopShuffle();clearDrag(false);clearRankMotion();rankLock=false;tab='command';activeAgent='';activeSquad='';choosingMode=false;guided=false;selected='';clearConfig()}});
+window.addEventListener('mws:workspace-tab-v1',e=>{
+  if(e.detail?.tab==='operationM'){
+    const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter();return;
+  }
+  if(!workspaceWasActive)return;
+  workspaceWasActive=false;resumeOnEnter=true;
+  clearResetDialog();clearHover();stopCommandTransitions();suspendGuided();
+  if(draftRun){finishDraft(false);tab='result'}
+  clearDrag(false);stopShuffle();clearRankMotion();rankLock=false;
+  // Close the top-layer dialog without discarding unsubmitted settings.
+  if(configDraft){const dialog=root.querySelector('.op-config');if(dialog?.open)dialog.close()}
+});
 let workspaceScope=document.body.dataset.mwsMode||'';
-window.addEventListener('mws:app-ready',e=>{const scope=e.detail?.scope||document.body.dataset.mwsMode||'',sameScope=scope===workspaceScope;workspaceScope=scope;if(sameScope&&workspaceReady&&root.classList.contains('active')){refreshView();return}clearResetDialog();finishDraft(false);stopShuffle();clearRankMotion();rankLock=false;guided=false;choosingMode=false;tab='command';activeAgent='';activeSquad='';workspaceReady=false;clearConfig();if(root.classList.contains('active'))void enter()});
+window.addEventListener('mws:app-ready',e=>{
+  const scope=e.detail?.scope||document.body.dataset.mwsMode||'',sameScope=scope===workspaceScope;workspaceScope=scope;
+  if(sameScope&&workspaceReady){if(root.classList.contains('active'))refreshView();return}
+  ++workspaceLoadEpoch;workspaceLoading=false;
+  clearResetDialog();finishDraft(false);stopShuffle();clearRankMotion();rankLock=false;
+  guidedResume=null;guided=false;choosingMode=false;tab='command';activeAgent='';activeSquad='';workspaceReady=false;resumeOnEnter=true;clearConfig();
+  if(root.classList.contains('active'))void enter()
+});
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){clearHover();stopCommandTransitions();if(draftRun)finishDraft(true);return}
-  if(guided&&!paused&&deckPhase==='pick'&&!rankLock)drawCard(0);
+  if(root.classList.contains('active')&&guided&&!paused&&deckPhase==='pick'&&!rankLock)drawCard(0);
 });
 window.addEventListener('beforeunload',e=>{if(configDraft&&configDirty()&&!configPending){e.preventDefault();e.returnValue=''}});
 window.addEventListener('mawang:datachange',()=>window.mwsOperationM?.refresh());
