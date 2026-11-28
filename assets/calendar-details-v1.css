@@ -619,3 +619,12 @@ body.mws-premium #eventModal .mws-event-editor-v6 .event-date-time-v7 :is(#evDat
    color:color-mix(in srgb,var(--text) 78%,var(--muted));
  }
 }
+
+/* Pass Z: the floating glass shares the calendar's light-facing rim.
+   Preserve the established 88% alpha and single-object entrance. */
+@media(min-width:901px){
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) .event-details-popover-v2{
+  border-color:var(--mws-calendar-rim)!important;
+  box-shadow:inset 0 1px var(--mws-calendar-rim-light),inset 0 -1px var(--mws-calendar-rim-dark),0 6px 14px #0006,0 18px 38px #0009!important;
+ }
+}
