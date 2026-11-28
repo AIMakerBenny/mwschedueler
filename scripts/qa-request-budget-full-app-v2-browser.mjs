@@ -179,6 +179,10 @@ try{
    const report=list=>({total:list.length,fullyReadable:list.filter(el=>el.scrollWidth<=el.clientWidth+1).length,minWidth:list.length?Math.min(...list.map(el=>Math.round(el.getBoundingClientRect().width*10)/10)):null});
    return {titles:report(titles),vrTitles:report(vr),denseDays:dense.map(el=>{const r=el.getBoundingClientRect(),cards=[...el.querySelectorAll('.mini-event[data-evid]')];return {date:el.closest('.day').dataset.date,fullCards:cards.filter(c=>{const b=c.getBoundingClientRect();return b.height>0&&b.top>=r.top-1&&b.bottom<=r.bottom+1}).length,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight}})};
   })()`);
+  if(viewport[0]>=1366){
+   assert(geom.labelMetrics.vrTitles.total>0&&geom.labelMetrics.vrTitles.fullyReadable===geom.labelMetrics.vrTitles.total,'Fixture VR titles clipped '+JSON.stringify(geom.labelMetrics));
+   assert(geom.labelMetrics.denseDays.length>0&&geom.labelMetrics.denseDays.every(d=>d.fullCards===3),'Three-event fixture days must show all three cards '+JSON.stringify(geom.labelMetrics.denseDays));
+  }
   if(viewport[0]<761){
    const labels=await browser.evaluate(`(()=>{const cards=[...document.querySelectorAll('#calendarGrid .mini-event[data-evid].calendar-event-vr-v1')].filter(c=>c.getBoundingClientRect().width>0);return cards.map(c=>{const title=c.querySelector('.calendar-card-title-v2'),r=title.getBoundingClientRect(),box=c.getBoundingClientRect(),s=getComputedStyle(c);return {width:r.width,card:box.width,visible:!!title.textContent&&getComputedStyle(title).visibility==='visible',padding:parseFloat(s.paddingRight)}})})()`);
    assert(labels.length>0&&labels.every(x=>x.visible&&x.width>=x.card*.65&&x.padding<=3),'Mobile VR titles clipped '+JSON.stringify(labels));
