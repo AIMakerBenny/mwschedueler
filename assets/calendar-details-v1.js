@@ -219,7 +219,7 @@
   if(!grid||!month||!toggle||!panel)return;
   const q=s=>panel.querySelector(s),dateInput=q('[data-agenda-date]'),list=q('[data-agenda-list]'),heading=q('[data-agenda-heading]'),count=q('[data-agenda-count]'),prev=q('[data-agenda-prev]'),next=q('[data-agenda-next]'),todayButton=q('[data-agenda-today]');
   const wide=matchMedia('(min-width:1700px)'),section=month.closest('#calendar');
-  let selected='',opened=false,lastSignature='';
+  let selected='',opened=false,lastSignature='',dateSignature='';
   const allowed=()=>section?.classList.contains('active')&&wide.matches&&document.body.dataset.deviceMode!=='mobile'&&document.body.dataset.resolution!=='mobile'&&month.classList.contains('active')&&!month.hidden;
   const dates=()=>[...grid.querySelectorAll('.day:not(.out)[data-date]')].map(e=>e.dataset.date);
   const dateToday=()=>typeof todayKST==='function'?todayKST():new Date(Date.now()+9*3600000).toISOString().slice(0,10);
@@ -238,7 +238,14 @@
     const days=dates();if(!days.length)return;
     const today=dateToday();
     if(!days.includes(selected))selected=days.includes(today)?today:days[0];
-    dateInput.min=days[0];dateInput.max=days.at(-1);dateInput.value=selected;
+    const dayKey=days.join(',');
+    if(dayKey!==dateSignature){
+      dateSignature=dayKey;
+      const options=document.createDocumentFragment(),format=new Intl.DateTimeFormat('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short',timeZone:'UTC'});
+      for(const day of days){const option=document.createElement('option');option.value=day;option.textContent=format.format(new Date(day+'T00:00:00Z'));options.append(option)}
+      dateInput.replaceChildren(options);
+    }
+    dateInput.value=selected;
     prev.disabled=selected===days[0];next.disabled=selected===days.at(-1);todayButton.disabled=!days.includes(today)||selected===today;
     const items=(typeof activeEvents==='function'?activeEvents():[]).filter(e=>e.date===selected).slice().sort((a,b)=>Number(!!b.restDay)-Number(!!a.restDay)||String(a.start||'99:99').replace('TBD','99:99').localeCompare(String(b.start||'99:99').replace('TBD','99:99')));
     const colors=new Map([...grid.querySelectorAll('.mini-event[data-evid]')].map(el=>[el.dataset.evid,el.style.getPropertyValue('--content-group-color')]));
@@ -246,7 +253,9 @@
     heading.textContent=new Intl.DateTimeFormat('ko-KR',{month:'long',day:'numeric',weekday:'long',timeZone:'UTC'}).format(new Date(selected+'T00:00:00Z'));
     count.textContent=items.length+'개 일정';
     mark();
-    const sig=JSON.stringify([selected,view]);if(sig===lastSignature)return;lastSignature=sig;
+    const time=window.mwsCalendarAgendaTimeV1?.summarize(items);
+    const sig=JSON.stringify([selected,view,time]);if(sig===lastSignature)return;lastSignature=sig;
+    renderTime(time,view);
     const focused=list.contains(document.activeElement)?document.activeElement.dataset.agendaEvent:'',scrollTop=list.scrollTop;
     const fragment=document.createDocumentFragment();
     for(const item of view){
@@ -264,6 +273,26 @@
     list.replaceChildren(fragment);list.scrollTop=scrollTop;
     if(focused)[...list.querySelectorAll('[data-agenda-event]')].find(el=>el.dataset.agendaEvent===focused)?.focus({preventScroll:true});
   }
+  function renderTime(time,view){
+    const section=q('[data-agenda-time-section]'),tracks=q('[data-agenda-tracks]'),total=q('[data-agenda-duration]'),note=q('[data-agenda-time-note]');
+    if(!section||!tracks||!total||!note)return;
+    section.hidden=!time||!time.count;
+    tracks.replaceChildren();
+    if(!time||!time.count){total.textContent='';note.textContent='';return}
+    const duration=n=>Math.floor(n/60)+'시간 '+n%60+'분';
+    total.textContent=time.entries.length?duration(time.minutes):'시간 미정';
+    note.textContent=[time.unknown?'시간 미정 '+time.unknown+'개':'',time.overnight?'다음 날 종료 '+time.overnight+'개':'','일정 시간 합계 · 중복 포함'].filter(Boolean).join(' · ');
+    const byId=new Map(view.map(item=>[item.id,item]));
+    for(const e of time.entries){
+      const item=byId.get(e.id);if(!item)continue;
+      const row=document.createElement('button');row.type='button';row.className='mws-agenda-track-v1';row.dataset.agendaTrack=e.id;
+      const label=item.title+' '+item.time+(e.spill?' 다음 날 종료':'');row.title=label;row.setAttribute('aria-label',label);
+      const bar=document.createElement('span');bar.className='mws-agenda-track-bar-v1';bar.style.left=e.start/14.4+'%';bar.style.width=(e.end-e.start)/14.4+'%';
+      if(/^#[0-9a-f]{3,8}$/i.test(item.color))bar.style.setProperty('--agenda-event-color',item.color);
+      if(e.spill)bar.classList.add('is-overnight');
+      row.append(bar);tracks.append(row);
+    }
+  }
   function setOpen(value,{focus=false}={}){
     const nextOpen=!!value&&allowed();if(opened===nextOpen)return;
     opened=nextOpen;lastSignature='';
@@ -272,13 +301,14 @@
     if(opened){render();if(focus)dateInput.focus({preventScroll:true})}
     else{mark();if(focus&&allowed())toggle.focus({preventScroll:true})}
   }
-  function selectDate(value){if(!opened||!dates().includes(value))return;selected=value;render()}
+  function selectDate(value){if(!opened||!dates().includes(value))return;const changed=value!==selected;selected=value;render();if(changed)list.scrollTop=0}
   function step(n){const days=dates();selectDate(days[days.indexOf(selected)+n])}
   toggle.addEventListener('click',()=>setOpen(!opened));
   q('[data-agenda-close]').addEventListener('click',()=>setOpen(false,{focus:true}));
   dateInput.addEventListener('change',()=>{selectDate(dateInput.value);dateInput.value=selected});
   prev.addEventListener('click',()=>step(-1));next.addEventListener('click',()=>step(1));todayButton.addEventListener('click',()=>selectDate(dateToday()));
   list.addEventListener('click',e=>{const button=e.target.closest('[data-agenda-event]');if(button&&list.contains(button))window.openCalendarEventDetailsV1?.(button.dataset.agendaEvent,button)});
+  q('[data-agenda-tracks]')?.addEventListener('click',e=>{const track=e.target.closest('[data-agenda-track]');if(!track)return;const row=[...list.querySelectorAll('[data-agenda-event]')].find(el=>el.dataset.agendaEvent===track.dataset.agendaTrack);if(row){row.scrollIntoView({block:'nearest',behavior:'instant'});row.focus({preventScroll:true});window.openCalendarEventDetailsV1?.(row.dataset.agendaEvent,row)}});
   grid.addEventListener('click',e=>{
     if(!opened||e.defaultPrevented||e.ctrlKey||e.target.closest('button,a')||month.closest('.calendar-group-select-active-v2'))return;
     const event=e.target.closest('.mini-event[data-evid]');if(event)selectDate(event.closest('.day')?.dataset.date);
