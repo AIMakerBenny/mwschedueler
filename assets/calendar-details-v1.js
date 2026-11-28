@@ -211,3 +211,81 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initCopyTrayV4,{once:true});else initCopyTrayV4();
 
 })(window);
+
+/* Optional wide-screen agenda; one live calendar dataset, no fetch or save.
+   Default month geometry is untouched. The existing event popover owns details. */
+(()=>{
+  const grid=document.getElementById('calendarGrid'),month=document.getElementById('calendarMonthPanelV172'),toggle=document.getElementById('calendarAgendaToggleV1'),panel=document.getElementById('calendarAgendaV1');
+  if(!grid||!month||!toggle||!panel)return;
+  const q=s=>panel.querySelector(s),dateInput=q('[data-agenda-date]'),list=q('[data-agenda-list]'),heading=q('[data-agenda-heading]'),count=q('[data-agenda-count]'),prev=q('[data-agenda-prev]'),next=q('[data-agenda-next]'),todayButton=q('[data-agenda-today]');
+  const wide=matchMedia('(min-width:1700px)');
+  let selected='',opened=false,lastSignature='';
+  const allowed=()=>wide.matches&&document.body.dataset.deviceMode!=='mobile'&&document.body.dataset.resolution!=='mobile'&&month.classList.contains('active')&&!month.hidden;
+  const dates=()=>[...grid.querySelectorAll('.day:not(.out)[data-date]')].map(e=>e.dataset.date);
+  const dateToday=()=>typeof todayKST==='function'?todayKST():new Date(Date.now()+9*3600000).toISOString().slice(0,10);
+  function mark(){
+    for(const node of grid.querySelectorAll('.mws-agenda-date-v1'))node.classList.remove('mws-agenda-date-v1');
+    if(opened)for(const day of grid.querySelectorAll('.day[data-date]'))if(day.dataset.date===selected)day.classList.add('mws-agenda-date-v1');
+  }
+  function timeLabel(e){
+    if(e.restDay)return '휴방';
+    const format=t=>/^([01]\d|2[0-3]):[0-5]\d$/.test(String(t||''))?String(t):'';
+    const start=format(e.start),end=format(e.end);
+    return start&&end?start+' - '+end:start||'시간 미정';
+  }
+  function render(){
+    if(!opened||!allowed())return;
+    const days=dates();if(!days.length)return;
+    const today=dateToday();
+    if(!days.includes(selected))selected=days.includes(today)?today:days[0];
+    dateInput.min=days[0];dateInput.max=days.at(-1);dateInput.value=selected;
+    prev.disabled=selected===days[0];next.disabled=selected===days.at(-1);todayButton.disabled=!days.includes(today)||selected===today;
+    const items=(typeof activeEvents==='function'?activeEvents():[]).filter(e=>e.date===selected).slice().sort((a,b)=>Number(!!b.restDay)-Number(!!a.restDay)||String(a.start||'99:99').replace('TBD','99:99').localeCompare(String(b.start||'99:99').replace('TBD','99:99')));
+    const colors=new Map([...grid.querySelectorAll('.mini-event[data-evid]')].map(el=>[el.dataset.evid,el.style.getPropertyValue('--content-group-color')]));
+    const view=items.map(e=>({id:String(e.id),title:e.restDay?'휴방':String(e.title||'제목 없음'),time:timeLabel(e),device:e.restDay?'':String(e.device||''),people:Array.isArray(e.participants)?e.participants.length:0,color:colors.get(String(e.id))||'',rest:!!e.restDay}));
+    heading.textContent=new Intl.DateTimeFormat('ko-KR',{month:'long',day:'numeric',weekday:'long',timeZone:'UTC'}).format(new Date(selected+'T00:00:00Z'));
+    count.textContent=items.length+'개 일정';
+    mark();
+    const sig=JSON.stringify([selected,view]);if(sig===lastSignature)return;lastSignature=sig;
+    const focused=list.contains(document.activeElement)?document.activeElement.dataset.agendaEvent:'',scrollTop=list.scrollTop;
+    const fragment=document.createDocumentFragment();
+    for(const item of view){
+      const button=document.createElement('button');button.type='button';button.className='mws-agenda-event-v1';button.dataset.agendaEvent=item.id;
+      if(/^#[0-9a-f]{3,8}$/i.test(item.color))button.style.setProperty('--agenda-event-color',item.color);
+      const meta=document.createElement('span');meta.className='mws-agenda-event-meta-v1';
+      const time=document.createElement('time');time.textContent=item.time;meta.append(time);
+      if(item.device){const device=document.createElement('span');device.textContent=item.device;meta.append(device)}
+      const title=document.createElement('strong');title.textContent=item.title;
+      button.append(meta,title);
+      if(!item.rest&&item.people){const people=document.createElement('small');people.textContent='참가자 '+item.people+'명';button.append(people)}
+      fragment.append(button);
+    }
+    if(!view.length){const empty=document.createElement('div');empty.className='mws-agenda-empty-v1';empty.textContent='등록된 일정이 없습니다.';fragment.append(empty)}
+    list.replaceChildren(fragment);list.scrollTop=scrollTop;
+    if(focused)[...list.querySelectorAll('[data-agenda-event]')].find(el=>el.dataset.agendaEvent===focused)?.focus({preventScroll:true});
+  }
+  function setOpen(value,{focus=false}={}){
+    const nextOpen=!!value&&allowed();if(opened===nextOpen)return;
+    opened=nextOpen;lastSignature='';
+    month.classList.toggle('mws-agenda-open-v1',opened);panel.hidden=!opened;toggle.setAttribute('aria-expanded',String(opened));toggle.title=opened?'일정 목록 닫기':'일정 목록 열기';
+    window.mwsCalendarDetailsV1?.close({restoreFocus:false});
+    if(opened){render();if(focus)dateInput.focus({preventScroll:true})}
+    else{mark();if(focus&&allowed())toggle.focus({preventScroll:true})}
+  }
+  function selectDate(value){if(!opened||!dates().includes(value))return;selected=value;render()}
+  function step(n){const days=dates();selectDate(days[days.indexOf(selected)+n])}
+  toggle.addEventListener('click',()=>setOpen(!opened));
+  q('[data-agenda-close]').addEventListener('click',()=>setOpen(false,{focus:true}));
+  dateInput.addEventListener('change',()=>{selectDate(dateInput.value);dateInput.value=selected});
+  prev.addEventListener('click',()=>step(-1));next.addEventListener('click',()=>step(1));todayButton.addEventListener('click',()=>selectDate(dateToday()));
+  list.addEventListener('click',e=>{const button=e.target.closest('[data-agenda-event]');if(button&&list.contains(button))window.openCalendarEventDetailsV1?.(button.dataset.agendaEvent,button)});
+  grid.addEventListener('click',e=>{
+    if(!opened||e.defaultPrevented||e.ctrlKey||e.target.closest('button,a')||month.closest('.calendar-group-select-active-v2'))return;
+    const event=e.target.closest('.mini-event[data-evid]');if(event)selectDate(event.closest('.day')?.dataset.date);
+  },true);
+  panel.addEventListener('keydown',e=>{if(e.key==='Escape'&&!window.mwsCalendarDetailsV1?.isOpen()){e.stopPropagation();setOpen(false,{focus:true})}});
+  new MutationObserver(()=>{if(opened)render()}).observe(grid,{childList:true});
+  new MutationObserver(()=>{if(opened&&!allowed())setOpen(false)}).observe(month,{attributes:true,attributeFilter:['class','hidden']});
+  new MutationObserver(()=>{if(opened&&!allowed())setOpen(false)}).observe(document.body,{attributes:true,attributeFilter:['data-device-mode','data-resolution']});
+  wide.addEventListener('change',()=>{if(opened&&!allowed())setOpen(false)});
+})();
