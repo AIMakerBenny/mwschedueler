@@ -218,9 +218,9 @@
   const grid=document.getElementById('calendarGrid'),month=document.getElementById('calendarMonthPanelV172'),toggle=document.getElementById('calendarAgendaToggleV1'),panel=document.getElementById('calendarAgendaV1');
   if(!grid||!month||!toggle||!panel)return;
   const q=s=>panel.querySelector(s),dateInput=q('[data-agenda-date]'),list=q('[data-agenda-list]'),heading=q('[data-agenda-heading]'),count=q('[data-agenda-count]'),prev=q('[data-agenda-prev]'),next=q('[data-agenda-next]'),todayButton=q('[data-agenda-today]');
-  const wide=matchMedia('(min-width:1700px)');
+  const wide=matchMedia('(min-width:1700px)'),section=month.closest('#calendar');
   let selected='',opened=false,lastSignature='';
-  const allowed=()=>wide.matches&&document.body.dataset.deviceMode!=='mobile'&&document.body.dataset.resolution!=='mobile'&&month.classList.contains('active')&&!month.hidden;
+  const allowed=()=>section?.classList.contains('active')&&wide.matches&&document.body.dataset.deviceMode!=='mobile'&&document.body.dataset.resolution!=='mobile'&&month.classList.contains('active')&&!month.hidden;
   const dates=()=>[...grid.querySelectorAll('.day:not(.out)[data-date]')].map(e=>e.dataset.date);
   const dateToday=()=>typeof todayKST==='function'?todayKST():new Date(Date.now()+9*3600000).toISOString().slice(0,10);
   function mark(){
@@ -267,7 +267,7 @@
   function setOpen(value,{focus=false}={}){
     const nextOpen=!!value&&allowed();if(opened===nextOpen)return;
     opened=nextOpen;lastSignature='';
-    month.classList.toggle('mws-agenda-open-v1',opened);panel.hidden=!opened;toggle.setAttribute('aria-expanded',String(opened));toggle.title=opened?'일정 목록 닫기':'일정 목록 열기';
+    month.classList.toggle('mws-agenda-open-v1',opened);panel.hidden=!opened;toggle.setAttribute('aria-expanded',String(opened));toggle.title=opened?'일정 목록 닫기':'일정 목록 열기';toggle.setAttribute('aria-label',toggle.title);
     window.mwsCalendarDetailsV1?.close({restoreFocus:false});
     if(opened){render();if(focus)dateInput.focus({preventScroll:true})}
     else{mark();if(focus&&allowed())toggle.focus({preventScroll:true})}
@@ -286,6 +286,7 @@
   panel.addEventListener('keydown',e=>{if(e.key==='Escape'&&!window.mwsCalendarDetailsV1?.isOpen()){e.stopPropagation();setOpen(false,{focus:true})}});
   new MutationObserver(()=>{if(opened)render()}).observe(grid,{childList:true});
   new MutationObserver(()=>{if(opened&&!allowed())setOpen(false)}).observe(month,{attributes:true,attributeFilter:['class','hidden']});
+  if(section)new MutationObserver(()=>{if(opened&&!allowed())setOpen(false)}).observe(section,{attributes:true,attributeFilter:['class']});
   new MutationObserver(()=>{if(opened&&!allowed())setOpen(false)}).observe(document.body,{attributes:true,attributeFilter:['data-device-mode','data-resolution']});
   wide.addEventListener('change',()=>{if(opened&&!allowed())setOpen(false)});
 })();
