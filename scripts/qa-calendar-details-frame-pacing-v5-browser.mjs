@@ -6,7 +6,7 @@ import path from 'node:path';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 
-// Use the full month fixture to verify the anchored fade never moves the grid.
+// Use the full month fixture to verify bounded compositor motion never moves the grid or the anchor layout.
 const dir=mkdtempSync(path.join(os.tmpdir(),'mws-frame-pacing-'));
 const fixture=path.join(dir,'month.html');
 let browser;
@@ -19,19 +19,20 @@ try{
     const tick=()=>new Promise(resolve=>requestAnimationFrame(resolve));
     async function measure(action,opening){
       const initial=grid.getBoundingClientRect(),start=performance.now();action();const synchronousMs=performance.now()-start;
-      const position=drawer.getBoundingClientRect();
-      let stableWidth=true,stablePosition=true,fadeOnly=true,duration=null;
-      const opacity=[];
+      const style=getComputedStyle(drawer),position=[parseFloat(style.left),parseFloat(style.top)];
+      let stableWidth=true,stablePosition=true,compositorOnly=true,boundedMotion=true,duration=null;
+      const opacity=[],offset=[];
       while(performance.now()-start<1000){
         const timestamp=await tick(),animation=drawer.getAnimations()[0];
         const r=grid.getBoundingClientRect();stableWidth&&=Math.abs(r.width-initial.width)<1&&Math.abs(r.left-initial.left)<1;
         if(!animation)break;
         duration=animation.effect.getTiming().duration;
-        fadeOnly&&=animation.effect.getKeyframes().every(frame=>frame.transform===undefined&&frame.opacity!==undefined);
-        const p=drawer.getBoundingClientRect();stablePosition&&=Math.abs(p.left-position.left)<1&&Math.abs(p.top-position.top)<1;
-        opacity.push(Number(getComputedStyle(drawer).opacity));
+        compositorOnly&&=animation.effect.getKeyframes().every(frame=>frame.transform===undefined&&frame.opacity!==undefined&&frame.translate!==undefined&&frame.left===undefined&&frame.top===undefined&&frame.width===undefined);
+        const p=getComputedStyle(drawer);stablePosition&&=Math.abs(parseFloat(p.left)-position[0])<1&&Math.abs(parseFloat(p.top)-position[1])<1;
+        const [dx=0,dy=0]=p.translate==='none'?[0,0]:p.translate.split(' ').map(parseFloat);const distance=Math.hypot(dx,dy);boundedMotion&&=distance<=10.1;offset.push(distance);
+        opacity.push(Number(p.opacity));
       }
-      return {synchronousMs:Math.round(synchronousMs),duration,frames:opacity.length,stableWidth,stablePosition,fadeOnly,monotonic:opacity.every((v,i)=>!i||(opening?v>=opacity[i-1]-.001:v<=opacity[i-1]+.001)),settled:opening?!drawer.hidden&&drawer.classList.contains('open'):drawer.hidden};
+      return {synchronousMs:Math.round(synchronousMs),duration,frames:opacity.length,stableWidth,stablePosition,compositorOnly,boundedMotion,offsetMonotonic:offset.every((v,i)=>!i||(opening?v<=offset[i-1]+.1:v>=offset[i-1]-.1)),monotonic:opacity.every((v,i)=>!i||(opening?v>=opacity[i-1]-.001:v<=opacity[i-1]+.001)),settled:opening?!drawer.hidden&&drawer.classList.contains('open')&&getComputedStyle(drawer).translate==='none':drawer.hidden};
     }
     await tick();await tick();const result=[];
     for(let i=0;i<3;i++){
@@ -45,7 +46,7 @@ try{
     const {cards,ribbons,result}=await browser.evaluate(frameTest);
     assert(cards>=40&&ribbons>=3,'Realistic month fixture required');
     for(const [i,sample] of result.entries()){
-      assert(sample.settled&&sample.stableWidth&&sample.stablePosition&&sample.fadeOnly&&sample.monotonic&&sample.duration===(i%2?110:150)&&sample.frames>=1,JSON.stringify(sample));
+      assert(sample.settled&&sample.stableWidth&&sample.stablePosition&&sample.compositorOnly&&sample.boundedMotion&&sample.offsetMonotonic&&sample.monotonic&&sample.duration===(i%2?140:240)&&sample.frames>=1,JSON.stringify(sample));
     }
     console.log('CALENDAR_POPOVER_STABLE_V2',width,height,JSON.stringify({cards,ribbons,result}));
   }
