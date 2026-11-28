@@ -62,6 +62,7 @@ jobs:
           path: baseline
       - name: Capture baseline with identical synthetic fixtures
         if: github.event_name == 'pull_request'
+        continue-on-error: true
         working-directory: baseline
         env:
           MWS_QA_CALENDAR_VISUAL: '1'

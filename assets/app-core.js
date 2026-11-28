@@ -2141,7 +2141,8 @@ function renderCalendar(){
       }).join('')}</div>
     </div>`;
   }
-  const grid=document.getElementById('calendarGrid');grid.classList.add('calendar-redesign-v1');grid.innerHTML=out;
+  document.getElementById('calendarGrid').classList.add('calendar-redesign-v1');
+  const grid=document.getElementById('calendarGrid');grid.innerHTML=out;
   // Record actual month DOM replacements, bounded to the first few renders.
   // This makes startup regressions observable on cold and repeat navigation.
   const startupHistory=window.__mwsCalendarRenderHistoryV2??=[];
