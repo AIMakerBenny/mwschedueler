@@ -123,11 +123,12 @@ for(const [w,h] of [[1366,768],[1600,900],[1715,894],[1726,892],[1766,831],[1913
  const key='mws.operationM.simulation.v1',baseline=JSON.parse(localStorage.getItem(key)),cfg={links:{...baseline.links},roles:[...baseline.roles]};
  const a=data.contacts.find(c=>c.id===cfg.links['양지팡']),b=data.contacts.find(c=>c.id===cfg.links['카노미☆']),other=data.contacts.find(c=>c.id===cfg.links['김웰로']),origA=a.image,origB=b.image,origOther=other.image,oldA=a.name,oldB=b.name;
  data.miniGames.operationMV1=cfg;
- a.name='양지팡_새로운닉네임';b.name='카노미 공식';a.image=origA.replace('blue','red');b.image=origB.replace('blue','green');data.contacts.push({...a,id:'duplicate-profile',name:oldA,image:origA});
- window.mwsOperationM.refresh();await wait();const renamed=src('양지팡')===a.image&&src('카노미☆')===b.image;
+ a.name='양지팡_새로운닉네임';b.name='카노';a.image=origA.replace('blue','red');b.image=origB.replace('blue','green');data.contacts.push({...a,id:'duplicate-profile',name:oldA,image:origA});
+ window.mwsOperationM.refresh();await wait();const renamed=src('양지팡')===a.image&&src('카노미☆')===b.image&&row('양지팡').querySelector('strong').textContent===a.name&&row('카노미☆').querySelector('strong').textContent===b.name;
  const frame=q('.op-armor-frame');q('[data-op-squad=wakgood]').click();const tiles=[...document.querySelectorAll('.op-agent-tile')],team=tiles.find(x=>x.dataset.opAgent==='양지팡').querySelector('img').getAttribute('src')===a.image;
- tiles.find(x=>x.dataset.opAgent==='양지팡').click();const detail=q('.op-dossier-portrait img').getAttribute('src')===a.image&&q('.op-agent-switch[data-op-agent="카노미☆"] img').getAttribute('src')===b.image;
+ tiles.find(x=>x.dataset.opAgent==='양지팡').click();const detail=q('.op-dossier-portrait img').getAttribute('src')===a.image&&q('.op-agent-identity h2').textContent===a.name&&q('.op-agent-switch[data-op-agent="카노미☆"] img').getAttribute('src')===b.image&&q('.op-agent-switch[data-op-agent="카노미☆"] strong').textContent===b.name;
  const shell=q('.op-shell');a.image='';a.avatar=origA;window.mwsOperationM.refresh();await wait();const avatarRefresh=q('.op-dossier-portrait img').getAttribute('src')===origA&&q('.op-shell')===shell;
+ a.name='연결 이름 수정';window.mwsOperationM.refresh();await wait();const liveRename=q('.op-agent-identity h2').textContent===a.name&&q('.op-agent-switch.is-current strong').textContent===a.name&&q('.op-shell')===shell;
  delete a.avatar;window.mwsOperationM.refresh();await wait();const missing=!q('.op-dossier-portrait img')&&q('.op-instrument-caption').textContent==='연락처 사진 없음';
  a.image=origA.replace('blue','red');window.mwsOperationM.refresh();await wait();
  document.body.dataset.mwsMode='admin';window.__mwsAppReadyV130=true;window.mwsOperationM.render();q('[data-op-action=open-config]').click();
@@ -137,7 +138,7 @@ for(const [w,h] of [[1366,768],[1600,900],[1715,894],[1726,892],[1766,831],[1913
  // Explicitly reconnect two valid slots, without any name guessing.
  cfg.links['양지팡']=other.id;cfg.links['김웰로']=a.id;other.image=origOther.replace('blue','orange');window.mwsOperationM.refresh();await wait();const explicit=src('양지팡')===other.image&&src('김웰로')===a.image;
  cfg.links={...baseline.links};data.contacts.pop();a.name=oldA;b.name=oldB;a.image=origA;b.image=origB;other.image=origOther;window.mwsOperationM.refresh();await wait();const restored=src('양지팡')===origA;
- return {renamed,team,detail,avatarRefresh,missing,preview,groups,explicit,restored,saves:saves===0}})()`);
+ return {renamed,team,detail,avatarRefresh,liveRename,missing,preview,groups,explicit,restored,saves:saves===0}})()`);
  assert(Object.values(profileSources).every(Boolean),JSON.stringify(profileSources));console.log('OPERATION_M_LINKED_PROFILE_SOURCES_OK',JSON.stringify(profileSources));
 
  // Data refresh must preserve live command nodes; all member lists use contact photos.
