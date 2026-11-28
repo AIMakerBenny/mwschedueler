@@ -8,6 +8,7 @@ let state=read(),tab='command',selected='',dragName='',picker='',query='',notice
 let configDraft=null,configSaving=false,configBaseline=null,configArt={},configDiscard=false,configPending=false,configNotice='',workspaceReady=false,workspaceLoading=false,workspaceError=false;
 let arrived='',layoutFrame=0,queue=[],guided=false,choosingMode=false,rankLock=false,rankTimer=0;
 let lastView='',guidedHistory=[],lastMove=null;
+let resetDialog=null,resetHold=false,pendingRefresh=false,lastPermission=false,commandImageKeys=new Map();
 let rankEffects=[],rankClock=0,rankCompletion=null;
 let draftRun=null,draftRender=false;
 const draftLater=(run,ms,fn)=>{run.timers.push(setTimeout(()=>{if(draftRun===run&&root.classList.contains('active'))fn()},ms))};
@@ -96,14 +97,60 @@ const TEAM_MARKS={
 };
 function teamMark(t){return '<svg class="op-team-mark" aria-hidden="true" viewBox="0 0 124 100" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="'+TEAM_MARKS[t.id]+'"/><path d="M4 10V4H22M102 4h18v16M120 80v16h-18M22 96H4V80" opacity=".6"/></svg>'}
 function tacFrame(){return '<svg class="op-armor-frame" aria-hidden="true" viewBox="0 0 800 320" preserveAspectRatio="none" fill="none"><path class="op-armor-outline" d="M17 2H783L798 17V303L783 318H17L2 303V17Z"/><path class="op-armor-inner" d="M23 8H777L792 23V297L777 312H23L8 297V23Z"/><path class="op-armor-corners" d="M3 57V18L18 3H83M717 317H782L797 302V263M717 3H782L797 18V57M3 263V302L18 317H83"/><path class="op-armor-sheen" d="M115 317H685M115 3H685"/><path class="op-armor-stripes" d="M741 312l12-12m0 12 12-12m0 12 12-12M23 20 35 8m0 12L47 8m0 12L59 8"/></svg>'}
+// Confirmed roster uses the contact's own profile, not dedicated artwork or simulated draft assignments.
+function confirmedProfile(n){
+  const c=matchContact(n,contacts);
+  if(c)return c;
+  // Exact roster names take precedence. Explicit display aliases are supported
+  // only when unique and no ambiguous full-name candidate exists.
+  const norm=x=>String(x||'').normalize('NFKC').trim().toLowerCase();
+  const key=x=>norm(x).replace(/[\s_!☆…\.\-]/g,'');
+  const partial=n.endsWith('…'),k=key(n);
+  if(contacts.some(p=>partial?key(p.name).startsWith(k):key(p.name)===k))return null;
+  const alias=agentName(n);
+  return alias===n?null:matchContact(alias,contacts);
+}
+const photoSource=c=>String(c?.image||c?.avatar||c?.profileImage||'');
+function profilePortrait(n,layout='row'){
+  const c=confirmedProfile(n),markup=photo(c,agentName(n));
+  return markup.replace('class="op-portrait"','class="op-portrait'+(layout==='row'?'':' op-agent-portrait op-profile-portrait')+'" data-op-profile-for="'+esc(n)+'" data-op-profile-layout="'+layout+'"');
+}
+function dossierPortrait(n){
+  return agentArt(n)?tacticalPortrait(n,true).replace('class="op-agent-portrait op-agent-large"','class="op-agent-portrait op-agent-large" data-op-dossier-for="'+esc(n)+'"'):profilePortrait(n,'dossier').replace('data-op-profile-for=','data-op-dossier-for=');
+}
+function commandImageKey(n,dossier=false){
+  const c=confirmedProfile(n);
+  return dossier&&agentArt(n)?'art:'+agentArt(n):JSON.stringify([c?.id,photoSource(c)]);
+}
+function snapshotCommandImages(){
+  commandImageKeys=new Map(ROSTER.map(n=>[n,commandImageKey(n)]));
+  if(activeAgent)commandImageKeys.set('dossier:'+activeAgent,commandImageKey(activeAgent,true));
+}
+function refreshCommandImages(){
+  const view=root.querySelector('.op-command-workspace');if(!view)return false;
+  for(const node of view.querySelectorAll('[data-op-profile-for],[data-op-dossier-for]')){
+    const n=node.dataset.opDossierFor||node.dataset.opProfileFor,dossier=!!node.dataset.opDossierFor,key=dossier?'dossier:'+n:n;
+    const next=commandImageKey(n,dossier);
+    if(commandImageKeys.get(key)!==next){
+      const tmp=document.createElement('template');tmp.innerHTML=dossier?dossierPortrait(n):profilePortrait(n,node.dataset.opProfileLayout);
+      node.replaceWith(tmp.content.firstElementChild);
+    }
+  }
+  if(activeAgent){const caption=view.querySelector('.op-instrument-caption');if(caption)caption.textContent=agentArt(activeAgent)||photoSource(confirmedProfile(activeAgent))?'':'이미지 미등록'}
+  snapshotCommandImages();return true;
+}
 function tacticalMember(t,n,i){
-  return '<button type="button" class="op-agent-row" data-op-agent="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 요원 정보">'+tacticalPortrait(n)+'<span class="op-agent-row-name"><strong>'+esc(agentName(n))+'</strong><small>#'+squadCode(t)+(i+1)+'</small></span><span class="op-tac-arrow" aria-hidden="true">›</span></button>';
+  return '<button type="button" class="op-agent-row" data-op-agent="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 요원 정보">'+profilePortrait(n)+'<span class="op-agent-row-name"><strong>'+esc(agentName(n))+'</strong><small>#'+squadCode(t)+(i+1)+'</small></span><span class="op-tac-arrow" aria-hidden="true">›</span></button>';
 }
 function commanderArt(t){
   return '<div class="op-commander-art"><span class="op-tac-reticle" aria-hidden="true"></span><img src="'+commanderUrl(t)+'" alt="" decoding="async" width="512" height="512"></div>';
 }
+function tacticalBackdrop(t){
+  // Inert original instrument geometry. All depth planes stay mounted.
+  return '<div class="op-tactical-depth" aria-hidden="true"><svg class="op-tactical-terrain" viewBox="0 0 600 320" preserveAspectRatio="xMidYMid slice" fill="none"><g stroke="currentColor" stroke-width=".9"><path d="M-50 76Q55 28 145 79T345 63T630 38M-40 93Q55 45 145 96T345 80T640 55M-30 111Q55 63 145 114T345 98T650 73M-20 129Q55 81 145 132T345 116T660 91M-20 147Q55 99 145 150T345 134T660 109M-20 165Q55 117 145 168T345 152T660 127M-20 183Q55 135 145 186T345 170T660 145M-20 201Q55 153 145 204T345 188T660 163"/><path stroke-dasharray="4 7" d="M60 285 156 170 272 232 460 90 590 125M155 0V320M430 0V320"/><circle cx="156" cy="170" r="22"/><circle cx="156" cy="170" r="35"/><circle cx="460" cy="90" r="40"/><path d="M146 170h20m-10-10v20M450 90h20m-10-10v20M25 18H80M25 18V50M575 302H520M575 302V270"/></g><g fill="currentColor"><circle cx="156" cy="170" r="3"/><circle cx="272" cy="232" r="3"/><circle cx="460" cy="90" r="3"/></g></svg><span class="op-tactical-plating"></span><span class="op-tactical-sight"></span><span class="op-tactical-scan"></span><span class="op-tactical-edge"></span></div>';
+}
 function squadCard(t){
-  return '<article class="op-squad-card" data-op-confirmed-team="'+t.id+'"'+squadStyle(t)+'>'+tacFrame()+'<div class="op-squad-hero"><span class="op-hero-hud" aria-hidden="true"></span>'+commanderArt(t)+'<div class="op-squad-title"><small>COMMANDER / '+squadCode(t)+'</small><button type="button" class="op-squad-link" data-op-squad="'+t.id+'" aria-label="'+esc(t.name)+' 팀 상세">'+tacEmblem()+'<strong>'+esc(t.name)+' 팀</strong><span class="op-tac-slash" aria-hidden="true"></span></button><span class="op-squad-coach"><span>코치</span><b>'+esc(t.coach)+'</b></span></div>'+teamMark(t)+'</div><div class="op-squad-roster"><div class="op-roster-caption"><span>요원 명단</span><span>05</span></div>'+t.members.map((n,i)=>tacticalMember(t,n,i)).join('')+'</div></article>';
+  return '<article class="op-squad-card" data-op-confirmed-team="'+t.id+'"'+squadStyle(t)+'>'+tacFrame()+'<div class="op-squad-hero">'+tacticalBackdrop(t)+'<span class="op-hero-hud" aria-hidden="true"></span>'+commanderArt(t)+'<div class="op-squad-title"><small>COMMANDER / '+squadCode(t)+'</small><span class="op-squad-link">'+tacEmblem()+'<strong>'+esc(t.name)+' 팀</strong></span><span class="op-squad-coach"><span>코치</span><b>'+esc(t.coach)+'</b></span></div>'+teamMark(t)+'<button type="button" class="op-squad-hit" data-op-squad="'+t.id+'" aria-label="'+esc(t.name)+' 팀 상세"><span class="op-team-entry">팀 정보 <span aria-hidden="true">›</span></span></button></div><div class="op-squad-roster"><div class="op-roster-caption"><span>요원 명단</span><span>05</span></div>'+t.members.map((n,i)=>tacticalMember(t,n,i)).join('')+'</div></article>';
 }
 function commandOverview(){
   return '<section class="op-command-workspace op-command-overview"><div class="op-command-heading"><div class="op-console-banks" aria-hidden="true"><span><i></i><i></i><i></i></span><span><i></i><i></i><i></i></span></div><div class="op-brief-title"><span class="op-tac-kicker">OPERATION M / COMMAND CENTER</span><h2>작전 현황</h2></div><div class="op-command-map" aria-hidden="true"><svg viewBox="0 0 480 80" preserveAspectRatio="xMidYMid meet" fill="none"><path d="M12 49 30 23 62 14 90 29 112 13 149 20 165 39 138 43 121 58 93 51 72 72 55 60 42 42 12 49ZM190 22 220 12 246 19 267 12 296 28 337 14 371 27 401 20 445 35 463 54 423 61 399 45 370 48 349 66 319 52 289 57 275 40 242 44 226 67 204 53 190 22Z" fill="#4489aa" fill-opacity=".12" stroke="#5287a0" stroke-dasharray="2 3"/><path d="M24 40H456M240 4V76M68 19 150 54 240 26 330 58 416 20" stroke="#58829b" stroke-opacity=".55" stroke-dasharray="3 4"/><g stroke="#9ad2e8"><circle cx="68" cy="19" r="3"/><circle cx="150" cy="54" r="3"/><circle cx="330" cy="58" r="3"/><circle cx="416" cy="20" r="3"/><path d="M217 28v-8h8m30 0h8v8m0 24v8h-8m-30 0h-8v-8"/></g><path d="M225 49V30l15 12 15-12v19" stroke="#b6d9e7" stroke-width="3"/></svg></div><span class="op-brief-code">TEAM 04 / AGENT 20</span></div><div class="op-command-grid">'+SQUADS.map(squadCard).join('')+'</div><div class="op-command-footer"><span class="op-tac-dot"></span><strong>팀 편성 완료</strong><span class="op-command-divider"></span><span>팀 <b>4</b></span><span class="op-command-divider"></span><span>참가자 <b>20</b>명</span><span class="op-command-divider"></span><span>코치 <b>4</b>명</span><span class="op-footer-stripes" aria-hidden="true"></span></div></section>';
@@ -112,11 +159,11 @@ function commanderNameplate(t){
   return '<span class="op-command-nameplate">'+tacEmblem()+'<span><small>COMMANDER</small><strong>'+esc(t.name)+'</strong></span></span>';
 }
 function commandSquad(t){
-  return '<section class="op-command-workspace op-squad-detail"'+squadStyle(t)+'><div class="op-detail-nav">'+button('command-back','작전 현황')+'<span>팀 정보</span><div class="op-squad-switch">'+SQUADS.map(s=>'<button type="button" data-op-squad="'+s.id+'" aria-pressed="'+(s.id===t.id)+'"'+squadStyle(s)+'>'+esc(s.name)+'</button>').join('')+'</div></div><div class="op-squad-detail-body"><div class="op-command-banner op-layer-panel">'+tacFrame()+teamMark(t)+commanderArt(t)+'<div class="op-banner-title"><span class="op-tac-kicker">SQUAD / '+squadCode(t)+'</span><h2>'+esc(t.name)+' 팀</h2><div class="op-squad-coach"><span>코치</span><b>'+esc(t.coach)+'</b></div></div></div><div class="op-team-dossiers op-layer-panel"><div class="op-roster-caption"><span>소속 요원</span><span>05 / 05</span></div><div class="op-team-agent-grid">'+t.members.map((n,i)=>'<button type="button" class="op-agent-tile" data-op-agent="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 요원 정보">'+teamMark(t)+tacticalPortrait(n,true)+'<span class="op-tile-id">#'+squadCode(t)+(i+1)+'</span><span class="op-agent-tile-plaque"><strong>'+esc(agentName(n))+'</strong><span class="op-tac-arrow" aria-hidden="true">›</span></span>'+tacFrame()+'</button>').join('')+'</div></div></div></section>';
+  return '<section class="op-command-workspace op-squad-detail"'+squadStyle(t)+'><div class="op-detail-nav">'+button('command-back','작전 현황')+'<span>팀 정보</span><div class="op-squad-switch">'+SQUADS.map(s=>'<button type="button" data-op-squad="'+s.id+'" aria-pressed="'+(s.id===t.id)+'"'+squadStyle(s)+'>'+esc(s.name)+'</button>').join('')+'</div></div><div class="op-squad-detail-body"><div class="op-command-banner op-layer-panel">'+tacFrame()+tacticalBackdrop(t)+teamMark(t)+commanderArt(t)+'<div class="op-banner-title"><span class="op-tac-kicker">SQUAD / '+squadCode(t)+'</span><h2>'+esc(t.name)+' 팀</h2><div class="op-squad-coach"><span>코치</span><b>'+esc(t.coach)+'</b></div></div></div><div class="op-team-dossiers op-layer-panel"><div class="op-roster-caption"><span>소속 요원</span><span>05 / 05</span></div><div class="op-team-agent-grid">'+t.members.map((n,i)=>'<button type="button" class="op-agent-tile" data-op-agent="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 요원 정보">'+teamMark(t)+profilePortrait(n,'tile')+'<span class="op-tile-id">#'+squadCode(t)+(i+1)+'</span><span class="op-agent-tile-plaque"><strong>'+esc(agentName(n))+'</strong><span class="op-tac-arrow" aria-hidden="true">›</span></span>'+tacFrame()+'</button>').join('')+'</div></div></div></section>';
 }
 function commandAgent(t,n){
   const i=t.members.indexOf(n),src=agentArt(n);
-  return '<section class="op-command-workspace op-agent-detail"'+squadStyle(t)+'><div class="op-detail-nav">'+button('command-team-back','팀으로')+'<span>요원 정보 / '+esc(t.name)+'</span><div class="op-detail-step"><button type="button" data-op-agent="'+esc(t.members[(i+4)%5])+'" data-op-step="prev" aria-label="이전 요원">‹</button><span class="op-detail-position" aria-live="polite">'+(i+1)+' / 5</span><button type="button" data-op-agent="'+esc(t.members[(i+1)%5])+'" data-op-step="next" aria-label="다음 요원">›</button></div></div><div class="op-agent-dossier"><div class="op-dossier-portrait op-layer-panel">'+tacFrame()+teamMark(t)+'<div class="op-portrait-instrument"><span class="op-instrument-label">AGENT / '+squadCode(t)+(i+1)+'</span>'+tacticalPortrait(n,true)+'<span class="op-instrument-caption">'+(src?'':'이미지 미등록')+'</span></div>'+(canConfigure()?'<label class="op-art-upload">'+(artBusy?'저장 중…':src?'요원 이미지 변경':'요원 이미지 등록')+'<input type="file" accept="image/png,image/jpeg,image/webp,image/avif" data-op-agent-upload="'+esc(n)+'" '+(artBusy?'disabled':'')+'></label>':'')+'</div><div class="op-dossier-content"><div class="op-agent-identity op-layer-panel">'+tacEmblem()+'<div><span class="op-tac-kicker">PERSONNEL FILE / '+squadCode(t)+(i+1)+'</span><h2>'+esc(agentName(n))+'</h2></div></div><div class="op-dossier-fields"><div><small>소속 팀</small><strong>'+esc(t.name)+' 팀</strong></div><div><small>담당 코치</small><strong>'+esc(t.coach)+'</strong></div></div><button type="button" class="op-dossier-command op-layer-panel" data-op-squad="'+t.id+'" aria-label="'+esc(t.name)+' 팀 상세">'+tacFrame()+teamMark(t)+commanderArt(t)+commanderNameplate(t)+'<span class="op-tac-arrow" aria-hidden="true">›</span></button>'+(artNotice?'<div class="op-art-notice" role="status">'+esc(artNotice)+'</div>':'')+'</div></div><div class="op-dossier-squad op-layer-panel"><div class="op-roster-caption"><span>팀 요원 전환</span><span>05</span></div><div class="op-agent-switch-grid">'+t.members.map((p,j)=>'<button type="button" class="op-agent-switch'+(p===n?' is-current':'')+'" data-op-agent="'+esc(p)+'" aria-pressed="'+(p===n)+'">'+tacticalPortrait(p)+'<span><small>#'+squadCode(t)+(j+1)+'</small><strong>'+esc(agentName(p))+'</strong></span></button>').join('')+'</div></div></section>';
+  return '<section class="op-command-workspace op-agent-detail"'+squadStyle(t)+'><div class="op-detail-nav">'+button('command-team-back','팀으로')+'<span>요원 정보 / '+esc(t.name)+'</span><div class="op-detail-step"><button type="button" data-op-agent="'+esc(t.members[(i+4)%5])+'" data-op-step="prev" aria-label="이전 요원">‹</button><span class="op-detail-position" aria-live="polite">'+(i+1)+' / 5</span><button type="button" data-op-agent="'+esc(t.members[(i+1)%5])+'" data-op-step="next" aria-label="다음 요원">›</button></div></div><div class="op-agent-dossier"><div class="op-dossier-portrait op-layer-panel">'+tacFrame()+tacticalBackdrop(t)+teamMark(t)+'<div class="op-portrait-instrument"><span class="op-instrument-label">AGENT / '+squadCode(t)+(i+1)+'</span>'+dossierPortrait(n)+'<span class="op-instrument-caption">'+(src||photoSource(confirmedProfile(n))?'':'이미지 미등록')+'</span></div>'+(canConfigure()?'<label class="op-art-upload">'+(artBusy?'저장 중…':src?'요원 이미지 변경':'요원 이미지 등록')+'<input type="file" accept="image/png,image/jpeg,image/webp,image/avif" data-op-agent-upload="'+esc(n)+'" '+(artBusy?'disabled':'')+'></label>':'')+'</div><div class="op-dossier-content"><div class="op-agent-identity op-layer-panel">'+tacEmblem()+'<div><span class="op-tac-kicker">PERSONNEL FILE / '+squadCode(t)+(i+1)+'</span><h2>'+esc(agentName(n))+'</h2></div></div><div class="op-dossier-fields"><div><small>소속 팀</small><strong>'+esc(t.name)+' 팀</strong></div><div><small>담당 코치</small><strong>'+esc(t.coach)+'</strong></div></div><button type="button" class="op-dossier-command op-layer-panel" data-op-squad="'+t.id+'" aria-label="'+esc(t.name)+' 팀 상세">'+tacFrame()+teamMark(t)+commanderArt(t)+commanderNameplate(t)+'<span class="op-tac-arrow" aria-hidden="true">›</span></button>'+(artNotice?'<div class="op-art-notice" role="status">'+esc(artNotice)+'</div>':'')+'</div></div><div class="op-dossier-squad op-layer-panel"><div class="op-roster-caption"><span>팀 요원 전환</span><span>05</span></div><div class="op-agent-switch-grid">'+t.members.map((p,j)=>'<button type="button" class="op-agent-switch'+(p===n?' is-current':'')+'" data-op-agent="'+esc(p)+'" aria-pressed="'+(p===n)+'">'+profilePortrait(p,'switch')+'<span><small>#'+squadCode(t)+(j+1)+'</small><strong>'+esc(agentName(p))+'</strong></span></button>').join('')+'</div></div></section>';
 }
 function commandView(){
   if(activeAgent){const t=squadFor(activeAgent);if(t)return commandAgent(t,activeAgent)}
@@ -149,6 +196,7 @@ function patchAgentDetail(t,n){
   for(const b of view.querySelectorAll('.op-agent-switch')){
     const current=b.dataset.opAgent===n;b.classList.toggle('is-current',current);b.setAttribute('aria-pressed',String(current));
   }
+  commandImageKeys.set('dossier:'+n,commandImageKey(n,true));
   measureLayout();scheduleMeasure();
   return true;
 }
@@ -257,7 +305,7 @@ const display=n=>current(n)?.name||n;
 const available=()=>workspaceReady&&!missing.length&&ROSTER.every(n=>TIERS.includes(state.tiers[n]));
 const button=(action,label,extra='')=>'<button type="button" data-op-action="'+action+'" '+extra+'>'+label+'</button>';
 function photo(c,name){
-  const src=String(c?.image||c?.avatar||c?.profileImage||'');
+  const src=photoSource(c);
   let attrs='';
   if(src&&/^(?:\/media\/contact\/|https?:\/\/|blob:|data:image\/)/i.test(src)){
     if(typeof mwsDeferredContactAttrsV1==='function')attrs=mwsDeferredContactAttrsV1(src);
@@ -396,21 +444,34 @@ function handleConfigClick(e,b){
   return true;
 }
 function openResetDialog(trigger){
-  if(root.querySelector('.op-reset-dialog'))return;
-  const dialog=document.createElement('dialog');
+  if(resetDialog||configDraft)return;
+  const wasGuided=guided;
+  // Resolve only the in-flight transition before mounting the modal. Classification
+  // already committed by confirmRank is retained; the next card cannot auto-draw.
+  resetHold=true;
+  if(guided&&canSkipGuided())skipGuidedMotion();
+  const dialog=document.createElement('dialog');resetDialog=dialog;
   dialog.className='op-reset-dialog op-layer-panel';
   dialog.setAttribute('aria-labelledby','op-reset-title');
   dialog.setAttribute('aria-describedby','op-reset-description');
   dialog.innerHTML=tacFrame()+'<form method="dialog" class="op-reset-body"><header>'+tacEmblem()+'<h2 id="op-reset-title">드래프트 초기화</h2></header><p id="op-reset-description">20명의 티어와 가상 팀 결과를 초기화합니다. 실제 확정 팀 편성, 인물 연결과 등록된 이미지는 유지됩니다.</p><footer><button type="submit" value="cancel" autofocus>취소</button><button type="submit" value="reset" class="op-reset-confirm">초기화</button></footer></form>';
   root.append(dialog);
-  dialog.addEventListener('close',()=>{
-    const confirmed=dialog.returnValue==='reset';dialog.remove();
-    if(!confirmed){if(trigger?.isConnected)trigger.focus({preventScroll:true});return;}
-    const wasGuided=guided;
+  const settle=()=>{
+    if(resetDialog!==dialog)return;
+    const confirmed=dialog.returnValue==='reset';resetDialog=null;resetHold=false;dialog.remove();
+    if(!confirmed){
+      if(trigger?.isConnected)trigger.focus({preventScroll:true});
+      if(guided&&!paused&&deckPhase==='pick'&&!document.hidden)drawCard(0);
+      flushPendingRefresh();return;
+    }
     stopShuffle();clearRankMotion();rankLock=false;deckPhase='pick';
     state.tiers={};state.teams=[];lastMove=null;guidedHistory=[];choosingMode=false;selected='';notice='';save();
     if(wasGuided)startGuided();else{guided=false;render()}
-  },{once:true});
+  };
+  // Real form submissions settle in the same task; native close/Escape remain supported.
+  dialog.addEventListener('submit',e=>{e.preventDefault();dialog.close(e.submitter?.value||'cancel');settle()});
+  dialog.addEventListener('cancel',e=>{e.preventDefault();dialog.close('cancel');settle()});
+  dialog.addEventListener('close',settle,{once:true});
   dialog.showModal();
 }
 function pickerHtml(){
@@ -516,7 +577,7 @@ function openDraw(card,epoch){
   card.classList.remove('op-face-down','op-is-flipping','op-deal-flow');card.classList.add('op-face-open');deckPhase='reveal';markMotion('reveal');refreshGuided();
 }
 function drawCard(i=0){
-  if(!guided||deckPhase!=='pick'||rankLock||!queue.length||!Number.isInteger(i)||i<0||i>=queue.length)return;
+  if(resetHold||!guided||deckPhase!=='pick'||rankLock||!queue.length||!Number.isInteger(i)||i<0||i>=queue.length)return;
   const n=queue[i];if(!current(n)||state.tiers[n]){shuffleDeck();return}
   const panel=root.querySelector('.op-guided'),stack=panel?.querySelector('.op-deck-reserve'),center=panel?.querySelector('.op-single-center');
   if(!stack||!center)return;
@@ -723,7 +784,7 @@ function draftPhase(run,phase){run.phase=phase;root.querySelector('.op-shell')?.
 function finishDraft(show=true){
   const run=draftRun;if(!run)return;
   run.timers.forEach(clearTimeout);run.animations.forEach(a=>a.cancel());run.layer?.remove();draftRun=null;root.classList.remove('op-drafting');root.querySelectorAll('.op-draft-source').forEach(c=>c.classList.remove('op-draft-source'));
-  if(show){tab='result';render()}
+  if(show){tab='result';render();flushPendingRefresh()}
 }
 function startDraft(){
   if(draftRun||rankLock||configDraft)return;sync();if(!available())return;
@@ -781,7 +842,7 @@ function dealDraft(run){
   draftLater(run,2100,()=>{draftPhase(run,'complete');root.querySelector('.op-teams')?.classList.add('op-draft-all-complete');draftLater(run,900,()=>finishDraft(true))});
 }
 function render(){
-  if(!root.classList.contains('active'))return;
+  if(!root.classList.contains('active')||resetDialog){if(resetDialog)pendingRefresh=true;return}
   if(!workspaceReady){
     clearHover();
     root.innerHTML='<div class="op-shell"><div class="op-result-empty">'+(workspaceError?'인물 설정을 불러오지 못했습니다. '+button('retry','다시 시도'):'<span class="op-loading-indicator" aria-hidden="true"></span>참가자 정보를 불러오는 중…')+'</div></div>';return;
@@ -804,7 +865,8 @@ function render(){
   updateSelection();
   if(guided&&root.querySelector('.op-single-stage'))refreshGuided();
   animateTab(previousTab);
-  lastSignature=signature();
+  lastSignature=signature();lastPermission=canConfigure();pendingRefresh=false;
+  if(tab==='command')snapshotCommandImages();
   const moved=arrived;
   arrived='';
   measureLayout();
@@ -908,7 +970,7 @@ function scheduleMeasure(){if(layoutFrame)cancelAnimationFrame(layoutFrame);layo
 window.addEventListener('resize',scheduleMeasure);
 window.visualViewport?.addEventListener('resize',scheduleMeasure);
 if(typeof ResizeObserver==='function'){let lastWidth=-1;const observer=new ResizeObserver(()=>{const width=root.getBoundingClientRect().width;if(root.classList.contains('active')&&Math.abs(width-lastWidth)>.5){lastWidth=width;scheduleMeasure()}});observer.observe(root);const main=root.closest('.main');if(main)observer.observe(main)}
-function signature(){return JSON.stringify(ROSTER.map(n=>{const c=current(n);return[c?.id,c?.name,c?.image]}).concat(state.roles.map(id=>{const c=byId.get(id);return[c?.id,c?.name,c?.image]}),ROSTER.map(n=>agentArt(n))))}
+function signature(){return JSON.stringify(ROSTER.map(n=>{const c=current(n);return[c?.id,c?.name,photoSource(c)]}).concat(state.roles.map(id=>{const c=byId.get(id);return[c?.id,c?.name,photoSource(c)]}),ROSTER.map(n=>agentArt(n)),ROSTER.map(n=>{const c=confirmedProfile(n);return[c?.id,c?.name,c?.image,c?.avatar,c?.profileImage]})))}
 function updateSelection(){
   root.querySelectorAll('.op-player[aria-pressed]').forEach(b=>{const on=b.dataset.opPlayer===selected,was=b.classList.contains('op-selected');b.classList.toggle('op-selected',on);b.setAttribute('aria-pressed',String(on));if(on!==was&&!reducedMotion()){b.querySelector('.op-card-front')?.animate?.(on?[{filter:'brightness(1.25)',transform:'scale(.97)'},{filter:'none',transform:'none'}]:[{opacity:.82},{opacity:1}],{duration:180,easing:'ease-out'})}});
   const board=root.querySelector('.op-board');if(board)board.classList.toggle('op-awaiting-drop',!!selected);
@@ -978,7 +1040,11 @@ function animateTab(previous){
   const indicator=document.createElement('span');indicator.className='op-tab-travel';indicator.setAttribute('aria-hidden','true');indicator.style.cssText='left:'+((next.left-parent.left)/scale)+'px;top:'+((next.bottom-parent.top)/scale-3)+'px;width:'+(next.width/scale)+'px';tabs.append(indicator);
   const anim=indicator.animate?.([{transform:'translate('+((previous.left-next.left)/scale)+'px,'+((previous.top-next.top)/scale)+'px) scaleX('+previous.width/next.width+')',opacity:1},{transform:'none',opacity:1},{opacity:0}],{duration:240,easing:'cubic-bezier(.2,.75,.2,1)'});if(anim)anim.onfinish=()=>indicator.remove();else indicator.remove();
 }
-const updateCommandPointer=e=>{if(e.pointerType==='mouse')root.dataset.opPointer='mouse';else delete root.dataset.opPointer};
+const updateCommandPointer=e=>{
+  const mouse=e.pointerType==='mouse';
+  if(mouse&&root.dataset.opPointer!=='mouse')root.dataset.opPointer='mouse';
+  else if(!mouse&&root.hasAttribute('data-op-pointer'))root.removeAttribute('data-op-pointer');
+};
 root.addEventListener('pointerover',updateCommandPointer);
 root.addEventListener('pointerdown',updateCommandPointer);
 root.addEventListener('pointermove',e=>{
@@ -998,6 +1064,7 @@ root.addEventListener('scroll',clearHover,true);
 window.addEventListener('resize',clearHover);
 window.addEventListener('mws-motion-change',()=>{if(interfaceMotionReduced()){clearHover();stopCommandTransitions()}});
 root.addEventListener('click',e=>{
+  if(resetDialog)return;
   const b=e.target.closest('button');if(handleConfigClick(e,b))return;if(b?.dataset.opAgent){const t=squadFor(b.dataset.opAgent);if(t&&!artBusy)goCommand(t.id,b.dataset.opAgent,b);return}if(b?.dataset.opSquad){if(!artBusy)goCommand(b.dataset.opSquad,'',b);return}if(b?.dataset.opCompleted){showTierMembers(b.dataset.opCompleted);return}if(b?.dataset.opAction==='close-tier-members'||e.target.classList.contains('op-tier-members')){root.querySelector('.op-tier-members')?.remove();root.querySelector('[data-op-completed="'+expandedTier+'"]')?.focus({preventScroll:true});expandedTier='';return}if(draftRun){const action=b?.dataset.opAction;if(action==='skip-draft'){finishDraft(true);return}if(!['tab-command','tab-draft','tab-roster','tab-tier','tab-result'].includes(action))return;finishDraft(false)}if(b?.hasAttribute('data-op-draw')&&root.contains(b)){drawCard(Number(b.dataset.opDraw));return}if(!b||!root.contains(b)){const target=e.target.closest('.op-tier-row');if(target&&selected&&!rankLock)move(selected,target.dataset.tier);else if(e.target.closest('.op-pool')&&selected&&!rankLock)move(selected,'');return;}
   if(guided&&['shuffle','draw','flip'].includes(deckPhase)&&!['choose-mode','exit-guided','tab-command','tab-draft','tab-roster','tab-tier','tab-result','toggle-pause','skip-guided','reset'].includes(b.dataset.opAction))return;
   const n=b.dataset.opPlayer;
@@ -1034,8 +1101,9 @@ root.addEventListener('click',e=>{
 });
 root.addEventListener('change',e=>{const n=e.target.dataset?.opAgentUpload;if(n)void saveAgentImage(n,e.target.files?.[0])});
 root.addEventListener('error',e=>{if(e.target instanceof HTMLImageElement){e.target.style.visibility='hidden';e.target.classList.remove('is-ready')}},true);
-root.addEventListener('load',e=>{if(e.target instanceof HTMLImageElement&&e.target.naturalWidth)e.target.classList.add('is-ready')},true);
+root.addEventListener('load',e=>{if(e.target instanceof HTMLImageElement&&e.target.naturalWidth){e.target.style.removeProperty('visibility');e.target.classList.add('is-ready')}},true);
 root.addEventListener('keydown',e=>{
+  if(resetDialog)return;
   if(configDraft){
     const dialog=root.querySelector('.op-config');
     if(e.key==='Tab'&&dialog){const focusable=[...dialog.querySelectorAll('button:not(:disabled),input:not(:disabled),[tabindex="0"]')].filter(x=>!x.closest('[inert]')&&x.getClientRects().length);if(focusable.length){const first=focusable[0],last=focusable.at(-1);if(e.shiftKey&&(document.activeElement===first||!focusable.includes(document.activeElement))){e.preventDefault();last.focus()}else if(!e.shiftKey&&(document.activeElement===last||!focusable.includes(document.activeElement))){e.preventDefault();first.focus()}}}
@@ -1047,7 +1115,7 @@ root.addEventListener('keydown',e=>{
     e.preventDefault();goCommand(t.id,t.members[next],e.target.closest('.op-agent-switch-grid,.op-detail-step')?e.target:root.querySelector('.op-agent-switch.is-current'));return;
   }
   if(e.key==='Escape'&&root.querySelector('.op-tier-members')){root.querySelector('.op-tier-members')?.remove();root.querySelector('[data-op-completed="'+expandedTier+'"]')?.focus({preventScroll:true});expandedTier=''}else if(e.key==='Escape'&&root.querySelector('.op-copy-overlay')){root.querySelector('.op-copy-overlay')?.remove();root.querySelector('[data-op-action="copy-results"]')?.focus({preventScroll:true})}else if(e.key==='Escape'&&dragName){clearDrag(true)}else if(e.key==='Escape'&&tab==='command'&&!artBusy&&(activeAgent||activeSquad)){goCommand(activeAgent?activeSquad:'')}else if(e.key==='Escape'&&selected){selected='';updateSelection()}});
-window.addEventListener('keydown',e=>{if(!root.classList.contains('active')||!guided||deckPhase!=='reveal'||rankLock||configDraft||root.querySelector('.op-tier-members')||e.repeat||e.ctrlKey||e.altKey||e.metaKey||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||'')||e.target?.isContentEditable)return;const i=Number(e.key)-1;if(/^[1-5]$/.test(e.key)&&TIERS[i]){e.preventDefault();root.querySelector('[data-op-assign="'+TIERS[i]+'"]')?.click()}});
+window.addEventListener('keydown',e=>{if(!root.classList.contains('active')||!guided||deckPhase!=='reveal'||rankLock||resetDialog||configDraft||root.querySelector('.op-tier-members')||e.repeat||e.ctrlKey||e.altKey||e.metaKey||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||'')||e.target?.isContentEditable)return;const i=Number(e.key)-1;if(/^[1-5]$/.test(e.key)&&TIERS[i]){e.preventDefault();root.querySelector('[data-op-assign="'+TIERS[i]+'"]')?.click()}});
 root.addEventListener('input',e=>{
   if(!e.target.hasAttribute('data-op-search'))return;
   query=e.target.value;const box=root.querySelector('.op-picker-results'),temp=document.createElement('div');temp.innerHTML=pickerHtml();box.replaceChildren(...temp.querySelector('.op-picker-results').childNodes);
@@ -1061,15 +1129,35 @@ root.addEventListener('dragstart',e=>{const b=e.target.closest('[data-op-player]
 root.addEventListener('dragover',e=>{const r=e.target.closest('[data-op-drop]');if(!r||!dragName)return;e.preventDefault();e.dataTransfer.dropEffect='move';root.querySelectorAll('.op-drop-active').forEach(x=>{if(x!==r)x.classList.remove('op-drop-active')});r.classList.add('op-drop-active')});
 root.addEventListener('drop',e=>{const r=e.target.closest('[data-op-drop]');if(!r||!dragName)return;e.preventDefault();const n=dragName,t=r.dataset.opDrop;clearDrag(false);move(n,t)});
 root.addEventListener('dragleave',e=>{const r=e.target.closest('[data-op-drop]');if(r&&!r.contains(e.relatedTarget))r.classList.remove('op-drop-active')});
-root.addEventListener('dragend',()=>clearDrag(!!dragName));
-window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{clearHover();stopCommandTransitions();finishDraft(false);stopShuffle();clearDrag(false);clearRankMotion();rankLock=false;tab='command';activeAgent='';activeSquad='';choosingMode=false;guided=false;selected='';clearConfig()}});
-window.addEventListener('mws:app-ready',()=>{if(configDraft&&canConfigure()&&root.classList.contains('active'))return;if(guided&&workspaceReady&&root.classList.contains('active'))return;finishDraft(false);stopShuffle();clearRankMotion();rankLock=false;guided=false;choosingMode=false;tab='command';activeAgent='';activeSquad='';workspaceReady=false;clearConfig();if(root.classList.contains('active'))void enter()});
+root.addEventListener('dragend',()=>{clearDrag(!!dragName);flushPendingRefresh()});
+function clearResetDialog(){
+  const dialog=resetDialog;resetDialog=null;resetHold=false;
+  if(dialog?.open)dialog.close('cancel');dialog?.remove();
+}
+function refreshView(){
+  if(!root.classList.contains('active')||!workspaceReady)return;
+  if(configDraft){if(!canConfigure()){clearConfig();render()}else pendingRefresh=true;return}
+  if(resetDialog||guided||rankLock||draftRun||dragName||artBusy){pendingRefresh=true;return}
+  sync();const next=signature();
+  if(lastPermission!==canConfigure()){render();return}
+  if(next===lastSignature){pendingRefresh=false;return}
+  if(tab==='command'&&refreshCommandImages()){lastSignature=next;pendingRefresh=false;return}
+  render();
+}
+function flushPendingRefresh(){if(pendingRefresh)refreshView()}
+function renderExternal(){
+  if(!workspaceReady||!root.querySelector('.op-shell[data-view]')){render();return}
+  refreshView();
+}
+window.addEventListener('mws:workspace-tab-v1',e=>{if(e.detail?.tab==='operationM'){const title=document.getElementById('pageTitle');if(title)title.textContent='오퍼 M';void enter()}else{clearResetDialog();clearHover();stopCommandTransitions();finishDraft(false);stopShuffle();clearDrag(false);clearRankMotion();rankLock=false;tab='command';activeAgent='';activeSquad='';choosingMode=false;guided=false;selected='';clearConfig()}});
+let workspaceScope=document.body.dataset.mwsMode||'';
+window.addEventListener('mws:app-ready',e=>{const scope=e.detail?.scope||document.body.dataset.mwsMode||'',sameScope=scope===workspaceScope;workspaceScope=scope;if(sameScope&&workspaceReady&&root.classList.contains('active')){refreshView();return}clearResetDialog();finishDraft(false);stopShuffle();clearRankMotion();rankLock=false;guided=false;choosingMode=false;tab='command';activeAgent='';activeSquad='';workspaceReady=false;clearConfig();if(root.classList.contains('active'))void enter()});
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){clearHover();stopCommandTransitions();if(draftRun)finishDraft(true);return}
   if(guided&&!paused&&deckPhase==='pick'&&!rankLock)drawCard(0);
 });
 window.addEventListener('beforeunload',e=>{if(configDraft&&configDirty()&&!configPending){e.preventDefault();e.returnValue=''}});
 window.addEventListener('mawang:datachange',()=>window.mwsOperationM?.refresh());
-window.mwsOperationM={render,motionReport(){return{phase:deckPhase,mode:guidedMode,paused,settings:{app:typeof window.mwsMotionReduced==='function'?window.mwsMotionReduced():null,system:reducedMotion(),hidden:document.hidden},events:motionTrace.map(x=>({...x}))}},refresh(){if(!root.classList.contains('active')||!workspaceReady)return;if(configDraft){if(!canConfigure()){clearConfig();render()}return}if(guided){for(const c of getData()?.contacts||[]){if(c&&c.id!=null&&c.name)byId.set(String(c.id),c)}return}sync();if(signature()!==lastSignature){finishDraft(false);render()}}};
+window.mwsOperationM={render:renderExternal,motionReport(){return{phase:deckPhase,mode:guidedMode,paused,settings:{app:typeof window.mwsMotionReduced==='function'?window.mwsMotionReduced():null,system:reducedMotion(),hidden:document.hidden},events:motionTrace.map(x=>({...x}))}},refresh:refreshView};
 if(root.classList.contains('active'))void enter();
 }

@@ -161,7 +161,19 @@ try{
    await until(()=>browser.evaluate("!!document.querySelector('.op-command-overview')"),'Operation M overview ready');
    await pause(350);
    const overview=await inspect('.op-command-overview');assert(overview.logo&&overview.geometry&&!overview.overflow&&overview.version.length===2&&overview.version.every(x=>x.includes('v=18')),JSON.stringify({w,h,overview}));if(w>=1366)assert(overview.fit,JSON.stringify({w,h,overview}));await capture('overview',w,h);
-   await browser.evaluate("document.querySelector('[data-op-squad=mudok]').click()");await pause(150);const team=await inspect('.op-squad-detail');assert(!team.overflow,JSON.stringify({w,h,team}));if(w>=1366)assert(team.fit,JSON.stringify({w,h,team}));await capture('team',w,h);
+   if(w>=1366){
+    await until(()=>browser.evaluate("(()=>{const imgs=[...document.querySelectorAll('.op-agent-row .op-portrait img')];return imgs.length===20&&imgs.every(x=>x.complete&&x.naturalWidth>0&&getComputedStyle(x).visibility==='visible')})()"),'All twenty roster contact media decoded');
+    const profileMedia=await browser.evaluate("(()=>[...document.querySelectorAll('.op-agent-row')].map(row=>{const img=row.querySelector('img');return{n:row.dataset.opAgent,src:img.dataset.mwsCdnContactSource||img.getAttribute('src'),id:img.dataset.contactId||''}}))()");
+    for(const entry of profileMedia){const expected=contacts[OP_ROSTER.indexOf(entry.n)];assert(expected&&((entry.src||'').includes('/media/contact/'+expected.id+'?')||entry.id===expected.id),JSON.stringify(entry))}
+    console.log('OPERATION_M_FULL_APP_PROFILE_MEDIA_OK '+JSON.stringify({w,h,count:profileMedia.length}));
+   }
+   if(w>=1366){
+    const pt=await browser.evaluate("(()=>{const e=document.querySelector('.op-squad-hero .op-commander-art'),r=e.getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}})()");
+    await browser.movePoint(pt.x,pt.y);await pause(280);
+    assert(await browser.evaluate("document.querySelector('.op-squad-hit').matches(':hover')"),'Commander real hover did not hit team button');
+    await browser.clickPoint(pt.x,pt.y);
+   }else await browser.evaluate("document.querySelector('[data-op-squad=mudok]').click()");
+   await pause(150);const team=await inspect('.op-squad-detail');assert(!team.overflow,JSON.stringify({w,h,team}));if(w>=1366)assert(team.fit,JSON.stringify({w,h,team}));await capture('team',w,h);
    await browser.evaluate("document.querySelector('.op-agent-tile').click()");await pause(150);const agent=await inspect('.op-agent-detail');assert(agent.commander&&agent.members&&!agent.overflow,JSON.stringify({w,h,agent}));if(w>=1366)assert(agent.fit,JSON.stringify({w,h,agent}));await capture('agent',w,h);
    await browser.evaluate("document.querySelector('[data-op-action=tab-draft]').click()");await pause(300);const roster=await inspect('.op-roster');assert(roster.logo&&!roster.overflow,JSON.stringify({w,h,roster}));if(w>=1366)assert(roster.fit,JSON.stringify({w,h,roster}));await capture('roster',w,h);
    await browser.evaluate("document.querySelector('[data-op-action=tab-tier]').click()");await pause(200);const choice=await inspect('.op-mode-choice');assert(!choice.overflow,JSON.stringify({w,h,choice}));await capture('choice',w,h);
