@@ -1,5 +1,7 @@
 // Operation M: local-only simulated team balancing. No persistence or network dependencies.
 export const ROSTER=Object.freeze(['마왕0216','햇비','뽀린걸','유키라','베베리','다키','최또','김웰로','양지팡','스위데','물초코','리냐_LIN…','거대별','박재박','난워니','카푸','고여름_','카노미☆','깡담비','카린야']);
+// The legacy key is retained solely for existing saved links, tiers and artwork.
+export const rosterContactName=n=>n==='양지팡'?'양지랖':n;
 export const ROLE_NAMES=Object.freeze(['우왁굳','고세구!','천양','머독','대월향']);
 export const TIERS=Object.freeze(['S','A','B','C','D']);
 export const SCORE=Object.freeze({S:5,A:4,B:3,C:2,D:1});
@@ -19,9 +21,9 @@ export function normalizeState(raw){
   const s=defaultState();if(!raw||typeof raw!=='object')return s;
   const used=new Set();
   for(const name of ROSTER){
-    const id=String(raw.links?.[name]||'');
+    const id=String(raw.links?.[name]||raw.links?.[rosterContactName(name)]||'');
     if(id&&!used.has(id)){s.links[name]=id;used.add(id)}
-    if(TIERS.includes(raw.tiers?.[name]))s.tiers[name]=raw.tiers[name];
+    const tier=raw.tiers?.[name]??raw.tiers?.[rosterContactName(name)];if(TIERS.includes(tier))s.tiers[name]=tier;
   }
   for(let i=0;i<5;i++){const id=String(raw.roles?.[i]||'');if(id&&!used.has(id)){s.roles[i]=id;used.add(id)}}
   if(Array.isArray(raw.teams)&&raw.teams.length===4&&raw.teams.every(t=>Array.isArray(t)&&t.length===5)){
@@ -36,7 +38,8 @@ export function syncContacts(state,contacts){
   const used=new Set([...Object.values(state.links),...state.roles].filter(Boolean));
   // Existing IDs are authoritative even when the name changes; never replace a missing linked contact silently.
   for(const name of ROSTER)if(!state.links[name]){
-    const c=matchContact(name,list),id=c&&String(c.id);
+    const canonical=rosterContactName(name);
+    const c=matchContact(canonical,list)||(name==='카노미☆'&&!list.some(p=>plain(p.name)===plain(name))?matchContact('카노',list):null),id=c&&String(c.id);
     if(id&&!used.has(id)){state.links[name]=id;used.add(id)}
   }
   return{byId,missing:ROSTER.filter(n=>!byId.has(state.links[n]))};

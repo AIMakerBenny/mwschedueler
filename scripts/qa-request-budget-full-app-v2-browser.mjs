@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 import {auditSession} from './qa-request-budget-session.mjs';
 import worker from '../src/cf-v111-entry.js';
 import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
-import {ROSTER as OP_ROSTER} from '../assets/operation-m-model-v1.js';
+import {ROSTER as OP_ROSTER,rosterContactName} from '../assets/operation-m-model-v1.js';
 const operationMQA=process.env.MWS_QA_OPERATION_M==='1';
 
 // Real HTML, browser scripts and Worker route chain; all data and upstream
@@ -73,7 +73,7 @@ const bsandongQA=process.env.MWS_QA_BSANDONG==='1';
 const parts={core:{version:52,categories:[],timezones:[],contentGroups:[],gameLibrary:[],achievementCards,contentApplications:[]},events:[{id:'fixture-event',title:'Fixture event',date:day,start:'12:00',end:'13:00',participants:['qa0'],checklist:[]}],contacts,contactMeta:{contactTags:[],contactTagBanners:{},emoticons:[]},activity:{collaborations:[],todayPeopleByDate:{},todayPeopleManualByDate:{},targetList:[]},clipboard:{scheduleClipboard:[]},notebook:{memos:[],favoriteFolders:[]},posts:fixturePosts,miniGames:{},wardogs:{schemaVersion:1,cards:[]}};
 if(operationMQA){
  const roles=['대월향','우왁굳','천양','머독','고세구!'];
- [...OP_ROSTER,...roles].forEach((name,i)=>{contacts[i].name=name==='리냐_LIN…'?'리냐_LINYA':name});
+ [...OP_ROSTER,...roles].forEach((name,i)=>{contacts[i].name=name==='리냐_LIN…'?'리냐_LINYA':name==='카노미☆'?'카노':rosterContactName(name)});
  parts.miniGames.operationMV1={links:Object.fromEntries(OP_ROSTER.map((name,i)=>[name,contacts[i].id])),roles:roles.map((_,i)=>contacts[OP_ROSTER.length+i].id)};
 }
 if(bsandongQA){

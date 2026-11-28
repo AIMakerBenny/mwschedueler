@@ -1,4 +1,4 @@
-import {ROSTER,ROLE_NAMES,TIERS,SCORE,normalizeState,syncContacts,matchContact,balancedDraft,teamStats} from './operation-m-model-v1.js?v=1';
+import {ROSTER,ROLE_NAMES,TIERS,SCORE,normalizeState,syncContacts,matchContact,balancedDraft,teamStats,rosterContactName} from './operation-m-model-v1.js?v=2';
 const root=document.getElementById('operationM');
 if(root){
 const KEY='mws.operationM.simulation.v1';
@@ -66,10 +66,10 @@ const SQUADS=Object.freeze([
 ].map(t=>Object.freeze({...t,members:Object.freeze(t.members)})));
 const teamByName=name=>SQUADS.find(t=>t.name===String(name).replace(/!$/,''));
 const SHORT_NAMES=Object.freeze({'마왕0216':'마왕','리냐_LIN…':'리냐','고여름_':'고여름','카노미☆':'카노'});
-const rosterAlias=n=>n==='카린야'?'카린아':SHORT_NAMES[n]||n;
+const rosterAlias=n=>n==='카린야'?'카린아':SHORT_NAMES[n]||rosterContactName(n);
 // Preserve intentional short labels only when the connected contact still matches
 // that roster identity. Other names are shown exactly as saved in Contacts.
-function agentName(n,links=state.links){const c=confirmedProfile(n,links);if(!c)return rosterAlias(n);const alias=rosterAlias(n);if(alias!==n){const norm=x=>String(x).normalize('NFKC').trim().toLowerCase();const key=x=>norm(x).replace(/[\s_!☆…\.\-]/g,'');const matches=n.endsWith('…')?key(c.name).startsWith(key(n)):key(c.name)===key(n);if(matches||norm(c.name)===norm(alias))return alias}return c.name}
+function agentName(n,links=state.links){const c=confirmedProfile(n,links);if(!c)return rosterAlias(n);if(n==='양지팡'&&c.name===n)return rosterContactName(n);const alias=rosterAlias(n);if(alias!==n){const norm=x=>String(x).normalize('NFKC').trim().toLowerCase();const key=x=>norm(x).replace(/[\s_!☆…\.\-]/g,'');const matches=n.endsWith('…')?key(c.name).startsWith(key(n)):key(c.name)===key(n);if(matches||norm(c.name)===norm(alias))return alias}return c.name}
 const squadFor=n=>SQUADS.find(t=>t.members.includes(n));
 const commanderUrl=t=>'/assets/operation-m-commander-'+t.id+'.avif?v=18';
 let activeSquad='',activeAgent='',artBusy=false,artNotice='';
@@ -269,10 +269,9 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(state));saveFailed=f
 function readConfig(){
   const raw=getData()?.miniGames?.[CONFIG_KEY];
   const clean=normalizeState(raw||{links:state.links,roles:state.roles});
+  // Fill only previously unlinked slots from unique canonical names. Explicit IDs remain authoritative.
+  syncContacts(clean,contacts);
   if(!raw){
-    // The local simulation's established IDs survive display-name changes.
-    // A missing linked contact stays missing rather than silently switching identities.
-    syncContacts(clean,contacts);
     const used=new Set([...Object.values(clean.links),...clean.roles].filter(Boolean));
     for(const n of ROSTER)if(!clean.links[n]&&rosterAlias(n)!==n){
       const alias=matchContact(rosterAlias(n),contacts),key=String(n).normalize('NFKC').trim().toLowerCase().replace(/[\s_!☆…\.\-]/g,'');
@@ -316,7 +315,7 @@ async function enter(){
   finally{if(epoch===workspaceLoadEpoch){workspaceLoading=false;showEnteredWorkspace()}}
 }
 const current=n=>byId.get(state.links[n]);
-const display=n=>current(n)?.name||n;
+const display=n=>{const name=current(n)?.name;return name&&!(n==='양지팡'&&name===n)?name:rosterContactName(n)};
 const available=()=>workspaceReady&&!missing.length&&ROSTER.every(n=>TIERS.includes(state.tiers[n]));
 const button=(action,label,extra='')=>'<button type="button" data-op-action="'+action+'" '+extra+'>'+label+'</button>';
 function photo(c,name){
@@ -501,7 +500,7 @@ function pickerHtml(){
   const used=new Set([...Object.entries(configDraft.links).filter(([n])=>n!==picker).map(([,id])=>id),...configDraft.roles.filter((_,i)=>i!==idx)]);
   const q=query.trim().toLocaleLowerCase('ko-KR');
   const list=q?contacts.filter(c=>String(c.name).toLocaleLowerCase('ko-KR').includes(q)).slice(0,40):[];
-  return '<div class="op-config-submodal"><div class="op-picker op-layer-panel" role="group" aria-label="연락처 연결">'+tacFrame()+'<div class="op-picker-top"><strong>'+esc(role?(idx?'감독 '+idx:'주최자'):picker)+' 연락처 연결</strong>'+button('close-picker','닫기')+'</div><input type="search" data-op-search placeholder="연락처 이름 검색" value="'+esc(query)+'" aria-label="연락처 이름 검색"><div class="op-picker-results">'+(list.length?list.map(c=>'<button type="button" data-op-link="'+esc(c.id)+'">'+photo(c,c.name)+'<span>'+esc(c.name)+(used.has(String(c.id))?' · 교환':'')+'</span></button>').join(''):'<span>'+(q?'검색 결과 없음':'이름을 입력하세요')+'</span>')+'</div></div></div>';
+  return '<div class="op-config-submodal"><div class="op-picker op-layer-panel" role="group" aria-label="연락처 연결">'+tacFrame()+'<div class="op-picker-top"><strong>'+esc(role?(idx?'감독 '+idx:'주최자'):rosterAlias(picker))+' 연락처 연결</strong>'+button('close-picker','닫기')+'</div><input type="search" data-op-search placeholder="연락처 이름 검색" value="'+esc(query)+'" aria-label="연락처 이름 검색"><div class="op-picker-results">'+(list.length?list.map(c=>'<button type="button" data-op-link="'+esc(c.id)+'">'+photo(c,c.name)+'<span>'+esc(c.name)+(used.has(String(c.id))?' · 교환':'')+'</span></button>').join(''):'<span>'+(q?'검색 결과 없음':'이름을 입력하세요')+'</span>')+'</div></div></div>';
 }
 function shuffleDeck(){
   stopShuffle();
