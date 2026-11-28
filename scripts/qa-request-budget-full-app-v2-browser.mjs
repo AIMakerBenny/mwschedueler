@@ -183,6 +183,8 @@ try{
    return {titles:report(titles),vrTitles:report(vr),denseDays:dense.map(el=>{const r=el.getBoundingClientRect(),cards=[...el.querySelectorAll('.mini-event[data-evid]')];return {date:el.closest('.day').dataset.date,fullCards:cards.filter(c=>{const b=c.getBoundingClientRect();return b.height>0&&b.top>=r.top-1&&b.bottom<=r.bottom+1}).length,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight}})};
   })()`);
   if(viewport[0]>=1366){
+   geom.brand=await browser.evaluate(`(()=>{const full=document.querySelector('.sidebar .logo-full'),mini=document.querySelector('.sidebar .logo-mini'),pin=document.getElementById('sidebarPinBtn'),logo=document.querySelector('.sidebar .logo'),f=full.getBoundingClientRect(),p=pin.getBoundingClientRect(),l=logo.getBoundingClientRect(),style=getComputedStyle(full,'::before');return {mark:style.maskImage.includes('data:image/svg+xml'),miniMark:getComputedStyle(mini,'::before').maskImage.includes('data:image/svg+xml'),width:f.width,available:l.width,overlap:Math.max(0,f.right-p.left),wordmarkFits:full.scrollWidth<=full.clientWidth+1,pinVisible:p.width>0}})()`);
+   assert(geom.brand.mark&&geom.brand.miniMark&&geom.brand.wordmarkFits&&geom.brand.overlap<=1&&geom.brand.pinVisible,'Brand must fit existing rail without overlap '+JSON.stringify(geom.brand));
    assert(geom.labelMetrics.vrTitles.total>0&&geom.labelMetrics.vrTitles.fullyReadable===geom.labelMetrics.vrTitles.total,'Fixture VR titles clipped '+JSON.stringify(geom.labelMetrics));
    assert(geom.labelMetrics.denseDays.length>0&&geom.labelMetrics.denseDays.every(d=>d.fullCards===3),'Three-event fixture days must show all three cards '+JSON.stringify(geom.labelMetrics.denseDays));
   }

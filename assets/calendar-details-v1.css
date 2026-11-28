@@ -389,3 +389,25 @@ body.mws-premium .event-details-popover-v2 .calendar-preview-person .avatar{
    transform:none!important;scale:none!important;box-shadow:var(--mws-material-inset)!important;
  }
 }
+
+/* Pass K: distinguish the command clusters from the landscape.
+   Keep original 32px hit targets, subgrid and single-line header. */
+@media(min-width:1050px){
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(.calendar-view-tabs-v172,.calendar-toolbar>.row,.calendar-jump,.calendar-group-toolbar-v2){
+   background:var(--mws-material-well)!important;
+   box-shadow:var(--mws-material-inset)!important;
+   border-radius:9px!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-quick-search-v174{
+   background:var(--mws-material-well)!important;
+   box-shadow:var(--mws-material-inset)!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-jump select{
+   background:var(--mws-material-raised)!important;
+   box-shadow:inset 0 1px var(--mws-material-light)!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 button:not([aria-selected=true]):not([aria-pressed=true]):not([aria-expanded=true]):not(:disabled):not(.drag-over):hover{
+   color:var(--text)!important;background:var(--mws-material-raised)!important;
+   box-shadow:inset 0 1px var(--mws-material-light),0 0 0 1px var(--mws-material-edge)!important;
+ }
+}
