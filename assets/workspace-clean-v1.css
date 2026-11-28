@@ -429,3 +429,44 @@ body.mws-premium :is(input,textarea,[contenteditable]:not([contenteditable="fals
   }
 }
 /* The environment is absent from mobile layout, reminders, and other tabs. */
+
+/* Stage 5: compact, data-driven schedule telemetry. No decorative fake data. */
+body.mws-premium #dashboard #dashboardOverviewMode .dashboard-statistics-v1{
+  --stats-line:color-mix(in srgb,var(--text) 12%,var(--border));
+  --stats-track:color-mix(in srgb,var(--input) 82%,var(--panel));
+  --stats-glint:color-mix(in srgb,var(--text) 9%,transparent);
+  margin:12px 0 0;min-width:0;
+  background:linear-gradient(150deg,color-mix(in srgb,var(--panel) 94%,var(--text)),var(--panel) 38%,var(--sidebar))!important;
+  border-color:var(--stats-line)!important;
+  box-shadow:inset 0 1px var(--stats-glint),0 6px 16px #0003!important;
+}
+#dashboard .dashboard-statistics-v1[hidden]{display:none!important}
+#dashboard .dashboard-stats-head-v1{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+#dashboard .dashboard-stats-head-v1 h3{margin:0!important}
+#dashboard .dashboard-stats-controls-v1,#dashboard .dashboard-stats-metric-v1{display:flex;align-items:center;gap:4px}
+#dashboard .dashboard-stats-controls-v1{flex-wrap:wrap}
+#dashboard .dashboard-stats-metric-v1{padding:2px;border-radius:8px;background:var(--stats-track)}
+#dashboard .dashboard-stats-controls-v1 :is(button,select){font-size:12px;min-height:32px;padding:5px 9px;line-height:1.3;width:auto}
+#dashboard .dashboard-stats-metric-v1 button[aria-pressed=true]{background:color-mix(in srgb,var(--accent) 18%,var(--panel))!important;box-shadow:inset 0 -2px var(--accent)!important;color:var(--text)}
+#dashboard .dashboard-stats-totals-v1{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+#dashboard .dashboard-stats-totals-v1>div{min-width:0;padding:8px 10px;background:var(--stats-track);border-radius:7px;box-shadow:inset 0 1px 3px #0002}
+#dashboard .dashboard-stats-totals-v1 span{font-size:11px;color:var(--muted);display:block}
+#dashboard .dashboard-stats-totals-v1 strong{display:block;font-size:clamp(13px,1.4vw,20px);line-height:1.4;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:var(--text)}
+#dashboard .dashboard-stats-chart-wrap-v1{display:flex;align-items:stretch;gap:7px;min-width:0;padding:8px;background:var(--stats-track);border-radius:8px;box-shadow:inset 0 0 0 1px var(--stats-line)}
+#dashboard .dashboard-stats-axis-v1{flex:0 0 auto;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;color:var(--muted);font-size:10px;line-height:1.2;padding:0 0 20px;max-width:80px;overflow-wrap:anywhere}
+#dashboard .dashboard-stats-chart-v1{display:grid;grid-template-columns:repeat(var(--stats-days,30),minmax(22px,1fr));gap:3px;overflow-x:auto;min-width:0;flex:1;scrollbar-width:thin}
+#dashboard .dashboard-stats-column-v1{display:flex;min-width:0;flex-direction:column;align-items:stretch;gap:4px;padding:0 0 2px!important;background:none!important;border:0!important;border-radius:4px!important;box-shadow:none!important;transform:none!important;scale:none!important}
+#dashboard .dashboard-stats-track-v1{height:98px;display:flex;align-items:flex-end;justify-content:center;position:relative;border-radius:4px;background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),var(--stats-line) calc(25% - 1px),var(--stats-line) 25%);border-bottom:1px solid var(--stats-line)}
+#dashboard .dashboard-stats-bar-v1{width:68%;height:calc(var(--stats-bar-ratio,0) * 100%);min-height:1px;border-radius:3px 3px 0 0;background:linear-gradient(0deg,var(--accent2),color-mix(in srgb,var(--accent) 74%,var(--text)));box-shadow:inset 0 1px #ffffff35;transform-origin:bottom;animation:mwsStatsBarV1 220ms cubic-bezier(.2,.75,.25,1) both}
+#dashboard .dashboard-stats-column-v1[data-empty=true] .dashboard-stats-bar-v1{background:var(--muted);opacity:.35;box-shadow:none}
+#dashboard .dashboard-stats-column-v1[data-unknown=true] .dashboard-stats-track-v1{border-bottom:2px dashed #d8a64b}
+#dashboard .dashboard-stats-column-v1[aria-pressed=true] .dashboard-stats-track-v1{box-shadow:inset 0 0 0 1px var(--accent);background-color:color-mix(in srgb,var(--accent) 9%,transparent)}
+#dashboard .dashboard-stats-column-v1:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+@media(hover:hover) and (pointer:fine){#dashboard .dashboard-stats-column-v1:hover .dashboard-stats-track-v1{background-color:color-mix(in srgb,var(--accent) 12%,transparent)}}
+#dashboard .dashboard-stats-date-v1{font-size:9px;line-height:1.3;min-height:12px;white-space:nowrap;text-align:center;color:var(--muted)}
+#dashboard .dashboard-stats-day-v1{min-height:1.5em;margin-top:9px;font-size:12px;color:var(--text);overflow-wrap:anywhere}
+#dashboard .dashboard-stats-note-v1{font-size:10px;color:var(--muted);line-height:1.5;margin-top:4px}
+@keyframes mwsStatsBarV1{from{transform:scaleY(.1);opacity:.6}to{transform:none;opacity:1}}
+@container dashboard-overview (max-width:530px){#dashboard .dashboard-stats-totals-v1{grid-template-columns:repeat(2,minmax(0,1fr))}}
+html[data-mws-motion=reduced] #dashboard .dashboard-stats-bar-v1{animation:none}
+@media(prefers-reduced-motion:reduce){#dashboard .dashboard-stats-bar-v1{animation:none}}
