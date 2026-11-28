@@ -171,7 +171,7 @@ try{
   await until(()=>browser.evaluate("document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length>=25"),'Representative calendar loaded');
   await browser.evaluate("document.fonts.ready.then(()=>true)");
   const scene=await browser.evaluate(`(async()=>{const grid=document.getElementById('calendarGrid'),paint=getComputedStyle(grid),value=paint.getPropertyValue('--calendar-atmosphere-art').trim();if(!value.includes('data:image/png;base64,'))return {present:false};const uri=value.substring(value.indexOf('data:'),value.lastIndexOf('"')),img=new Image();img.src=uri;await img.decode();return {present:true,width:img.naturalWidth,height:img.naturalHeight,bytes:atob(uri.split(',')[1]).length}})()`);
-  if(viewport[0]>=901)assert(scene.present&&scene.width===800&&scene.height===450&&scene.bytes<=240000,JSON.stringify(scene));
+  if(viewport[0]>=901)assert(scene.present&&scene.width===1280&&scene.height===720&&scene.bytes<=240000,JSON.stringify(scene));
   else assert(!scene.present,'Mobile must not render the desktop landscape');
   await capture('calendar');
   const geom=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),main=document.querySelector('.app>.main'),r=grid.getBoundingClientRect(),m=main.getBoundingClientRect();return {cards:grid.querySelectorAll('.mini-event[data-evid]').length,rootOverflow:document.documentElement.scrollWidth-innerWidth,gridWidth:r.width,mainWidth:m.width,gridHeight:r.height,theme:document.body.dataset.theme,font:getComputedStyle(grid).fontFamily}})()`);
