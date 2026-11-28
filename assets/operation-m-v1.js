@@ -9,7 +9,7 @@ let configDraft=null,configSaving=false,configBaseline=null,configArt={},configD
 let arrived='',layoutFrame=0,queue=[],guided=false,choosingMode=false,rankLock=false,rankTimer=0;
 let lastView='',guidedHistory=[],lastMove=null;
 let guidedResume=null,workspaceLoadEpoch=0,workspaceWasActive=root.classList.contains('active'),resumeOnEnter=false;
-let resetDialog=null,resetHold=false,pendingRefresh=false,lastPermission=false,commandImageKeys=new Map();
+let resetDialog=null,resetSettle=null,resetHold=false,pendingRefresh=false,lastPermission=false,commandImageKeys=new Map();
 let rankEffects=[],rankClock=0,rankCompletion=null;
 let draftRun=null,draftRender=false;
 const draftLater=(run,ms,fn)=>{run.timers.push(setTimeout(()=>{if(draftRun===run&&root.classList.contains('active'))fn()},ms))};
@@ -66,7 +66,10 @@ const SQUADS=Object.freeze([
 ].map(t=>Object.freeze({...t,members:Object.freeze(t.members)})));
 const teamByName=name=>SQUADS.find(t=>t.name===String(name).replace(/!$/,''));
 const SHORT_NAMES=Object.freeze({'마왕0216':'마왕','리냐_LIN…':'리냐','고여름_':'고여름','카노미☆':'카노'});
-const agentName=n=>n==='카린야'?'카린아':SHORT_NAMES[n]||n;
+const rosterAlias=n=>n==='카린야'?'카린아':SHORT_NAMES[n]||n;
+// Preserve intentional short labels only when the connected contact still matches
+// that roster identity. Other names are shown exactly as saved in Contacts.
+function agentName(n,links=state.links){const c=confirmedProfile(n,links);if(!c)return rosterAlias(n);const alias=rosterAlias(n);if(alias!==n){const norm=x=>String(x).normalize('NFKC').trim().toLowerCase();const key=x=>norm(x).replace(/[\s_!☆…\.\-]/g,'');const matches=n.endsWith('…')?key(c.name).startsWith(key(n)):key(c.name)===key(n);if(matches||norm(c.name)===norm(alias))return alias}return c.name}
 const squadFor=n=>SQUADS.find(t=>t.members.includes(n));
 const commanderUrl=t=>'/assets/operation-m-commander-'+t.id+'.avif?v=18';
 let activeSquad='',activeAgent='',artBusy=false,artNotice='';
@@ -103,7 +106,7 @@ function tacFrame(){return '<svg class="op-armor-frame" aria-hidden="true" viewB
 function confirmedProfile(n,links=state.links){return byId.get(String(links[n]||''))||null}
 const photoSource=c=>String(c?.image||c?.avatar||c?.profileImage||'');
 function profilePortrait(n,layout='row',links=state.links){
-  const c=confirmedProfile(n,links),markup=photo(c,agentName(n));
+  const c=confirmedProfile(n,links),markup=photo(c,agentName(n,links));
   return markup.replace('class="op-portrait"','class="op-portrait'+(layout==='row'?'':' op-agent-portrait op-profile-portrait')+'" data-op-profile-for="'+esc(n)+'" data-op-profile-layout="'+layout+'"');
 }
 function portraitCaption(n){return agentArt(n)||photoSource(confirmedProfile(n))?'':confirmedProfile(n)?'연락처 사진 없음':'연락처 연결 필요'}
@@ -112,7 +115,7 @@ function dossierPortrait(n){
 }
 function commandImageKey(n,dossier=false){
   const c=confirmedProfile(n);
-  return dossier&&agentArt(n)?'art:'+agentArt(n):JSON.stringify([c?.id,photoSource(c)]);
+  return JSON.stringify([c?.id,agentName(n),dossier&&agentArt(n)?agentArt(n):photoSource(c)]);
 }
 function snapshotCommandImages(){
   commandImageKeys=new Map(ROSTER.map(n=>[n,commandImageKey(n)]));
@@ -128,7 +131,8 @@ function refreshCommandImages(){
       node.replaceWith(tmp.content.firstElementChild);
     }
   }
-  if(activeAgent){const caption=view.querySelector('.op-instrument-caption');if(caption&&caption.textContent!==portraitCaption(activeAgent))caption.textContent=portraitCaption(activeAgent);const text=view.querySelector('.op-art-upload-text');if(text&&!artBusy)text.textContent=agentArt(activeAgent)?'전용 이미지 변경':'전용 이미지 추가'}
+  for(const button of view.querySelectorAll('.op-agent-row,.op-agent-tile,.op-agent-switch')){const name=agentName(button.dataset.opAgent),label=button.querySelector('strong');if(label&&label.textContent!==name)label.textContent=name;if(button.hasAttribute('aria-label'))button.setAttribute('aria-label',name+' 요원 정보')}
+  if(activeAgent){const title=view.querySelector('.op-agent-identity h2');if(title&&title.textContent!==agentName(activeAgent))title.textContent=agentName(activeAgent);const caption=view.querySelector('.op-instrument-caption');if(caption&&caption.textContent!==portraitCaption(activeAgent))caption.textContent=portraitCaption(activeAgent);const text=view.querySelector('.op-art-upload-text');if(text&&!artBusy)text.textContent=agentArt(activeAgent)?'전용 이미지 변경':'전용 이미지 추가'}
   snapshotCommandImages();return true;
 }
 function tacticalMember(t,n,i){
@@ -270,8 +274,8 @@ function readConfig(){
     // A missing linked contact stays missing rather than silently switching identities.
     syncContacts(clean,contacts);
     const used=new Set([...Object.values(clean.links),...clean.roles].filter(Boolean));
-    for(const n of ROSTER)if(!clean.links[n]&&agentName(n)!==n){
-      const alias=matchContact(agentName(n),contacts),key=String(n).normalize('NFKC').trim().toLowerCase().replace(/[\s_!☆…\.\-]/g,'');
+    for(const n of ROSTER)if(!clean.links[n]&&rosterAlias(n)!==n){
+      const alias=matchContact(rosterAlias(n),contacts),key=String(n).normalize('NFKC').trim().toLowerCase().replace(/[\s_!☆…\.\-]/g,'');
       const hasOriginal=contacts.some(c=>{const name=String(c.name).normalize('NFKC').trim().toLowerCase().replace(/[\s_!☆…\.\-]/g,'');return n.endsWith('…')?name.startsWith(key):name===key});
       if(!hasOriginal&&alias&&!used.has(String(alias.id))){clean.links[n]=String(alias.id);used.add(String(alias.id))}
     }
@@ -394,11 +398,11 @@ function adminConfig(){
   const changedCount=Object.keys(configArt).length;
   const ids=[...ROSTER.map(n=>configDraft.links[n]),...configDraft.roles];
   const validLinks=ids.every(id=>id&&byId.has(id))&&new Set(ids).size===25;
-  return tacFrame()+'<div class="op-config-main" '+(picker||configDiscard?'inert':'')+'><header class="op-config-head"><h2 class="op-config-title">'+tacEmblem()+'인물 설정</h2>'+button('close-config','닫기',disabled)+'</header><nav class="op-config-jump" aria-label="설정 영역 이동">'+button('config-jump-links','인물 연결',disabled)+button('config-jump-art','전용 이미지',disabled)+'</nav><div class="op-config-scroll"><section class="op-config-section op-config-links" tabindex="-1" aria-label="공통 연락처 연결"><div class="op-config-section-head"><h3>공통 연락처 연결</h3><span>'+(validLinks?'연결 확인':'미연결 항목 확인')+'</span></div><h4>주최자 및 감독</h4><div class="op-config-roles">'+configDraft.roles.map((id,i)=>slot(i?'감독 '+i:'주최자',id,'role:'+i)).join('')+'</div><h4>참가자 20명</h4><div class="op-config-players">'+SQUADS.map(t=>'<section class="op-link-team"'+squadStyle(t)+'><header>'+esc(t.name)+' 팀</header>'+t.members.map(n=>slot(agentName(n),configDraft.links[n],n)).join('')+'</section>').join('')+'</div></section><section class="op-config-section op-config-art" tabindex="-1" aria-label="오퍼 M 전용 이미지"><div class="op-config-section-head"><h3>요원 상세 이미지</h3><span>'+(changedCount?changedCount+'장 변경 준비':'전용 이미지는 선택 사항')+'</span></div><div class="op-art-config-grid">'+SQUADS.map(t=>'<section class="op-art-config-team"'+squadStyle(t)+'><header>'+commanderPortrait(null,t.name)+'<span><strong>'+esc(t.name)+' 팀</strong><small>코치 · '+esc(t.coach)+'</small></span></header>'+t.members.map(n=>{
+  return tacFrame()+'<div class="op-config-main" '+(picker||configDiscard?'inert':'')+'><header class="op-config-head"><h2 class="op-config-title">'+tacEmblem()+'인물 설정</h2>'+button('close-config','닫기',disabled)+'</header><nav class="op-config-jump" aria-label="설정 영역 이동">'+button('config-jump-links','인물 연결',disabled)+button('config-jump-art','전용 이미지',disabled)+'</nav><div class="op-config-scroll"><section class="op-config-section op-config-links" tabindex="-1" aria-label="공통 연락처 연결"><div class="op-config-section-head"><h3>공통 연락처 연결</h3><span>'+(validLinks?'연결 확인':'미연결 항목 확인')+'</span></div><h4>주최자 및 감독</h4><div class="op-config-roles">'+configDraft.roles.map((id,i)=>slot(i?'감독 '+i:'주최자',id,'role:'+i)).join('')+'</div><h4>참가자 20명</h4><div class="op-config-players">'+SQUADS.map(t=>'<section class="op-link-team"'+squadStyle(t)+'><header>'+esc(t.name)+' 팀</header>'+t.members.map(n=>slot(rosterAlias(n),configDraft.links[n],n)).join('')+'</section>').join('')+'</div></section><section class="op-config-section op-config-art" tabindex="-1" aria-label="오퍼 M 전용 이미지"><div class="op-config-section-head"><h3>요원 상세 이미지</h3><span>'+(changedCount?changedCount+'장 변경 준비':'전용 이미지는 선택 사항')+'</span></div><div class="op-art-config-grid">'+SQUADS.map(t=>'<section class="op-art-config-team"'+squadStyle(t)+'><header>'+commanderPortrait(null,t.name)+'<span><strong>'+esc(t.name)+' 팀</strong><small>코치 · '+esc(t.coach)+'</small></span></header>'+t.members.map(n=>{
     const staged=Object.hasOwn(configArt,n),src=staged?configArt[n]:agentArt(n),contact=confirmedProfile(n,configDraft.links);
     const preview=src?tacticalPortrait(n,false,src):profilePortrait(n,'config',configDraft.links);
     const sourceLabel=staged?(src?'변경 저장 대기':'프로필 복귀 대기'):src?'전용 이미지':photoSource(contact)?'연락처 프로필':contact?'프로필 없음':'연락처 미연결';
-    return '<div class="op-art-config-entry'+(staged?' is-edited':'')+'"><label class="op-art-config-slot">'+preview+'<span><strong>'+esc(agentName(n))+'</strong><small>'+sourceLabel+'</small></span><input type="file" aria-label="'+esc(agentName(n))+' 이미지 등록 또는 변경" accept="image/png,image/jpeg,image/webp,image/avif" data-op-agent-upload="'+esc(n)+'" '+editDisabled+'></label>'+'<div class="op-art-actions">'+(staged&&!configPending?button('undo-art','취소','data-op-art-undo="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 이미지 변경 취소" '+disabled):src&&!configPending?button('remove-art','프로필 복귀','data-op-art-remove="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 전용 이미지 제거" '+disabled):'')+'</div></div>';
+    return '<div class="op-art-config-entry'+(staged?' is-edited':'')+'"><label class="op-art-config-slot">'+preview+'<span><strong>'+esc(agentName(n,configDraft.links))+'</strong><small>'+sourceLabel+'</small></span><input type="file" aria-label="'+esc(agentName(n))+' 이미지 등록 또는 변경" accept="image/png,image/jpeg,image/webp,image/avif" data-op-agent-upload="'+esc(n)+'" '+editDisabled+'></label>'+'<div class="op-art-actions">'+(staged&&!configPending?button('undo-art','취소','data-op-art-undo="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 이미지 변경 취소" '+disabled):src&&!configPending?button('remove-art','프로필 복귀','data-op-art-remove="'+esc(n)+'" aria-label="'+esc(agentName(n))+' 전용 이미지 제거" '+disabled):'')+'</div></div>';
   }).join('')+'</section>').join('')+'</div></section></div><footer class="op-config-footer"><span role="status" aria-live="polite">'+esc(busy?(configSaving?'온라인 저장 중…':'이미지 준비 중…'):configNotice||(configDirty()?'저장되지 않은 변경사항이 있습니다.':'변경사항 없음'))+'</span>'+button('save-config',configSaving?'저장 중':configPending?'저장 다시 시도':'설정 저장','class="op-primary" '+(busy||!configDirty()?'disabled':''))+'</footer></div>'+pickerHtml()+(configDiscard?'<div class="op-config-submodal"><section class="op-config-confirm op-layer-panel" role="group" aria-labelledby="op-config-discard-title">'+tacFrame()+'<h3 id="op-config-discard-title">'+(configPending?'온라인 저장 미확인':'저장하지 않은 변경사항')+'</h3><p>'+(configPending?'이미 전송한 저장 요청은 취소할 수 없습니다. 닫으면 공용 저장 복구 기능에서 계속 관리됩니다.':'저장하지 않은 연락처 연결 및 이미지 변경을 취소할까요?')+'</p><div>'+button('keep-config','계속 편집')+button('discard-config',configPending?'닫기':'변경사항 버리기','class="op-danger"')+'</div></section></div>':'');
 }
 function renderConfig(target={}){
@@ -458,6 +462,7 @@ function handleConfigClick(e,b){
   return true;
 }
 function openResetDialog(trigger){
+  if(resetDialog&&!resetDialog.open)resetSettle?.();
   if(resetDialog||configDraft)return;
   const wasGuided=guided;
   // Resolve only the in-flight transition before mounting the modal. Classification
@@ -472,7 +477,7 @@ function openResetDialog(trigger){
   root.append(dialog);
   const settle=()=>{
     if(resetDialog!==dialog)return;
-    const confirmed=dialog.returnValue==='reset';resetDialog=null;resetHold=false;dialog.remove();
+    const confirmed=dialog.returnValue==='reset';resetDialog=null;resetSettle=null;resetHold=false;dialog.remove();
     if(!confirmed){
       if(trigger?.isConnected)trigger.focus({preventScroll:true});
       if(guided&&!paused&&deckPhase==='pick'&&!document.hidden)drawCard(0);
@@ -483,6 +488,8 @@ function openResetDialog(trigger){
     if(wasGuided)startGuided();else{guided=false;render()}
   };
   // Real form submissions settle in the same task; native close/Escape remain supported.
+  resetSettle=settle;
+  dialog.addEventListener('click',e=>{const b=e.target.closest('button[type=submit]');if(!b||!dialog.contains(b))return;e.preventDefault();dialog.close(b.value);settle()});
   dialog.addEventListener('submit',e=>{e.preventDefault();dialog.close(e.submitter?.value||'cancel');settle()});
   dialog.addEventListener('cancel',e=>{e.preventDefault();dialog.close('cancel');settle()});
   dialog.addEventListener('close',settle,{once:true});
@@ -1169,7 +1176,7 @@ root.addEventListener('drop',e=>{const r=e.target.closest('[data-op-drop]');if(!
 root.addEventListener('dragleave',e=>{const r=e.target.closest('[data-op-drop]');if(r&&!r.contains(e.relatedTarget))r.classList.remove('op-drop-active')});
 root.addEventListener('dragend',()=>{clearDrag(!!dragName);flushPendingRefresh()});
 function clearResetDialog(){
-  const dialog=resetDialog;resetDialog=null;resetHold=false;
+  const dialog=resetDialog;resetDialog=null;resetSettle=null;resetHold=false;
   if(dialog?.open)dialog.close('cancel');dialog?.remove();
 }
 function refreshView(){
