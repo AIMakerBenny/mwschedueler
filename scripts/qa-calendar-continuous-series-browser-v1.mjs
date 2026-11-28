@@ -6,6 +6,8 @@ import {spawnSync} from 'node:child_process';
 import {mkdtempSync,mkdtemp,writeFileSync,rmSync,readFileSync} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 
 const candidates=['google-chrome','google-chrome-stable','chromium','chromium-browser'];
 const chrome=candidates.map(name=>spawnSync('which',[name],{encoding:'utf8'}))
@@ -46,6 +48,7 @@ const ok=bars.length===4 && bars.slice(0,2).every(b=>b.dataset.groupId==='wow' &
   getComputedStyle(bars[0]).pointerEvents==='none' &&
   cells.every(c=>!!c.querySelector('.mini-event')) &&
   cells[4].querySelector('.daynum').getBoundingClientRect().bottom<r1.top;
+window.runGroupInteractionQA=()=>{
 const groupCard=first.querySelector('.mini-event'),other=cells[25].querySelector('.mini-event');
 const dims=()=>[...grid.querySelectorAll('.mini-event,.calendar-continuous-ribbon-v1')].map(n=>[n.offsetLeft,n.offsetTop,n.offsetWidth,n.offsetHeight]);
 const before=JSON.stringify(dims());
@@ -55,21 +58,22 @@ const pointerLinked=active.length===10&&active.every(n=>(n.dataset.mwsUiGroup||n
 groupCard.dispatchEvent(new PointerEvent('pointerleave',{bubbles:true,pointerType:'mouse'}));
 grid.dispatchEvent(new PointerEvent('pointerleave',{pointerType:'mouse'}));
 const pointerCleared=!grid.querySelector('.mws-ui-group-highlight');
-groupCard.focus();
+groupCard.focus({preventScroll:true});
 const keyboardLinked=grid.querySelectorAll('.mws-ui-group-highlight').length===10;
-other.focus();
+other.focus({preventScroll:true});
 const switched=[...grid.querySelectorAll('.mws-ui-group-highlight')].every(n=>(n.dataset.mwsUiGroup||n.dataset.groupId)==='draft')&&grid.querySelectorAll('.mws-ui-group-highlight').length===6;
 grid.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
 const cleared=!grid.querySelector('.mws-ui-group-highlight');
 const context=window.mwsCalendarContinuousSeriesV1.contextFor(grid,events[0]);
 const interaction=pointerLinked&&pointerCleared&&keyboardLinked&&switched&&cleared&&before===JSON.stringify(dims())&&context?.totalDays===8;
-document.getElementById('qa-result').textContent=JSON.stringify({
+return {
   ok:ok&&interaction,interaction,pointerLinked,pointerCleared,keyboardLinked,switched,cleared,bars:bars.length,
   groups:bars.map(b=>b.dataset.groupId),
   leftDiff:r1.left-(c1.left+7),rightDiff:r1.right-(c7.right-7),
   nextLeftDiff:r2.left-(c8.left+7),nextRightDiff:r2.right-(c12.right-7),
-  ribbonBottom:r1.bottom,cardTop:card.top
-});
+  ribbonBottom:r1.bottom,cardTop:card.top,focused:document.hasFocus(),activeElement:document.activeElement?.outerHTML.slice(0,100)
+};
+};
 `;
 const baseCss=`*{box-sizing:border-box}
 body{margin:12px;background:#090e18;color:#fff;font-family:Arial,sans-serif}
@@ -77,23 +81,19 @@ body{margin:12px;background:#090e18;color:#fff;font-family:Arial,sans-serif}
 .day{min-height:130px;padding:8px;overflow:hidden;position:relative;background:#171c27;border:1px solid #303848;border-radius:8px}
 .daynum{font-size:12px;margin-bottom:7px}.mini-event{height:28px;padding:5px;background:#203c46;border-radius:4px}`;
 const dir=mkdtempSync(path.join(os.tmpdir(),'mws-continuous-browser-'));
+let browser;
 try{
   const file=path.join(dir,'index.html');
   const html=`<!doctype html><meta charset="utf-8"><style>${baseCss}\n${css}</style>
     <div id="calendarGrid">${days}</div><pre id="qa-result">PENDING</pre>
     <script>${engine}</script><script>${script}</script>`;
   writeFileSync(file,html,'utf8');
+  browser=await launchCalendarBrowser(dir);
   for(const width of [1920,1366,850]){
-    const run=spawnSync(chrome,[
-      '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
-      '--disable-background-networking','--no-first-run','--virtual-time-budget=2500',
-      '--window-size='+width+',1080','--dump-dom','file://'+file
-    ],{encoding:'utf8',timeout:30000,maxBuffer:8*1024*1024});
-    assert.equal(run.status,0,'Chrome failed: '+run.stderr.slice(-1000));
-    const match=run.stdout.match(/<pre id="qa-result">([^<]+)<\/pre>/);
-    assert(match,'Missing browser layout assertion: '+run.stdout.slice(-300));
-    const result=JSON.parse(match[1]);
+    await browser.navigate(pathToFileURL(file).href+'?width='+width,width,1080);
+    await browser.setFocusEmulation(true);
+    const result=await browser.evaluate('window.runGroupInteractionQA()');
     assert(result.ok,'Ribbon geometry failed '+width+': '+JSON.stringify(result));
     console.log('CALENDAR_SERIES_BROWSER_OK',width,JSON.stringify(result));
   }
-}finally{rmSync(dir,{recursive:true,force:true})}
+}finally{await browser?.close();rmSync(dir,{recursive:true,force:true})}
