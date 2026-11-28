@@ -72,7 +72,11 @@ for(const [w,h] of [[1366,768],[1600,900],[1715,894],[1726,892],[1766,831],[1913
   click('[data-op-squad=mudok]');click('.op-agent-tile');const image=!!q('.op-dossier-portrait img');
   document.body.dataset.mwsMode='public';window.mwsOperationM.render();
   const publicSafe=!q('[data-op-action=open-config]')&&!q('[data-op-agent-upload]')&&!!q('.op-dossier-portrait img');
-  return {open,tabTrap,picker,focusRestored,unchanged,staged,scrollStable,invalidPreserved,refreshStable:!!refreshStable,confirm,kept,discarded,noOp,failure,retry,image,publicSafe};
+  document.body.dataset.mwsMode='admin';window.mwsOperationM.render();click('[data-op-action=open-config]');click('[data-op-art-remove="마왕0216"]');
+  const removeStaged=!!q('.op-art-config-entry.is-edited .op-profile-portrait img')&&data.miniGames.operationMArtV1.players.length===1&&saves===2;
+  click('[data-op-action=save-config]');await wait(()=>!q('.op-config'));
+  const removed=data.miniGames.operationMArtV1.players.length===0&&q('.op-dossier-portrait img')?.getAttribute('src')===data.contacts[0].image&&saves===3;
+  return {open,tabTrap,picker,focusRestored,unchanged,staged,scrollStable,invalidPreserved,refreshStable:!!refreshStable,confirm,kept,discarded,noOp,failure,retry,image,publicSafe,removeStaged,removed};
  })()`);
  assert(Object.values(adminSettings).every(Boolean),JSON.stringify(adminSettings));console.log('OPERATION_M_ADMIN_SETTINGS_OK',JSON.stringify(adminSettings));
  await capture('settings-saved-agent',1366,768);
@@ -112,19 +116,30 @@ for(const [w,h] of [[1366,768],[1600,900],[1715,894],[1726,892],[1766,831],[1913
  assert(Object.values(heroHover).every(Boolean),JSON.stringify(heroHover));await capture('commander-hover',1726,892);
  await b.clickPoint(heroPoint.x,heroPoint.y);assert.equal(await b.evaluate("document.querySelector('.op-squad-detail h2')?.textContent"),'머독 팀');await capture('team-depth',1726,892);
  console.log('OPERATION_M_COMMANDER_HIT_OK',JSON.stringify(heroHover));
- // Contacts, not simulated draft links or artwork, drive the confirmed roster.
- await b.navigate(url,1726,892);
- const profileSources=await b.evaluate(`(async()=>{const q=s=>document.querySelector(s),row=n=>q('.op-agent-row[data-op-agent="'+n+'"]'),src=n=>row(n).querySelector('img')?.getAttribute('src'),wait=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));for(let i=0;i<100&&!row('마왕0216');i++)await new Promise(r=>setTimeout(r,20));
- const original=data.contacts.find(c=>c.name==='마왕0216'),other=data.contacts.find(c=>c.name==='김웰로'),origImage=original.image;
- const updated=origImage.replace('blue','red'),alternate=origImage.replace('blue','green');other.image=alternate;data.miniGames.operationMV1={links:{'마왕0216':other.id},roles:[]};original.image=updated;window.mwsOperationM.refresh();await wait();
- const correctDespiteDraft=src('마왕0216')===updated&&src('김웰로')===alternate;
- original.image='';original.avatar=origImage;window.mwsOperationM.refresh();await wait();const avatarRefresh=src('마왕0216')===origImage;
- delete original.avatar;window.mwsOperationM.refresh();await wait();const missing=!src('마왕0216')&&!!row('마왕0216').querySelector('.op-initial');
- original.image=origImage;data.contacts.push({...original,id:'duplicate-profile'});window.mwsOperationM.refresh();await wait();const ambiguous=!src('마왕0216')&&!!row('마왕0216').querySelector('.op-initial');
- data.contacts.pop();window.mwsOperationM.refresh();await wait();const restored=src('마왕0216')===origImage;
- return {correctDespiteDraft,avatarRefresh,missing,ambiguous,restored,saves:saves===0}})()`);
- assert(Object.values(profileSources).every(Boolean),JSON.stringify(profileSources));console.log('OPERATION_M_ROSTER_PROFILE_SOURCES_OK',JSON.stringify(profileSources));
 
+ // Explicit IDs are authoritative even with renamed, duplicate or missing contacts.
+ await b.navigate(url,1726,892);
+ const profileSources=await b.evaluate(`(async()=>{const q=s=>document.querySelector(s),row=n=>q('.op-agent-row[data-op-agent="'+n+'"]'),src=n=>row(n).querySelector('img')?.getAttribute('src'),wait=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));for(let i=0;i<100&&!row('양지팡');i++)await new Promise(r=>setTimeout(r,20));
+ const key='mws.operationM.simulation.v1',baseline=JSON.parse(localStorage.getItem(key)),cfg={links:{...baseline.links},roles:[...baseline.roles]};
+ const a=data.contacts.find(c=>c.id===cfg.links['양지팡']),b=data.contacts.find(c=>c.id===cfg.links['카노미☆']),other=data.contacts.find(c=>c.id===cfg.links['김웰로']),origA=a.image,origB=b.image,origOther=other.image,oldA=a.name,oldB=b.name;
+ data.miniGames.operationMV1=cfg;
+ a.name='양지팡_새로운닉네임';b.name='카노';a.image=origA.replace('blue','red');b.image=origB.replace('blue','green');data.contacts.push({...a,id:'duplicate-profile',name:oldA,image:origA});
+ window.mwsOperationM.refresh();await wait();const renamed=src('양지팡')===a.image&&src('카노미☆')===b.image&&row('양지팡').querySelector('strong').textContent===a.name&&row('카노미☆').querySelector('strong').textContent===b.name;
+ const frame=q('.op-armor-frame');q('[data-op-squad=wakgood]').click();const tiles=[...document.querySelectorAll('.op-agent-tile')],team=tiles.find(x=>x.dataset.opAgent==='양지팡').querySelector('img').getAttribute('src')===a.image;
+ tiles.find(x=>x.dataset.opAgent==='양지팡').click();const detail=q('.op-dossier-portrait img').getAttribute('src')===a.image&&q('.op-agent-identity h2').textContent===a.name&&q('.op-agent-switch[data-op-agent="카노미☆"] img').getAttribute('src')===b.image&&q('.op-agent-switch[data-op-agent="카노미☆"] strong').textContent===b.name;
+ const shell=q('.op-shell');a.image='';a.avatar=origA;window.mwsOperationM.refresh();await wait();const avatarRefresh=q('.op-dossier-portrait img').getAttribute('src')===origA&&q('.op-shell')===shell;
+ a.name='연결 이름 수정';window.mwsOperationM.refresh();await wait();const liveRename=q('.op-agent-identity h2').textContent===a.name&&q('.op-agent-switch.is-current strong').textContent===a.name&&q('.op-shell')===shell;
+ delete a.avatar;window.mwsOperationM.refresh();await wait();const missing=!q('.op-dossier-portrait img')&&q('.op-instrument-caption').textContent==='연락처 사진 없음';
+ a.image=origA.replace('blue','red');window.mwsOperationM.refresh();await wait();
+ document.body.dataset.mwsMode='admin';window.__mwsAppReadyV130=true;window.mwsOperationM.render();q('[data-op-action=open-config]').click();
+ const left=q('[data-op-config="양지팡"] img'),right=q('.op-art-config-slot:has([data-op-agent-upload="양지팡"]) img'),preview=left.getAttribute('src')===a.image&&right.getAttribute('src')===a.image&&q('.op-art-config-slot:has([data-op-agent-upload="양지팡"]) small').textContent==='연락처 프로필';
+ const groups=[...document.querySelectorAll('.op-link-team')].map(x=>[...x.querySelectorAll('[data-op-config]')].map(y=>y.dataset.opConfig).join(',')).join('|')===[...document.querySelectorAll('.op-art-config-team')].map(x=>[...x.querySelectorAll('[data-op-agent-upload]')].map(y=>y.dataset.opAgentUpload).join(',')).join('|');
+ q('[data-op-action=close-config]').click();document.body.dataset.mwsMode='public';window.mwsOperationM.render();q('[data-op-action=tab-command]').click();
+ // Explicitly reconnect two valid slots, without any name guessing.
+ cfg.links['양지팡']=other.id;cfg.links['김웰로']=a.id;other.image=origOther.replace('blue','orange');window.mwsOperationM.refresh();await wait();const explicit=src('양지팡')===other.image&&src('김웰로')===a.image;
+ cfg.links={...baseline.links};data.contacts.pop();a.name=oldA;b.name=oldB;a.image=origA;b.image=origB;other.image=origOther;window.mwsOperationM.refresh();await wait();const restored=src('양지팡')===origA;
+ return {renamed,team,detail,avatarRefresh,liveRename,missing,preview,groups,explicit,restored,saves:saves===0}})()`);
+ assert(Object.values(profileSources).every(Boolean),JSON.stringify(profileSources));console.log('OPERATION_M_LINKED_PROFILE_SOURCES_OK',JSON.stringify(profileSources));
 
  // Data refresh must preserve live command nodes; all member lists use contact photos.
  await b.navigate(url,1726,892);
@@ -138,7 +153,8 @@ for(const [w,h] of [[1366,768],[1600,900],[1715,894],[1726,892],[1766,831],[1913
  const detailFrame=q('.op-dossier-portrait .op-armor-frame'),switches=[...document.querySelectorAll('.op-agent-switch')],custom=q('.op-dossier-portrait img')?.getAttribute('src')===art,profileSwitch=switches.every(x=>x.querySelector('img')?.getAttribute('src')===data.contacts.find(p=>p.name===x.dataset.opAgent)?.image);
  data.miniGames.operationMArtV1={players:[]};window.mwsOperationM.refresh();await wait();
  const fallback=q('.op-dossier-portrait img')?.getAttribute('src')===c.image,stable=detailFrame===q('.op-dossier-portrait .op-armor-frame')&&switches.every((x,i)=>x===document.querySelectorAll('.op-agent-switch')[i]);
- return {overview,teamProfiles,custom,profileSwitch,fallback,stable,saves:saves===0}})()`);
+ const box=q('.op-dossier-portrait').getBoundingClientRect(),inside=q('.op-portrait-instrument').getBoundingClientRect(),comm=q('.op-dossier-command').getBoundingClientRect(),safe=inside.left-box.left>=12&&inside.top-box.top>=12&&box.right-inside.right>=12&&box.bottom-inside.bottom>=12,primary=box.width>comm.width&&box.height>comm.height,clean=!q('.op-instrument-label')&&!q('.op-instrument-caption').textContent;
+ return {overview,teamProfiles,custom,profileSwitch,fallback,stable,safe,primary,clean,saves:saves===0}})()`);
  assert(Object.values(incremental).every(Boolean),JSON.stringify(incremental));console.log('OPERATION_M_INCREMENTAL_REFRESH_OK',JSON.stringify(incremental));await capture('profile-dossier',1726,892);
  // Last-card completion must never destroy an open reset confirmation. While open,
  // neither auto-draw, repeated render, refresh, nor keyboard rank shortcuts can act.
@@ -158,6 +174,30 @@ for(const [w,h] of [[1366,768],[1600,900],[1715,894],[1726,892],[1766,831],[1913
  click('[data-op-action=reset]');q('.op-reset-dialog').close('reset');await wait(50);
  return {shuffleHeld,resumed,finalHeld,cancelPreserved,resetClears:Object.keys(JSON.parse(saved())).length===0}})()`);
  assert(Object.values(modalRace).every(Boolean),JSON.stringify(modalRace));console.log('OPERATION_M_MODAL_RACE_OK',JSON.stringify(modalRace));
+
+
+ // Category and internal-tab navigation must preserve the live logical deck,
+ // including a partially drawn card, a paused session and a committed rank.
+ await b.navigate(url,1726,892);
+ await b.evaluate("localStorage.removeItem('mws.operationM.simulation.v1')");
+ await b.navigate(url,1726,892);
+ const continuity=await b.evaluate(`(async()=>{
+ const q=s=>document.querySelector(s),click=s=>q(s).click(),skip=()=>click('[data-op-action=skip-guided]'),wait=ms=>new Promise(r=>setTimeout(r,ms)),root=q('#operationM'),key='mws.operationM.simulation.v1',tiers=()=>JSON.parse(localStorage.getItem(key)).tiers,card=()=>q('[data-op-current]')?.dataset.opCurrent;
+ const navigate=tab=>{root.classList.toggle('active',tab==='operationM');window.dispatchEvent(new CustomEvent('mws:workspace-tab-v1',{detail:{tab}}))};
+ for(let i=0;i<100&&!q('.op-command-grid');i++)await wait(20);
+ click('[data-op-action=tab-draft]');click('[data-op-action=tab-tier]');click('[data-op-action=start-guided]');
+ navigate('calendar');await wait(1800);navigate('operationM');skip();const first=card(),shuffleRestored=!!first&&!!q('.op-deck-phase-reveal');
+ const live=q('[data-op-current]');navigate('operationM');const duplicateEnter=live===q('[data-op-current]');
+ click('[data-op-action=toggle-pause]');navigate('contacts');const firstContact=data.contacts.find(x=>x.name===(first==='리냐_LIN…'?'리냐_LINA':first));firstContact.image=firstContact.image.replace('blue','green');firstContact.name='변경된 연락처 닉네임';window.mwsOperationM.refresh();navigate('operationM');
+ const pauseRestored=card()===first&&window.mwsOperationM.motionReport().paused&&q('[data-op-current] img').getAttribute('src')===firstContact.image&&q('[data-op-current] .op-player-name').textContent===firstContact.name;
+ click('[data-op-action=tab-roster]');click('[data-op-action=tab-tier]');const internal=card()===first&&window.mwsOperationM.motionReport().paused;
+ click('[data-op-action=toggle-pause]');click('[data-op-assign=S]');navigate('calendar');await wait(1200);navigate('operationM');skip();const committed=tiers()[first]==='S'&&card()!==first&&!!card();
+ const seen=[first];while(q('.op-deck-phase-reveal')&&seen.length<20){const n=card();if(seen.includes(n))throw Error('duplicate '+n);seen.push(n);click('[data-op-assign=A]');if(q('.op-deck-phase-confirm'))skip();if(q('.op-deck-phase-draw,.op-deck-phase-flip'))skip()}
+ const complete=seen.length===20&&Object.keys(tiers()).length===20&&!!q('.op-tier-workspace');
+ click('[data-op-action=tab-command]');click('[data-op-squad=mudok]');click('.op-agent-tile');navigate('calendar');navigate('operationM');const dossier=q('.op-agent-detail h2')?.textContent==='마왕';
+ return {shuffleRestored,duplicateEnter,pauseRestored,internal,committed,complete,dossier,unique:new Set(seen).size===20,saves:saves===0}
+ })()`);
+ assert(Object.values(continuity).every(Boolean),JSON.stringify(continuity));console.log('OPERATION_M_SESSION_CONTINUITY_OK',JSON.stringify(continuity));await b.evaluate("localStorage.removeItem('mws.operationM.simulation.v1')");
 
 // The command-only job makes visual artifacts available without waiting for the long simulation suite.
 if(process.env.MWS_COMMAND_ONLY==='1'){

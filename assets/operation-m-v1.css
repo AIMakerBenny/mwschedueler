@@ -1310,3 +1310,50 @@ html:has(#operationM dialog.op-config[open]),body:has(#operationM dialog.op-conf
 html[data-mws-motion=reduced] #operationM .op-tactical-scan{transform:none;transition:none}
 @media(prefers-reduced-motion:reduce){#operationM .op-tactical-scan{transform:none;transition:none}}
 @container(max-width:760px){#operationM .op-shell button.op-squad-hit{padding:0 4px 4px!important}#operationM .op-team-entry{padding:3px 5px;gap:4px}#operationM .op-command-banner .op-banner-title{padding:7px 9px}}
+
+/* Personnel file: recessed optical bay, raised housing, shared safe inset.
+   The foreground remains a static, independent hit plane. */
+#operationM .op-agent-dossier{--op-safe:clamp(16px,1.45cqw,28px);gap:10px}
+#operationM .op-dossier-portrait{padding:var(--op-safe);border:0;background:linear-gradient(145deg,#617384 0%,#334551 2%,#101b24 8%,#0b131a 90%,#344957 98%);box-shadow:inset 0 1px #c2d3df65,inset 0 -5px #0009;isolation:isolate}
+#operationM .op-dossier-portrait>.op-armor-frame{inset:4px;width:calc(100% - 8px);height:calc(100% - 8px)}
+#operationM .op-dossier-portrait>.op-tactical-depth{inset:11px;z-index:0}
+#operationM .op-portrait-instrument{grid-template-rows:minmax(0,1fr) auto;padding:clamp(8px,1cqw,18px);border:1px solid #6c879755;background:radial-gradient(ellipse at 45% 45%,#3b56614d,#0b1525a6 75%);box-shadow:inset 0 2px 14px #0008;overflow:hidden}
+#operationM .op-portrait-instrument .op-profile-portrait{background:transparent;box-shadow:none}
+#operationM .op-portrait-instrument::after{inset:3px;border-color:#a6c4d333}
+#operationM .op-instrument-caption:empty{display:none}
+#operationM .op-dossier-portrait .op-art-upload{z-index:2;min-height:30px;border-color:#6b8090;background:linear-gradient(155deg,#3e505c,#1e2c38);box-shadow:inset 0 1px #d4e7f630,0 2px 4px #0007}
+#operationM .op-dossier-content{isolation:isolate;overflow:hidden;position:relative;grid-template-rows:auto auto minmax(0,1fr);padding:var(--op-safe);gap:10px;background:linear-gradient(155deg,#2d3f4c,#101a23 43%,#0d151e);border:1px solid #687d8a;box-shadow:inset 0 2px #9cb6c544,inset 0 -5px #0005}
+#operationM .op-dossier-content:has(.op-art-notice){grid-template-rows:auto auto minmax(0,1fr) auto}
+#operationM .op-dossier-content>*:not(.op-tactical-depth){position:relative;z-index:2}
+#operationM .op-agent-identity{padding:8px 0 10px;gap:10px;background:none;border:0;border-bottom:1px solid #66809266}
+#operationM .op-agent-identity::after{display:none}
+#operationM .op-agent-identity h2{font-size:clamp(25px,2.5cqw,48px);margin:2px 0}
+#operationM .op-agent-identity .op-command-emblem{width:clamp(34px,3.5cqw,62px);height:clamp(34px,3.5cqw,62px);flex:none}
+#operationM .op-dossier-fields{gap:8px}
+#operationM .op-dossier-fields>div{padding:7px 10px;border:0;border-left:2px solid #69808f;background:linear-gradient(90deg,#31445080,transparent);box-shadow:none;gap:3px}
+#operationM .op-dossier-fields strong{font-size:clamp(15px,1.35cqw,24px)}
+#operationM .op-shell button.op-dossier-command{align-self:end;grid-template-columns:minmax(70px,.8fr) minmax(0,1.2fr);grid-template-rows:minmax(0,1fr) auto;gap:5px 12px;min-height:0;max-height:clamp(150px,20cqw,250px);height:100%;padding:12px 14px!important;border:0!important;box-shadow:inset 0 2px #8ba9b833,inset 0 -3px #0008,0 5px 10px #0006!important;background:linear-gradient(135deg,#334753,#13212b 62%)!important;isolation:isolate}
+#operationM .op-shell button.op-dossier-command .op-commander-art{grid-row:1/3;height:100%;max-height:220px;background:none;align-self:stretch;pointer-events:none}
+#operationM .op-dossier-command .op-command-nameplate{position:relative;z-index:2;grid-column:2;grid-row:1;align-self:center;min-width:0}
+#operationM .op-dossier-command .op-team-entry{position:relative;grid-column:2;grid-row:2;justify-self:end;z-index:2}
+#operationM .op-dossier-command .op-armor-frame{inset:3px;width:calc(100% - 6px);height:calc(100% - 6px)}
+#operationM[data-op-pointer=mouse] .op-dossier-command:hover .op-team-entry .op-tac-arrow{transform:translateX(var(--op-arrow-shift))}
+#operationM[data-op-pointer=mouse] .op-dossier-command:hover .op-tactical-scan{opacity:1;transform:none}
+#operationM .op-dossier-squad{background:linear-gradient(160deg,#354552,#17232e 25%,#0e1721);padding:10px;border-color:#708290}
+#operationM .op-shell button.op-agent-switch{border:1px solid #5b7180!important;box-shadow:inset 0 1px #b3c6d82e,0 2px 4px #0005!important;clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px);background:linear-gradient(155deg,#334654,#14222c 70%)!important}
+#operationM .op-shell button.op-agent-switch.is-current{background:linear-gradient(150deg,color-mix(in srgb,var(--squad) 30%,#41505c),#17232b 80%)!important;box-shadow:inset 0 -3px var(--squad),inset 0 1px #ffffff44,0 2px 5px #0006!important;border-color:var(--squad)!important}
+@container(min-width:800px){#operationM .op-agent-dossier{grid-template-columns:minmax(0,1.18fr) minmax(0,.82fr)}}
+@container(max-width:799px){#operationM .op-agent-dossier{--op-safe:12px}#operationM .op-shell button.op-dossier-command{height:150px}#operationM .op-dossier-content{grid-template-rows:auto auto auto}#operationM .op-dossier-content:has(.op-art-notice){grid-template-rows:auto auto auto auto}}
+/* Matched team grouping and optional-art previews in settings. */
+#operationM .op-config-players{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#operationM .op-link-team{display:grid;align-content:start;gap:5px;min-width:0;padding:7px;border:1px solid #576975;border-top:2px solid var(--squad);background:linear-gradient(155deg,color-mix(in srgb,var(--squad) 10%,#283844),#131e28)}
+#operationM .op-link-team>header{display:flex;align-items:center;min-height:33px;color:var(--squad);font-size:12px;font-weight:700;border-bottom:1px solid #536673}
+#operationM .op-link-team .op-admin-slot{width:100%;min-height:42px}
+#operationM .op-art-config-slot{min-height:42px}
+#operationM .op-art-config-slot .op-profile-portrait{aspect-ratio:1;width:100%}
+#operationM .op-art-actions:empty{display:none}
+#operationM .op-art-actions{display:grid;align-items:stretch;min-width:0}
+#operationM .op-art-config-entry .op-art-actions button{white-space:normal;max-width:55px;line-height:1.3}
+#operationM .op-config-footer button.op-primary:disabled{color:#82939f!important;background:#24323b!important;border-color:#475965!important;box-shadow:none!important;opacity:1}
+@media(min-width:1080px){#operationM dialog.op-config{width:min(1400px,calc(100vw - 48px));max-height:calc(100dvh - 36px)}#operationM .op-config-scroll{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#operationM .op-config-main{margin:9px;max-height:calc(100dvh - 70px)}#operationM .op-config-links .op-config-players{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){#operationM .op-config-players{grid-template-columns:1fr}}
