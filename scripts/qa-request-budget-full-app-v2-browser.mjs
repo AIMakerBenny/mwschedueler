@@ -179,7 +179,7 @@ try{
   geom.labelMetrics=await browser.evaluate(`(()=>{
    const titles=[...document.querySelectorAll('#calendarGrid .calendar-card-title-v2')].filter(el=>el.getBoundingClientRect().width>0),vr=titles.filter(el=>el.closest('.calendar-event-vr-v1'));
    const dense=[...document.querySelectorAll('#calendarGrid .calendar-day-events-v2')].filter(el=>el.querySelectorAll('.mini-event[data-evid]').length===3);
-   const report=list=>({total:list.length,fullyReadable:list.filter(el=>el.scrollWidth<=el.clientWidth+1).length,minWidth:list.length?Math.min(...list.map(el=>Math.round(el.getBoundingClientRect().width*10)/10)):null});
+   const report=list=>({total:list.length,fullyReadable:list.filter(el=>el.scrollWidth<=el.clientWidth+1&&el.scrollHeight<=el.clientHeight+1).length,minWidth:list.length?Math.min(...list.map(el=>Math.round(el.getBoundingClientRect().width*10)/10)):null});
    return {titles:report(titles),vrTitles:report(vr),denseDays:dense.map(el=>{const r=el.getBoundingClientRect(),cards=[...el.querySelectorAll('.mini-event[data-evid]')];return {date:el.closest('.day').dataset.date,fullCards:cards.filter(c=>{const b=c.getBoundingClientRect();return b.height>0&&b.top>=r.top-1&&b.bottom<=r.bottom+1}).length,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight}})};
   })()`);
   if(viewport[0]>=1366){
@@ -189,6 +189,8 @@ try{
   if(viewport[0]<761){
    const labels=await browser.evaluate(`(()=>{const cards=[...document.querySelectorAll('#calendarGrid .mini-event[data-evid].calendar-event-vr-v1')].filter(c=>c.getBoundingClientRect().width>0);return cards.map(c=>{const title=c.querySelector('.calendar-card-title-v2'),r=title.getBoundingClientRect(),box=c.getBoundingClientRect(),s=getComputedStyle(c);return {width:r.width,card:box.width,visible:!!title.textContent&&getComputedStyle(title).visibility==='visible',padding:parseFloat(s.paddingRight)}})})()`);
    assert(labels.length>0&&labels.every(x=>x.visible&&x.width>=x.card*.65&&x.padding<=3),'Mobile VR titles clipped '+JSON.stringify(labels));
+   assert(geom.labelMetrics.titles.fullyReadable>0,'Two-line mobile titles must improve on the zero fully readable baseline '+JSON.stringify(geom.labelMetrics));
+   assert(geom.labelMetrics.denseDays.every(d=>d.fullCards===2),'Mobile dense days must keep both visible cards '+JSON.stringify(geom.labelMetrics));
    await browser.evaluate("document.querySelector('#calendarGrid .day:has(.mini-event[data-evid])').click()");
    await until(()=>browser.evaluate("!!document.querySelector('.mws-mobile-calendar-day-detail-v130.open')"),'Mobile day sheet open');
    await capture('calendar-detail');

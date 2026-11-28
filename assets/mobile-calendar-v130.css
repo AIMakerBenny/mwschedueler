@@ -631,7 +631,7 @@ body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="mon
 }
 body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] .mws-calendar-tabs{margin-bottom:8px!important}
 body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .day{
-  position:relative!important;min-height:91px!important;height:auto!important;padding:5px 2px 4px!important;gap:0!important;
+  position:relative!important;min-height:102px!important;height:auto!important;padding:5px 2px 4px!important;gap:0!important;
 }
 body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .daynum{
   margin-bottom:3px!important;padding:0 1px!important;box-sizing:border-box!important;
@@ -641,8 +641,8 @@ body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="mon
   margin:0!important;padding:0!important;overflow:visible!important;gap:3px!important;
 }
 body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .mini-event[data-evid]{
-  display:block!important;box-sizing:border-box!important;min-height:23px!important;height:23px!important;max-height:23px!important;
-  padding:3px 1px!important;margin:0!important;line-height:15px!important;font-size:10px!important;border-left-width:2px!important;
+  display:block!important;box-sizing:border-box!important;min-height:30px!important;height:30px!important;max-height:30px!important;
+  padding:2px 1px!important;margin:0!important;line-height:12px!important;font-size:10px!important;border-left-width:2px!important;
 }
 body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .mini-event[data-evid].mws-mobile-event-hidden-v130{display:none!important}
 body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .mini-event[data-evid] .mini-event-main{
@@ -671,12 +671,21 @@ body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[da
 }
 body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid] .mini-event-main{
   display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;
-  overflow:hidden!important;white-space:nowrap!important;line-height:15px!important;
+  overflow:hidden!important;white-space:normal!important;line-height:12px!important;
 }
 body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid] .calendar-card-title-v2{
-  display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;
-  font-size:inherit!important;line-height:15px!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:2;width:100%!important;min-width:0!important;max-width:100%!important;
+  font-size:inherit!important;line-height:12px!important;max-height:24px!important;white-space:normal!important;overflow-wrap:anywhere;word-break:normal;overflow:hidden!important;text-overflow:ellipsis!important;
 }
 body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid]>:is(.calendar-vr-badge-v1,.mws-steam-slot-v111){
   display:none!important;
+}
+
+/* Pass I: retain the full date sheet as the source for long titles, while
+   using both lines in the month. The +N row stays in normal flow. */
+body[data-device-mode=mobile] #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day[data-mobile-more]:not([data-mobile-more=""]){
+ min-height:112px!important;
+}
+body.mws-premium .mws-mobile-calendar-day-detail-v130 .mws-mobile-day-event-title-v130{
+ overflow-wrap:anywhere;font-weight:750;
 }

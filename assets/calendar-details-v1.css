@@ -283,8 +283,8 @@ body #calendar.section #calendarGrid .mini-event[data-evid]>.calendar-vr-badge-v
 body.mws-premium .event-details-popover-v2{
   border-color:color-mix(in srgb,var(--event-detail-color,var(--accent)) 22%,var(--border));
   background-color:var(--calendar-detail-glass-v4);
-  background-image:linear-gradient(145deg,#ffffff09,transparent 38%);
-  box-shadow:inset 0 1px #ffffff15,0 7px 18px #0005,0 24px 54px #0008;
+  background-image:linear-gradient(155deg,var(--mws-material-light),transparent 38%);
+  box-shadow:var(--mws-material-depth),0 24px 54px #0008;
 }
 body.mws-premium .event-details-popover-v2 .event-details-head-v1{
   background:linear-gradient(180deg,#ffffff08,transparent);
@@ -312,7 +312,7 @@ body.mws-premium .event-details-popover-v2 .calendar-preview-title::before{
   box-shadow:inset 0 1px #ffffff50,0 2px 6px color-mix(in srgb,var(--event-detail-color,var(--accent)) 25%,transparent);
 }
 body.mws-premium .event-details-popover-v2 .event-details-section-v1{
-  border-top-color:color-mix(in srgb,var(--text) 12%,var(--border));
+  border-top-color:var(--mws-material-edge);
 }
 body.mws-premium .event-details-popover-v2 .calendar-preview-person .avatar{
   box-shadow:0 0 0 1px color-mix(in srgb,var(--text) 12%,var(--border)),0 2px 5px #0003;
@@ -356,8 +356,8 @@ body.mws-premium .event-details-popover-v2 .calendar-preview-person .avatar{
     adding a second toolbar row or moving any clickable bounds. */
  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(.calendar-toolbar>.row,.calendar-jump,.calendar-group-toolbar-v2){
    border-radius:9px;
-   background:linear-gradient(180deg,color-mix(in srgb,var(--panel2) 45%,transparent),color-mix(in srgb,var(--bg) 44%,transparent));
-   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--text) 9%,transparent),inset 0 2px 5px #0003;
+   background:var(--mws-material-well);
+   box-shadow:var(--mws-material-inset);
  }
  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-jump select{
    background-color:color-mix(in srgb,var(--panel) 90%,var(--text))!important;
@@ -369,5 +369,23 @@ body.mws-premium .event-details-popover-v2 .calendar-preview-person .avatar{
  }
  body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(button,select,input):focus-visible{
    outline:2px solid var(--accent)!important;outline-offset:-2px;
+ }
+}
+
+/* Pass I: persistent operation states are distinct from hover. No new
+   wrapper, padding, width or transform changes in the compact toolbar. */
+@media(min-width:901px){
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(.calendar-group-toolbar-v2 button,.calendar-view-tab-v172)[aria-pressed=true],
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(.calendar-group-toolbar-v2 button,.calendar-view-tab-v172)[aria-expanded=true],
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 .calendar-view-tab-v172[aria-selected=true]{
+   background:var(--mws-material-selected)!important;
+   box-shadow:inset 0 1px var(--mws-material-light),inset 0 -2px var(--accent)!important;
+   color:var(--text)!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 button:disabled{
+   opacity:.5;box-shadow:none!important;
+ }
+ body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 button:not(:disabled):active{
+   transform:none!important;scale:none!important;box-shadow:var(--mws-material-inset)!important;
  }
 }

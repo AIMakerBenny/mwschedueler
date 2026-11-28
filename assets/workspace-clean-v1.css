@@ -1,5 +1,18 @@
 /* MWS workspace clean v1. Presentation only, using the selected theme palette.
    Preserve monthly slot geometry, sidebar rail widths and specialized F1 UI. */
+/* Pass I: shared material contract. Theme palette remains the sole color
+   source. Upper-left light, distinct raised / recessed / selected surfaces.
+   Components retain their own layout, interaction and animation owners. */
+body.mws-premium{
+  --mws-material-edge:color-mix(in srgb,var(--text) 15%,var(--border));
+  --mws-material-light:color-mix(in srgb,var(--text) 15%,transparent);
+  --mws-material-face:color-mix(in srgb,var(--panel) 93%,var(--text));
+  --mws-material-well:color-mix(in srgb,var(--input) 88%,var(--bg));
+  --mws-material-raised:linear-gradient(155deg,var(--mws-material-face),var(--panel) 48%,color-mix(in srgb,var(--panel) 88%,var(--bg)));
+  --mws-material-selected:linear-gradient(155deg,color-mix(in srgb,var(--accent) 23%,var(--mws-material-face)),color-mix(in srgb,var(--accent) 8%,var(--panel)));
+  --mws-material-depth:inset 0 1px var(--mws-material-light),inset 0 -1px #0003,0 6px 18px #0004;
+  --mws-material-inset:inset 0 1px 5px #0004,inset 0 0 0 1px var(--mws-material-edge);
+}
 body.mws-premium:not(:has(#gameF1Racing.active)){
   --mws-clean-line:color-mix(in srgb,var(--border) 68%,transparent);
   background:var(--bg)!important;
@@ -315,10 +328,10 @@ body.mws-premium :is(input,textarea,[contenteditable]:not([contenteditable="fals
    surfaces. No extra network resource, DOM, timers or layout ownership. */
 @media(min-width:901px){
   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active){
-    --mws-studio-line:color-mix(in srgb,var(--text) 13%,var(--border));
-    --mws-studio-glint:color-mix(in srgb,var(--text) 11%,transparent);
-    --mws-studio-recess:color-mix(in srgb,var(--input) 78%,var(--bg));
-    --mws-studio-surface:color-mix(in srgb,var(--panel) 92%,var(--text));
+    --mws-studio-line:var(--mws-material-edge);
+    --mws-studio-glint:var(--mws-material-light);
+    --mws-studio-recess:var(--mws-material-well);
+    --mws-studio-surface:var(--mws-material-face);
     --mws-studio-art:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201600%20900%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22wall%22%20x2%3D%22.8%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23617597%22%20stop-opacity%3D%22.30%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2328384d%22%20stop-opacity%3D%22.02%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22floor%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2392a7c4%22%20stop-opacity%3D%22.14%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23101c30%22%20stop-opacity%3D%22.03%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22edge%22%3E%3Cstop%20stop-color%3D%22%23b8d6ff%22%20stop-opacity%3D%22.02%22%2F%3E%3Cstop%20offset%3D%22.52%22%20stop-color%3D%22%23b8d6ff%22%20stop-opacity%3D%22.38%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23b8d6ff%22%20stop-opacity%3D%22.03%22%2F%3E%3C%2FlinearGradient%3E%3CradialGradient%20id%3D%22lamp%22%3E%3Cstop%20stop-color%3D%22%2394b6eb%22%20stop-opacity%3D%22.16%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2394b6eb%22%20stop-opacity%3D%220%22%2F%3E%3C%2FradialGradient%3E%3C%2Fdefs%3E%3Cellipse%20cx%3D%221150%22%20cy%3D%22240%22%20rx%3D%22690%22%20ry%3D%22400%22%20fill%3D%22url(%23lamp)%22%2F%3E%3Cpath%20d%3D%22M0%200H1600V145L1180%20325%20420%20325%200%20145Z%20M0%20145L420%20325V570L0%20900Z%20M1600%20145L1180%20325V570L1600%20900Z%22%20fill%3D%22url(%23wall)%22%2F%3E%3Cpath%20d%3D%22M0%20900L420%20570H1180L1600%20900Z%22%20fill%3D%22url(%23floor)%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%239db4d6%22%20stroke-opacity%3D%22.13%22%20stroke-width%3D%221.5%22%3E%3Cpath%20d%3D%22M0%2065L420%20325H1180L1600%2065M0%20145L420%20325V570L0%20900M1600%20145L1180%20325V570L1600%20900M0%20240L420%20365H1180L1600%20240M0%20420L420%20460H1180L1600%20420M0%20660L420%20525H1180L1600%20660M420%20570H1180M250%20900L540%20570M525%20900L665%20570M800%20900V570M1075%20900L935%20570M1350%20900L1060%20570M120%20805H1480M250%20705H1350M350%20625H1250M145%200L485%20325M360%200L625%20325M1240%200L975%20325M1455%200L1115%20325%22%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22url(%23edge)%22%20stroke-width%3D%222%22%3E%3Cpath%20d%3D%22M0%20145L420%20325H1180L1600%20145M0%20900L420%20570H1180L1600%20900M45%2015H1555M420%20325V570M1180%20325V570%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   }
   body.mws-premium:not([data-device-mode=mobile]):not([data-resolution=mobile]):has(#calendar.section.active) .app>.main{
@@ -619,12 +632,14 @@ body #calendar.section .calendar-topbar-v4 #calendarAgendaToggleV1{display:none!
    Geometry remains fixed on hover/focus/selection; no animated layout. */
 @media(min-width:1700px){
  #calendarAgendaV1:not([hidden]){
-   background:linear-gradient(155deg,color-mix(in srgb,var(--panel2) 77%,var(--panel)),var(--panel) 28%,color-mix(in srgb,var(--panel) 86%,var(--bg)))!important;
-   box-shadow:inset 0 1px color-mix(in srgb,var(--text) 24%,transparent),inset 0 0 0 2px #0002,0 0 0 1px #0008,0 10px 28px #0006!important;
+   background:var(--mws-material-raised)!important;
+   border-color:var(--mws-material-edge)!important;
+   box-shadow:var(--mws-material-depth),0 0 0 2px #0004!important;
  }
  #calendarAgendaV1 .mws-agenda-time-v1{
-   border-color:color-mix(in srgb,var(--text) 13%,var(--border));
-   box-shadow:inset 0 2px 7px #0005,0 1px #ffffff12;
+   border-color:var(--mws-material-edge);
+   background:var(--mws-material-well);
+   box-shadow:var(--mws-material-inset);
  }
  #calendarAgendaV1 .mws-agenda-tracks-v1{max-height:116px;gap:3px}
  #calendarAgendaV1 .mws-agenda-track-v1{
@@ -663,4 +678,20 @@ body #calendar.section .calendar-topbar-v4 #calendarAgendaToggleV1{display:none!
  #calendarAgendaV1 :is([data-agenda-close],[data-agenda-prev],[data-agenda-next],[data-agenda-today]):active:not(:disabled){box-shadow:inset 0 2px 5px #0006!important}
  html[data-mws-motion=reduced] #calendarAgendaV1 .mws-agenda-event-v1{transition:none!important}
  @media(prefers-reduced-motion:reduce){#calendarAgendaV1 .mws-agenda-event-v1{transition:none!important}}
+}
+
+/* The day instrument is read in three levels: date, time scale, event list.
+   Empty state occupies the available list, not the control rail. */
+@media(min-width:1700px){
+ #calendarAgendaV1 .mws-agenda-date-summary-v1{border-bottom-color:var(--mws-material-edge)}
+ #calendarAgendaV1 .mws-agenda-date-summary-v1 strong{font-variant-numeric:tabular-nums;letter-spacing:-.035em}
+ #calendarAgendaV1 .mws-agenda-time-head-v1 strong{font-size:19px;line-height:1.3;font-weight:730}
+ #calendarAgendaV1 .mws-agenda-time-axis-v1{font-size:10px}
+ #calendarAgendaV1 .mws-agenda-event-v1{display:grid;grid-template-columns:minmax(0,1fr);align-content:start}
+ #calendarAgendaV1 .mws-agenda-event-meta-v1 span{border-color:var(--mws-material-edge);border-radius:5px;font-size:10px}
+ #calendarAgendaV1 .mws-agenda-event-v1 small{line-height:1.45}
+ #calendarAgendaV1 .mws-agenda-empty-v1{display:grid;place-content:center;min-height:104px;border:0;box-shadow:var(--mws-material-inset);background:var(--mws-material-well);line-height:1.6}
+ #calendarAgendaV1 .mws-agenda-list-v1{scrollbar-color:var(--mws-material-edge) transparent}
+ #calendarAgendaV1 .mws-agenda-track-v1{background-color:var(--mws-material-well)!important}
+ #calendarAgendaV1 .mws-agenda-track-bar-v1.is-overnight{border-radius:3px 0 0 3px;box-shadow:inset -3px 0 color-mix(in srgb,var(--text) 75%,transparent)}
 }

@@ -70,27 +70,27 @@ body.mws-premium .dashboard-overview-heading p.muted{display:none!important}
 /* Stage 2 shared chrome. Retain compact header geometry, alert visibility and
    each workspace's dedicated controls. No positioned decoration or overlays. */
 body.mws-premium:not(:has(:is(#gameF1Racing,#operationM,#wardogs,#careerTimeline,#mawangArchive).active)) .app>.main>.topbar{
-  border-bottom-color:color-mix(in srgb,var(--text) 13%,var(--border))!important;
+  border-bottom-color:var(--mws-material-edge)!important;
 }
 body.mws-premium:has(#calendar.active) .app>.main>.topbar #newEventBtn{
-  background:linear-gradient(158deg,#418df9,#2465cc 75%,#2155a9)!important;
-  border-color:#6ca1ec!important;
-  color:#fff!important;
-  box-shadow:inset 0 1px #ffffff48,inset 0 -1px #12336588,0 3px 9px #0004!important;
+  background:var(--mws-material-raised)!important;
+  border-color:color-mix(in srgb,var(--accent) 65%,var(--mws-material-edge))!important;
+  color:var(--text)!important;
+  box-shadow:inset 0 1px var(--mws-material-light),inset 0 -2px var(--accent),0 3px 9px #0004!important;
   transform:none!important;
   filter:none!important;
   transition:background-color 100ms,border-color 100ms!important;
 }
 @media(hover:hover) and (pointer:fine){
   body.mws-premium:has(#calendar.active) .app>.main>.topbar #newEventBtn:not(:disabled):hover{
-    background:linear-gradient(158deg,#5aa3ff,#3279e2 75%,#2866c5)!important;
-    border-color:#92c4ff!important;
-    box-shadow:inset 0 1px #ffffff65,0 3px 12px #2465cc45!important;
+    background:var(--mws-material-selected)!important;
+    border-color:var(--accent)!important;
+    box-shadow:var(--mws-material-depth)!important;
   }
 }
 body.mws-premium:has(#calendar.active) .app>.main>.topbar #newEventBtn:not(:disabled):active{
   scale:none!important;
-  box-shadow:inset 0 2px 5px #071d5077,inset 0 0 0 1px #b8d7ff55!important;
+  box-shadow:var(--mws-material-inset)!important;
 }
 body.mws-premium:has(#calendar.active) .app>.main>.topbar #newEventBtn:focus-visible{
   outline:2px solid var(--text)!important;outline-offset:2px;
