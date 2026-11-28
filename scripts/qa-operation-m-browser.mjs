@@ -195,7 +195,14 @@ for(const [w,h] of [[1366,768],[1600,900],[1715,894],[1726,892],[1766,831],[1913
  click('[data-op-action=toggle-pause]');click('[data-op-assign=S]');navigate('calendar');await wait(1200);navigate('operationM');skip();const committed=tiers()[first]==='S'&&card()!==first&&!!card();
  const seen=[first];while(q('.op-deck-phase-reveal')&&seen.length<20){const n=card();if(seen.includes(n))throw Error('duplicate '+n);seen.push(n);click('[data-op-assign=A]');if(q('.op-deck-phase-confirm'))skip();if(q('.op-deck-phase-draw,.op-deck-phase-flip'))skip()}
  const complete=seen.length===20&&Object.keys(tiers()).length===20&&!!q('.op-tier-workspace');
- click('[data-op-action=tab-command]');click('[data-op-squad=mudok]');click('.op-agent-tile');navigate('calendar');navigate('operationM');const dossier=q('.op-agent-detail h2')?.textContent==='마왕';
+ click('[data-op-action=tab-command]');click('[data-op-squad=mudok]');
+ // The randomized first draw may have been MaWang, whose linked contact
+ // was deliberately renamed earlier. Verify the selected stable identity
+ // and current displayed name rather than an obsolete fixed nickname.
+ const agent=q('.op-agent-tile'),agentKey=agent.dataset.opAgent,agentLabel=agent.querySelector('strong').textContent;
+ agent.click();const beforeDossier=q('.op-agent-detail [data-op-dossier-for]')?.dataset.opDossierFor===agentKey&&q('.op-agent-detail h2')?.textContent===agentLabel;
+ navigate('calendar');navigate('operationM');
+ const dossier=beforeDossier&&q('.op-agent-detail [data-op-dossier-for]')?.dataset.opDossierFor===agentKey&&q('.op-agent-detail h2')?.textContent===agentLabel;
  return {shuffleRestored,duplicateEnter,pauseRestored,internal,committed,complete,dossier,unique:new Set(seen).size===20,saves:saves===0}
  })()`);
  assert(Object.values(continuity).every(Boolean),JSON.stringify(continuity));console.log('OPERATION_M_SESSION_CONTINUITY_OK',JSON.stringify(continuity));await b.evaluate("localStorage.removeItem('mws.operationM.simulation.v1')");
