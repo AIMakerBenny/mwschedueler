@@ -21,6 +21,17 @@ try{
     return {card:rect(card),neighbor:rect(next),grid:rect($('#calendarGrid')),width:card.offsetWidth,height:card.offsetHeight,scale:getComputedStyle(card).scale,shadow:getComputedStyle(card).boxShadow,hover:matchMedia('(hover:hover) and (pointer:fine)').matches};
   })()`;
   const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  // Wait for the animation to settle rather than sampling an exact string
+  // on a single potentially delayed compositor frame.
+  async function settleScale(expected){
+    let value;
+    for(let i=0;i<40;i++){
+      value=await browser.evaluate(inspect);
+      if(expected==='none'?value.scale==='none':Math.abs(Number(value.scale)-expected)<0.0001)return value;
+      await pause(25);
+    }
+    assert.fail('Scale did not settle: '+JSON.stringify({expected,value}));
+  }
   for(const [w,h,mobile] of [[1366,768,false],[1920,1080,false],[2560,1440,false],[2560,1080,false],[390,844,true],[844,390,true]]){
     await browser.navigate(pathToFileURL(file).href+'?size='+w+'x'+h,w,h,mobile);
     await pause(100);
@@ -29,15 +40,14 @@ try{
     if(!mobile){
       const [x,y,width,height]=before.card;
       await browser.movePoint(x+width/2,y+height/2);await pause(190);
-      const hover=await browser.evaluate(inspect);
-      assert.equal(hover.scale,'1.02',JSON.stringify(hover));
+      const hover=await settleScale(1.02);
       assert.equal(hover.width,before.width);assert.equal(hover.height,before.height);
       assert.deepEqual(hover.neighbor,before.neighbor);assert.deepEqual(hover.grid,before.grid);
       await browser.mouseDown(x+width/2,y+height/2);await pause(190);
-      assert.equal((await browser.evaluate(inspect)).scale,'0.98');
+      await settleScale(.98);
       await browser.mouseUp(x+width/2,y+height/2);
       await browser.movePoint(2,2);await pause(190);
-      assert.equal((await browser.evaluate(inspect)).scale,'none');
+      await settleScale('none');
     }else{
       assert(!before.hover,'Mobile must not inherit mouse hover treatment');
     }
