@@ -123,7 +123,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const gridPaint=getComputedStyle($('#calendarGrid')),dayPaint=getComputedStyle($('.day:not(.out)'));
  const sceneURL=gridPaint.getPropertyValue('--calendar-atmosphere-art').trim(),scene=new Image();
  scene.src=sceneURL.substring(sceneURL.indexOf('data:'),sceneURL.lastIndexOf('"'));await scene.decode().catch(()=>{});
- const sceneDecoded=scene.naturalWidth===800&&scene.naturalHeight===450;
+ const sceneDecoded=scene.naturalWidth===1280&&scene.naturalHeight===720;
  const atmosphericGrid=gridPaint.backgroundColor==='rgb(12, 14, 18)'&&gridPaint.backgroundImage.includes('data:image/png;base64,')&&gridPaint.backgroundSize.includes('cover')&&dayPaint.backgroundColor==='rgba(12, 14, 18, 0.32)'&&dayPaint.backgroundImage.includes('linear-gradient');
  // Use an actual supported alternate theme; wait for its paint to settle.
  const originalTheme=document.body.dataset.theme;document.body.dataset.theme='ocean';await new Promise(r=>setTimeout(r,300));
