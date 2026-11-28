@@ -12,7 +12,7 @@ const css=['assets/app-core.css','assets/mawang-premium-v1621.css',
   'assets/ui-frame-presets.css','assets/calendar-space-efficiency-v1.css',
   'assets/contact-card-readable-layout-v1.css'].map(file).join('\n');
 const inline=[...index.matchAll(/<style(?:\s[^>]*)?>([\s\S]*?)<\/style>/gi)].map(m=>m[1]).join('\n');
-const newSheet=['assets/contact-card-readable-layout-v1.css','assets/workspace-clean-v1.css','assets/workspace-ui-v176.css','assets/contact-directory-v177.css'].map(file).join('\n');
+const newSheet=['assets/contact-card-readable-layout-v1.css','assets/workspace-clean-v1.css','assets/workspace-ui-v176.css','assets/contact-directory-v177.css','assets/ui-interactions-v1.css'].map(file).join('\n');
 const nav=index.match(/<button class="active" data-tab="calendar"/g)||[];
 assert.equal(nav.length,1,'Calendar must be the sole default active nav button');
 assert(!index.includes('<button class="active" data-tab="dashboard"'),'Dashboard must not be default nav');
@@ -67,6 +67,13 @@ function geometry(){
    if(Math.max(...tools.map(x=>x.top))-Math.min(...tools.map(x=>x.top))>2)failures.push(' desktop toolbar unexpectedly wraps');
  }
  const first=cards[0];
+ const initialRect=r(first),initialBorder=getComputedStyle(first).getPropertyValue('--person-state');
+ for(const state of ['pending-card','has-upcoming','is-self']){
+  first.classList.add(state);const paint=getComputedStyle(first),box=r(first);
+  if(paint.getPropertyValue('--person-state')===initialBorder||!paint.boxShadow.includes('inset')||Math.abs(box.width-initialRect.width)>1||Math.abs(box.height-initialRect.height)>1)failures.push('state paint or geometry '+state);
+  first.classList.remove(state);
+ }
+ if(getComputedStyle(first.querySelector('.contact-card-avatar-lg')).boxShadow==='none')failures.push('portrait depth missing');
  first.hidden=true;
  if(getComputedStyle(first).display!=='none')failures.push('search-hidden contact still displayed');
  first.hidden=false;
