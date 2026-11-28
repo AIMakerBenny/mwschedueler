@@ -6,7 +6,7 @@
 (function(root){
   'use strict';
   const DAY_MS=86400000;
-  const BAND_HEIGHT=12;
+  const BAND_HEIGHT=8;
   const BAND_GAP=3;
   let observer=null,frame=0;
   function utcDay(value){
@@ -155,7 +155,7 @@
           if(!first||!last||!spacer)continue;
           const left=first.offsetLeft+7;
           const right=last.offsetLeft+last.offsetWidth-7;
-          const top=first.offsetTop+spacer.offsetTop+item.lane*(BAND_HEIGHT+BAND_GAP)+2;
+          const top=first.offsetTop+spacer.offsetTop+item.lane*(BAND_HEIGHT+BAND_GAP)+1;
           item.element.style.left=left+'px';
           item.element.style.top=top+'px';
           item.element.style.width=Math.max(0,right-left)+'px';
