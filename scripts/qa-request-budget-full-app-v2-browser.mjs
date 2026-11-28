@@ -211,7 +211,17 @@ try{
    assert(agenda.separate&&agenda.inside&&agenda.marked===date&&agenda.gridWidth<initialWidth&&agenda.panelWidth>=248,JSON.stringify(agenda));
    assert.deepEqual([...agenda.ids].sort(),[...agenda.expected].sort());assert.equal(agenda.ids.length,3);
    assert.equal(calls.length,beforeAgenda,'Opening or selecting agenda date must not request data');
+   const timeInstrument=await browser.evaluate(`(()=>{const panel=document.getElementById('calendarAgendaV1'),select=panel.querySelector('[data-agenda-date]'),tracks=[...panel.querySelectorAll('[data-agenda-track]')],total=panel.querySelector('[data-agenda-duration]').textContent,model=window.mwsCalendarAgendaTimeV1.summarize(activeEvents().filter(e=>e.date===select.value)),list=panel.querySelector('[data-agenda-list]');return {dateLabel:select.selectedOptions[0].textContent,options:select.options.length,tracks:tracks.map(t=>({id:t.dataset.agendaTrack,left:parseFloat(t.firstElementChild.style.left),width:parseFloat(t.firstElementChild.style.width)})),expected:model.entries,total,expectedTotal:Math.floor(model.minutes/60)+'시간 '+model.minutes%60+'분',listHeight:list.clientHeight}})()`);
+   assert(timeInstrument.dateLabel.includes('년')&&timeInstrument.dateLabel.includes('월')&&timeInstrument.dateLabel.includes('일')&&timeInstrument.options>=28);
+   assert.equal(timeInstrument.total,timeInstrument.expectedTotal);
+   assert.equal(timeInstrument.tracks.length,3);
+   for(const track of timeInstrument.tracks){const e=timeInstrument.expected.find(x=>x.id===track.id);assert(e&&Math.abs(track.left-e.start/14.4)<.01&&Math.abs(track.width-(e.end-e.start)/14.4)<.01)}
+   assert(timeInstrument.listHeight>200,JSON.stringify(timeInstrument));
+   agenda.timeInstrument=timeInstrument;
    await capture('calendar-agenda');
+   await browser.evaluate("document.querySelector('#calendarAgendaV1 [data-agenda-track]').click()");
+   await until(()=>browser.evaluate("window.mwsCalendarDetailsV1?.isOpen()===true"),'Time bar opens actual event detail');
+   await browser.evaluate("window.mwsCalendarDetailsV1.close({restoreFocus:false})");
    await browser.evaluate("document.querySelector('#calendarAgendaV1 [data-agenda-event]').click()");
    await until(()=>browser.evaluate("window.mwsCalendarDetailsV1?.isOpen()===true"),'Agenda opens existing event detail');
    await capture('calendar-agenda-detail');
