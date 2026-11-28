@@ -102,3 +102,27 @@ html[data-mws-motion=reduced] body.mws-premium:has(#calendar.active) .app>.main>
 @media(prefers-reduced-motion:reduce){
   html:not([data-mws-motion=full]) body.mws-premium:has(#calendar.active) .app>.main>.topbar #newEventBtn{transition:none!important}
 }
+
+/* Pass T: the month navigation is a single compact instrument strip.
+   Existing sizes, controls, order and responsive ownership are unchanged. */
+@media(min-width:901px){
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(.calendar-toolbar>.row>button,.calendar-jump select,.calendar-group-toolbar-v2 button){
+   background:linear-gradient(165deg,#35404f,#252e3d 42%,#1b2330)!important;
+   border-color:#899db54a!important;
+   box-shadow:inset 0 1px #c4d5e92b,inset 0 -1px #090e19,0 2px 4px #0004!important;
+   transition:none!important;
+ }
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(button.active,button[aria-pressed=true],button[aria-expanded=true]){
+   background:linear-gradient(155deg,#57516e,#35364b 65%,#292d40)!important;
+   box-shadow:inset 0 1px #d7ccff45,inset 0 -2px var(--accent),0 2px 4px #0004!important;
+ }
+ @media(hover:hover) and (pointer:fine){
+  body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(.calendar-toolbar>.row>button,.calendar-jump select,.calendar-group-toolbar-v2 button):not(:disabled):hover{
+    border-color:#aec5df80!important;
+    color:var(--text)!important;
+    box-shadow:inset 0 1px #d2e3f35c,0 2px 5px #0005!important;
+  }
+ }
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(button,select):focus-visible{outline:2px solid var(--accent)!important;outline-offset:1px!important}
+ body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active .calendar-topbar-v4 :is(button,select):disabled{opacity:.55;box-shadow:none!important}
+}

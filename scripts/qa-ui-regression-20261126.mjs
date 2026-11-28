@@ -30,6 +30,15 @@ try{
   for(let i=0;i<25;i++){await sleep(16);frames.push(await state())}
   const end=await state();assert(end.w<85&&end.label==='hidden',JSON.stringify(end));
   for(const f of frames)assert(Math.abs(f.x-closed.x)<2&&Math.abs(f.y-closed.y)<2&&Math.abs(f.n-closed.n)<2&&Math.abs(f.m-closed.m)<2,JSON.stringify({closed,f}));
+  // Re-enter the old expanded footprint while the rail is closing.
+  await browser.movePoint(30,100);await sleep(230);
+  await browser.movePoint(500,300);await sleep(145);
+  await browser.movePoint(120,100);await sleep(230);
+  const noReopen=await state();assert(noReopen.w<85&&noReopen.label==='hidden','Closing footprint reopened rail '+JSON.stringify(noReopen));
+  // A real return to the collapsed hit area still opens immediately.
+  await browser.movePoint(30,100);await sleep(230);
+  assert((await state()).w>=165,'Rail does not reopen at its real edge');
+  await browser.movePoint(500,300);await sleep(340);
   for(const scale of [1,1.15,1.3]){
    const metrics=await browser.evaluate("(()=>{const c=document.querySelector('.mini-event');c.style.setProperty('--ui-text-scale',"+scale+");const r=c.getBoundingClientRect(),t=c.querySelector('.calendar-card-title-v2'),m=c.querySelector('.mini-event-main'),b=t.getBoundingClientRect(),s=getComputedStyle(c);return {bottom:b.bottom,limit:r.bottom-parseFloat(s.paddingBottom),textHeight:b.height,line:parseFloat(getComputedStyle(t).lineHeight),mainHeight:m.clientHeight,mainScroll:m.scrollHeight}})()");
    assert(metrics.bottom<=metrics.limit+1&&metrics.textHeight>=metrics.line-1&&metrics.mainScroll<=metrics.mainHeight+1,JSON.stringify(metrics));

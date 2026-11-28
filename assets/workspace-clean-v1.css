@@ -497,7 +497,7 @@ html[data-mws-motion=reduced] #dashboard .dashboard-stats-bar-v1{animation:none}
     background-color:#0c0e12!important;
   }
   body.mws-premium[data-theme=neon]:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section.active #calendarGrid .day:not(.out):not(.drag-over):not(.template-drag-over){
-    background:linear-gradient(155deg,#9ec3e30a 0%,#10182713 24%,#080e1a28 100%) rgba(12,14,18,.29)!important;
+    background:linear-gradient(155deg,#9ec3e30a 0%,#10182713 24%,#080e1a28 100%) rgba(12,14,18,.32)!important;
     border-color:#8da8c12b!important;
     box-shadow:inset 0 1px #c3def21a,inset 0 -1px #0509123b!important;
   }

@@ -49,12 +49,13 @@ body.mws-premium .sidebar .nav-scroll button[data-tab]:focus-visible,
    margin:0!important;box-sizing:border-box!important;padding:12px 8px!important;overflow:clip!important;border-radius:0!important;transform:none!important;z-index:500!important;
    &.mws-sidebar-expanded-v2{--rail-size:var(--mws-sidebar-expanded-width-v2);--tile-size:calc(var(--mws-sidebar-expanded-width-v2) - 31px);--label-opacity:1;--label-visibility:visible;--label-events:auto;--mini-opacity:0}
    &:is(.mws-sidebar-expanded-v2,:not(.mws-sidebar-expanded-v2)){
-    width:var(--rail-size)!important;min-width:var(--rail-size)!important;max-width:var(--rail-size)!important;transition:width .18s ease,min-width .18s ease,max-width .18s ease!important;
+    width:var(--rail-size)!important;min-width:var(--rail-size)!important;max-width:var(--rail-size)!important;transition:width .18s cubic-bezier(.22,.72,.28,1),min-width .18s cubic-bezier(.22,.72,.28,1),max-width .18s cubic-bezier(.22,.72,.28,1)!important;
     &>:is(.sidebar-head,.nav,#pageTextScaleControlV54,.mws-creator-links,#mwsBuildVersion){width:calc(var(--mws-sidebar-expanded-width-v2) - 17px)!important;min-width:calc(var(--mws-sidebar-expanded-width-v2) - 17px)!important;max-width:calc(var(--mws-sidebar-expanded-width-v2) - 17px)!important;align-self:flex-start!important;box-sizing:border-box!important}
     & .nav .nav-scroll{width:100%!important;scrollbar-gutter:stable!important}
-    & .nav .nav-scroll>button[data-tab]{width:var(--tile-size)!important;min-width:0!important;max-width:none!important;margin-left:4px!important;margin-right:0!important;transition:width .18s ease,background-color .11s,color .11s!important}
+    & .nav .nav-scroll>button[data-tab]{width:var(--tile-size)!important;min-width:0!important;max-width:none!important;margin-left:4px!important;margin-right:0!important;transition:width .18s cubic-bezier(.22,.72,.28,1)!important}
     & .nav .nav-scroll>button[data-tab]>.nav-icon{left:5px!important;transform:none!important}
     & .nav .nav-scroll>button[data-tab]>.nav-label{display:block!important;left:48px!important;transform:none!important;width:calc(var(--mws-sidebar-expanded-width-v2) - 77px)!important;max-width:none!important}
+    & .nav .nav-scroll>button[data-tab]>.nav-icon{transition:none!important}
     & .sidebar-head .logo{left:0!important;width:105px!important;min-width:105px!important;max-width:105px!important}
     & .sidebar-head :is(.logo-full,.logo-mini,.logo small){display:block!important}
     & .sidebar-head .logo-mini{position:absolute!important;left:16px!important;top:0!important;width:24px!important;text-align:center;opacity:var(--mini-opacity)!important;transition:opacity .14s ease!important}
@@ -176,4 +177,39 @@ html[data-mws-motion=reduced] body:not(.sidebar-pinned) .app>.sidebar,html[data-
   html body.mws-premium:not([data-resolution=mobile]):not([data-device-mode=mobile]):has(#calendar.section.active) .app>.sidebar .sidebar-pin:focus-visible{
     outline:2px solid var(--accent)!important;outline-offset:-2px!important;
   }
+}
+
+/* Pass T: calendar rail shares the stage 19 satin housing. Preserve rail
+   geometry, group hit targets, icon anchoring and theme-specific layouts. */
+@media(min-width:901px){
+ html body.mws-premium[data-theme=neon]:not([data-resolution=mobile]):not([data-device-mode=mobile]):has(#calendar.section.active) .app>.sidebar{
+   background:radial-gradient(ellipse at 15% 0%,#9eb4cf17,transparent 45%),linear-gradient(155deg,#303946,#222a36 15%,#171e29 43%,#10151f 89%,#0c111a)!important;
+   border-color:#71849a55!important;
+   box-shadow:inset 0 1px #d2e3f33d,inset -1px 0 #060a11aa,5px 0 15px #0004!important;
+ }
+ html body.mws-premium[data-theme=neon]:not([data-resolution=mobile]):not([data-device-mode=mobile]):has(#calendar.section.active) .app>.sidebar .nav .nav-scroll>button[data-tab]{
+   transition:none!important;
+ }
+ html body.mws-premium[data-theme=neon]:not(.sidebar-pinned):not([data-resolution=mobile]):not([data-device-mode=mobile]):has(#calendar.section.active) .app>.sidebar:is(.mws-sidebar-expanded-v2,:not(.mws-sidebar-expanded-v2)) .nav .nav-scroll>button[data-tab]{
+   transition:width .18s cubic-bezier(.22,.72,.28,1)!important;
+ }
+ html body.mws-premium[data-theme=neon]:not([data-resolution=mobile]):not([data-device-mode=mobile]):has(#calendar.section.active) .app>.sidebar .nav .nav-scroll>button[data-tab].active{
+   background:linear-gradient(155deg,#585474,#353449 45%,#252a3c)!important;
+   box-shadow:inset 2px 0 var(--accent),inset 0 1px #d0c6f64d,inset 0 -1px #10121e,0 3px 6px #0005!important;
+   color:var(--text)!important;
+ }
+ html body.mws-premium[data-theme=neon]:not([data-resolution=mobile]):not([data-device-mode=mobile]):has(#calendar.section.active) .app>.sidebar .nav .nav-scroll>button[data-tab]>.nav-icon{
+   transition:none!important;
+ }
+ @media(hover:hover) and (pointer:fine){
+  html body.mws-premium[data-theme=neon]:not([data-resolution=mobile]):not([data-device-mode=mobile]):has(#calendar.section.active) .app>.sidebar .nav .nav-scroll>button[data-tab]:not(.active):not(:disabled):hover{
+    background:linear-gradient(155deg,#424f61,#283341 65%,#202938)!important;
+    box-shadow:inset 0 1px #c8d9eb45,inset 0 -1px #090d17,0 2px 4px #0003!important;
+    color:var(--text)!important;
+  }
+ }
+}
+html[data-mws-motion=reduced] body.mws-premium:has(#calendar.section.active) .app>.sidebar .nav .nav-scroll>button[data-tab]{transition:none!important}
+@media(prefers-reduced-motion:reduce){
+ html body.mws-premium:has(#calendar.section.active) .app>.sidebar .nav .nav-scroll>button[data-tab]{transition:none!important}
 }
