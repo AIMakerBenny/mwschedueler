@@ -184,8 +184,12 @@ try{
   const wallpaper=await browser.evaluate(`(()=>{const b=document.body,g=document.getElementById('calendarGrid'),prefs=JSON.parse(localStorage.getItem('mws_device_preferences_v1')||'{}'),s=getComputedStyle(g);return {stored:prefs.backgroundImage?.startsWith('data:image/'),body:getComputedStyle(b).backgroundImage.includes('data:image/'),grid:s.backgroundImage.includes('data:image/'),preview:document.getElementById('backgroundPreview').style.backgroundImage.includes('data:image/')}})()`);
   assert(wallpaper.stored&&wallpaper.body&&wallpaper.preview,'Uploaded wallpaper must be local and visible '+JSON.stringify(wallpaper));
   assert(wallpaper.grid,'Calendar must use user wallpaper at every tested viewport');
-  const wallpaperAlpha=await browser.evaluate(`(()=>{const d=document.querySelector('#calendarGrid .day:not(.out):not(.today)'),c=document.createElement('canvas');c.width=c.height=1;const x=c.getContext('2d');x.fillStyle=getComputedStyle(d).backgroundColor;x.fillRect(0,0,1,1);return x.getImageData(0,0,1,1).data[3]})()`);
-  assert(wallpaperAlpha<255,'Calendar day must not hide the custom wallpaper');
+  const readWallpaperAlpha=()=>browser.evaluate(`(()=>{const d=document.querySelector('#calendarGrid .day:not(.out):not(.today)'),c=document.createElement('canvas');c.width=c.height=1;const x=c.getContext('2d');x.fillStyle=getComputedStyle(d).backgroundColor;x.fillRect(0,0,1,1);return x.getImageData(0,0,1,1).data[3]})()`);
+  // Wait for the existing background transition to finish, not just the upload flag.
+  await until(async()=>{const alpha=await readWallpaperAlpha();return alpha>0&&alpha<255},'Calendar day must not hide the custom wallpaper');
+  await pause(200);
+  const wallpaperAlpha=await readWallpaperAlpha();
+  assert(wallpaperAlpha>0&&wallpaperAlpha<255,'Settled calendar wallpaper alpha '+wallpaperAlpha);
   await capture('calendar-custom-background');
   await browser.evaluate("document.getElementById('removeBackgroundBtn').click()");
   await until(()=>browser.evaluate("document.body.dataset.backgroundCustom==='false'"),'Wallpaper removed');
