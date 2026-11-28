@@ -273,11 +273,13 @@ const getData=()=>{try{return typeof data!=='undefined'?data:window.data}catch(_
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));saveFailed=false}catch(_){saveFailed=true}}
 function readConfig(){
   const raw=getData()?.miniGames?.[CONFIG_KEY];
-  const clean=normalizeState(raw);
+  const clean=normalizeState(raw||{links:state.links,roles:state.roles});
   if(!raw){
+    // The local simulation's established IDs survive display-name changes.
+    // A missing linked contact stays missing rather than silently switching identities.
     syncContacts(clean,contacts);
-    const used=new Set(Object.values(clean.links));
-    clean.roles=DEFAULT_ROLES.map(n=>{const c=matchContact(n,contacts),id=c?String(c.id):'';if(!id||used.has(id))return '';used.add(id);return id});
+    const used=new Set([...Object.values(clean.links),...clean.roles].filter(Boolean));
+    clean.roles=DEFAULT_ROLES.map((n,i)=>{if(clean.roles[i])return clean.roles[i];const c=matchContact(n,contacts),id=c?String(c.id):'';if(!id||used.has(id))return '';used.add(id);return id});
   }
   return{links:clean.links,roles:clean.roles};
 }
