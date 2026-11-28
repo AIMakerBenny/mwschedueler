@@ -173,6 +173,12 @@ try{
   await capture('calendar');
   const geom=await browser.evaluate(`(()=>{const grid=document.getElementById('calendarGrid'),main=document.querySelector('.app>.main'),r=grid.getBoundingClientRect(),m=main.getBoundingClientRect();return {cards:grid.querySelectorAll('.mini-event[data-evid]').length,rootOverflow:document.documentElement.scrollWidth-innerWidth,gridWidth:r.width,mainWidth:m.width,gridHeight:r.height,theme:document.body.dataset.theme,font:getComputedStyle(grid).fontFamily}})()`);
   assert(geom.cards>=25&&geom.rootOverflow<=2&&geom.gridWidth>0,JSON.stringify(geom));
+  geom.labelMetrics=await browser.evaluate(`(()=>{
+   const titles=[...document.querySelectorAll('#calendarGrid .calendar-card-title-v2')].filter(el=>el.getBoundingClientRect().width>0),vr=titles.filter(el=>el.closest('.calendar-event-vr-v1'));
+   const dense=[...document.querySelectorAll('#calendarGrid .calendar-day-events-v2')].filter(el=>el.querySelectorAll('.mini-event[data-evid]').length===3);
+   const report=list=>({total:list.length,fullyReadable:list.filter(el=>el.scrollWidth<=el.clientWidth+1).length,minWidth:list.length?Math.min(...list.map(el=>Math.round(el.getBoundingClientRect().width*10)/10)):null});
+   return {titles:report(titles),vrTitles:report(vr),denseDays:dense.map(el=>{const r=el.getBoundingClientRect(),cards=[...el.querySelectorAll('.mini-event[data-evid]')];return {date:el.closest('.day').dataset.date,fullCards:cards.filter(c=>{const b=c.getBoundingClientRect();return b.height>0&&b.top>=r.top-1&&b.bottom<=r.bottom+1}).length,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight}})};
+  })()`);
   if(viewport[0]<761){
    const labels=await browser.evaluate(`(()=>{const cards=[...document.querySelectorAll('#calendarGrid .mini-event[data-evid].calendar-event-vr-v1')].filter(c=>c.getBoundingClientRect().width>0);return cards.map(c=>{const title=c.querySelector('.calendar-card-title-v2'),r=title.getBoundingClientRect(),box=c.getBoundingClientRect(),s=getComputedStyle(c);return {width:r.width,card:box.width,visible:!!title.textContent&&getComputedStyle(title).visibility==='visible',padding:parseFloat(s.paddingRight)}})})()`);
    assert(labels.length>0&&labels.every(x=>x.visible&&x.width>=x.card*.65&&x.padding<=3),'Mobile VR titles clipped '+JSON.stringify(labels));
