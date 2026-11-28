@@ -96,4 +96,4 @@ try{
     assert(result.ok,'Ribbon geometry failed '+width+': '+JSON.stringify(result));
     console.log('CALENDAR_SERIES_BROWSER_OK',width,JSON.stringify(result));
   }
-}finally{await browser?.close();rmSync(dir,{recursive:true,force:true})}
+}finally{await browser?.close();rmSync(dir,{recursive:true,force:true,maxRetries:8,retryDelay:150})}
