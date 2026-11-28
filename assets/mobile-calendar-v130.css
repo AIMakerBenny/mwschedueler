@@ -659,3 +659,24 @@ body[data-device-mode="mobile"][data-resolution="mobile"]:has(.mws-mobile-tabs) 
   body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] .calendar-topbar-v4 :is(.calendar-view-tabs-v172,.calendar-group-toolbar-v2) button{width:32px!important;min-width:32px!important}
   body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .mini-event[data-evid]{font-size:9px!important}
 }
+
+/* Visual review B: the month is a title-only compact overview on mobile.
+   Desktop's VR and Steam reservations previously consumed the entire text
+   track even though both controls were hidden. Keep their actual functionality
+   in the existing mobile day-detail sheet, not in the tiny month cells. */
+body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid].mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4)),
+body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid].mws-steam-host-v111.calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4)){
+  padding-inline:2px!important;
+  min-width:0!important;
+}
+body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid] .mini-event-main{
+  display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  overflow:hidden!important;white-space:nowrap!important;line-height:15px!important;
+}
+body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid] .calendar-card-title-v2{
+  display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  font-size:inherit!important;line-height:15px!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+body:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section[data-mobile-calendar-view=month] #calendarGrid .day .mini-event[data-evid]>:is(.calendar-vr-badge-v1,.mws-steam-slot-v111){
+  display:none!important;
+}
