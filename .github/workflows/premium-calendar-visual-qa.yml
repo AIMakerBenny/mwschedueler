@@ -5,6 +5,7 @@ on:
       - 'index.html'
       - 'assets/**'
       - 'scripts/qa-request-budget-full-app-v2-browser.mjs'
+      - 'scripts/render-calendar-scene-v1.mjs'
       - '.github/workflows/premium-calendar-visual-qa.yml'
   workflow_dispatch:
 permissions:
@@ -30,6 +31,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Verify generated landscape matches embedded PNG pixels
+        run: node scripts/render-calendar-scene-v1.mjs --check
       - name: Install Korean glyphs for accurate visual review
         run: |
           sudo apt-get update -qq
