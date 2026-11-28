@@ -321,7 +321,7 @@ body.mws-premium .event-details-popover-v2 .calendar-preview-person .avatar{
 /* Visual pass C: make the existing controls occupy the time row, not the
    title row. Keep the 24px game hit target and wide-cell layout unchanged. */
 @media(min-width:901px){
- @container mws-calendar-day (max-width:214px){
+ @container mws-calendar-day (width < 215px){
    body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111.calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4)){
      padding-right:35px!important;
    }
@@ -329,13 +329,21 @@ body.mws-premium .event-details-popover-v2 .calendar-preview-person .avatar{
      max-width:calc(100% - 23px);
    }
    body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid].calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4))>.calendar-vr-badge-v1{
-     top:3px;right:35px;transform:none;width:19px;height:13px;border-radius:4px;
+     top:3px;right:35px;transform:none;width:19px;height:12px;border-radius:4px;
      font-size:8px;line-height:1;
+   }
+   /* A full-width title track also provides predictable ellipsis and
+      measurable geometry for short titles. The time row is independent. */
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .mini-event[data-evid]:not(:has(.calendar-event-drag-handle-v4)) .calendar-card-title-v2{
+     align-self:stretch;width:100%;
+   }
+   body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .calendar-day-events-v2:has(>.mini-event[data-evid]~.mini-event[data-evid]~.mini-event[data-evid])>.mini-event[data-evid].calendar-event-vr-v1>.calendar-vr-badge-v1{
+     top:1px;
    }
    /* A dense day retains both time and title; only vertical dead space is
       reduced. Dates with a long list still use their own scroll/expand path. */
    body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .calendar-day-events-v2:has(>.mini-event[data-evid]~.mini-event[data-evid]~.mini-event[data-evid])>.mini-event[data-evid]:not(.rest-event):not(:has(.calendar-event-drag-handle-v4)){
-     margin-block:1px!important;padding-block:2px!important;min-height:30px!important;
+     margin-block:0!important;padding-block:1px!important;min-height:28px!important;
    }
    body:not([data-device-mode=mobile]):not([data-resolution=mobile]) #calendar.section #calendarGrid .calendar-day-events-v2:has(>.mini-event[data-evid]~.mini-event[data-evid]~.mini-event[data-evid])>.mini-event[data-evid]:not(.rest-event) .mini-event-main{
      gap:0;
