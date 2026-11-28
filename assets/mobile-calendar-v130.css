@@ -712,3 +712,17 @@ body.mws-premium .mws-mobile-calendar-day-detail-v130 .mws-mobile-day-event-titl
    word-break:normal;overflow-wrap:anywhere;
  }
 }
+
+/* Optional device-local wallpaper on the actual mobile calendar surface.
+   Retain opaque default UI and existing layout/hit targets. No new asset. */
+html body.mws-premium[data-background-custom=true]:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section.active[data-mobile-calendar-view=month] #calendarGrid.calendar{
+  background-image:linear-gradient(rgb(0 0 0 / var(--custom-bg-dim)),rgb(0 0 0 / var(--custom-bg-dim))),var(--custom-bg-image)!important;
+  background-position:center!important;background-size:cover!important;
+  background-repeat:no-repeat!important;
+}
+html body.mws-premium[data-background-custom=true]:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section.active[data-mobile-calendar-view=month] #calendarGrid .day:not(.out):not(.drag-over):not(.template-drag-over){
+  background:color-mix(in srgb,var(--panel) 78%,transparent)!important;
+}
+html body.mws-premium[data-background-custom=true]:is([data-device-mode=mobile],[data-resolution=mobile]) #calendar.section.active[data-mobile-calendar-view=month] #calendarGrid .day.out{
+  background:color-mix(in srgb,var(--panel) 90%,transparent)!important;
+}
